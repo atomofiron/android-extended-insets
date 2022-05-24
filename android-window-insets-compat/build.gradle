@@ -27,35 +27,20 @@ android {
     }
 }
 
-def githubProperties = new Properties()
-githubProperties.load(new FileInputStream(rootProject.file("github.properties")))
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+}
 
-def mUserId = "Atomofiron"
-def mArtifactId = "android-window-insets-compat"
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
 
-publishing {
-    publications {
-        bar(MavenPublication) {
-            groupId 'lib.atomofiron'
-            artifactId mArtifactId
-            version "1.0.0"
-            artifact("$buildDir/outputs/aar/$mArtifactId-release.aar")
-        }
-    }
-
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/$mUserId/$mArtifactId")
-
-            credentials {
-                username = githubProperties['gpr.usr'] ?: System.getenv("GPR_USER")
-                password = githubProperties['gpr.key'] ?: System.getenv("GPR_API_KEY")
+                groupId = 'com.github.atomofiron'
+                artifactId = 'android-window-insets-compat'
+                version = '1.0.0'
             }
         }
     }
-}
-
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.4.1'
 }
