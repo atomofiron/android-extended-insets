@@ -38,7 +38,7 @@ publishing {
         bar(MavenPublication) {
             groupId 'lib.atomofiron'
             artifactId mArtifactId
-            version mArtifactId
+            version "1.0.0"
             artifact("$buildDir/outputs/aar/$mArtifactId-release.aar")
         }
     }
