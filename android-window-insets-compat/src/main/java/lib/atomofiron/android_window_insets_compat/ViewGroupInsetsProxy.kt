@@ -17,28 +17,30 @@
 package lib.atomofiron.android_window_insets_compat
 
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.WindowInsetsCompat
 
-@Deprecated("Use ViewInsetsController")
+@Deprecated("Use View.insetsProxying(InsetsListener?)")
 class ViewGroupInsetsProxy private constructor() : OnApplyWindowInsetsListener {
     companion object {
 
-        @Deprecated("Use ViewInsetsController.comsume(View)", ReplaceWith("ViewInsetsController.consume(view)"))
-        fun consume(view: View) = ViewInsetsController.consume(view)
+        @Deprecated("Use View.consumeInsets(InsetsListener?)", ReplaceWith("View.consumeInsets()"))
+        fun consume(view: View) = view.consumeInsets()
 
-        @Deprecated("Use ViewInsetsController.setProxy(View, InsetsListener?)")
+        @Deprecated("Use View.insetsProxying(Int, InsetsListener?)")
         fun set(viewGroup: View, listener: InsetsListener? = null): ViewGroupInsetsProxy {
-            ViewInsetsController.setProxy(viewGroup, listener)
+            viewGroup.insetsProxying(listener = listener)
             return ViewGroupInsetsProxy()
         }
 
         @Deprecated(
-            message = "Use ViewInsetsController.dispatchChildrenWindowInsets(View, WindowInsetsCompat)",
-            replaceWith = ReplaceWith("ViewInsetsController.dispatchChildrenWindowInsets(viewGroup, insets)"),
+            message = "Use ViewGroup.dispatchChildrenWindowInsets(WindowInsetsCompat)",
+            replaceWith = ReplaceWith("ViewGroup.dispatchChildrenWindowInsets(insets)"),
         )
         fun dispatchChildrenWindowInsets(viewGroup: View, insets: WindowInsetsCompat) {
-            ViewInsetsController.dispatchChildrenWindowInsets(viewGroup, insets)
+            viewGroup as ViewGroup
+            viewGroup.dispatchChildrenWindowInsets(insets)
         }
     }
 
