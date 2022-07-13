@@ -1,5 +1,8 @@
-<resources>
-    <style name="Theme.AndroidWindowInsetsCompat" parent="@android:style/Theme">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="colorPrimary">@color/purple_500</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">always</item>
     </style>
 </resources>
