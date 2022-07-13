@@ -17,42 +17,30 @@
 package lib.atomofiron.android_window_insets_compat
 
 import android.view.View
-import android.view.ViewGroup
 import androidx.core.view.OnApplyWindowInsetsListener
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
-typealias InsetsListener = (View, WindowInsetsCompat) -> Unit
-
-class ViewGroupInsetsProxy private constructor(
-    private val listener: InsetsListener?,
-) : OnApplyWindowInsetsListener {
+@Deprecated("Use ViewInsetsController")
+class ViewGroupInsetsProxy private constructor() : OnApplyWindowInsetsListener {
     companion object {
 
-        fun consume(view: View) = ViewCompat.setOnApplyWindowInsetsListener(view) { _, _ ->
-            WindowInsetsCompat.CONSUMED
-        }
+        @Deprecated("Use ViewInsetsController.comsume(View)", ReplaceWith("ViewInsetsController.consume(view)"))
+        fun consume(view: View) = ViewInsetsController.consume(view)
 
+        @Deprecated("Use ViewInsetsController.setProxy(View, InsetsListener?)")
         fun set(viewGroup: View, listener: InsetsListener? = null): ViewGroupInsetsProxy {
-            viewGroup as ViewGroup
-            val proxy = ViewGroupInsetsProxy(listener)
-            ViewCompat.setOnApplyWindowInsetsListener(viewGroup, proxy)
-            return proxy
+            ViewInsetsController.setProxy(viewGroup, listener)
+            return ViewGroupInsetsProxy()
         }
 
+        @Deprecated(
+            message = "Use ViewInsetsController.dispatchChildrenWindowInsets(View, WindowInsetsCompat)",
+            replaceWith = ReplaceWith("ViewInsetsController.dispatchChildrenWindowInsets(viewGroup, insets)"),
+        )
         fun dispatchChildrenWindowInsets(viewGroup: View, insets: WindowInsetsCompat) {
-            viewGroup as ViewGroup
-            val windowInsets = insets.toWindowInsets()
-            for (index in 0 until viewGroup.childCount) {
-                val child = viewGroup.getChildAt(index)
-                child.dispatchApplyWindowInsets(windowInsets)
-            }
+            ViewInsetsController.dispatchChildrenWindowInsets(viewGroup, insets)
         }
     }
 
-    override fun onApplyWindowInsets(view: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-        dispatchChildrenWindowInsets(view, insets)
-        listener?.invoke(view, insets)
-        return WindowInsetsCompat.CONSUMED
-    }
+    override fun onApplyWindowInsets(view: View, insets: WindowInsetsCompat) = WindowInsetsCompat.CONSUMED
 }

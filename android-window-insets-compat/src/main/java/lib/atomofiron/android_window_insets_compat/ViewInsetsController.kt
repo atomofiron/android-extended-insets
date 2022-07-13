@@ -25,19 +25,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
 
+typealias InsetsListener = (View, WindowInsetsCompat) -> Unit
+
 class ViewInsetsController private constructor(
     private val view: View,
-    private val applyStart: Boolean,
-    private val applyTop: Boolean,
-    private val applyEnd: Boolean,
-    private val applyBottom: Boolean,
     private val destination: Destination,
     private val withProxy: Boolean,
     private val typeMask: Int,
+    private var listener: InsetsListener? = null,
 ) : OnApplyWindowInsetsListener {
     companion object {
 
-        val defaultTypeMask = Type.systemBars() or Type.ime()
+        val defaultTypeMask = Type.systemBars() or Type.ime() or Type.displayCutout()
 
         fun bindPadding(
             view: View,
@@ -49,7 +48,8 @@ class ViewInsetsController private constructor(
             typeMask: Int = defaultTypeMask,
         ): ViewInsetsController {
             require(start || top || end || bottom)
-            val controller = ViewInsetsController(view, start, top, end, bottom, Destination.PADDING, withProxy, typeMask)
+            val destination = Destination.Padding(start, top, end, bottom)
+            val controller = ViewInsetsController(view, destination, withProxy, typeMask)
             ViewCompat.setOnApplyWindowInsetsListener(view, controller)
             return controller
         }
@@ -64,7 +64,8 @@ class ViewInsetsController private constructor(
             typeMask: Int = defaultTypeMask,
         ): ViewInsetsController {
             require(start || top || end || bottom)
-            val controller = ViewInsetsController(view, start, top, end, bottom, Destination.MARGIN, withProxy, typeMask)
+            val destination = Destination.Margin(start, top, end, bottom)
+            val controller = ViewInsetsController(view, destination, withProxy, typeMask)
             ViewCompat.setOnApplyWindowInsetsListener(view, controller)
             return controller
         }
@@ -73,10 +74,43 @@ class ViewInsetsController private constructor(
             val insets = ViewCompat.getRootWindowInsets(view) ?: WindowInsetsCompat.CONSUMED
             return insets.getInsets(typeMask)
         }
+
+        fun consume(view: View) = ViewCompat.setOnApplyWindowInsetsListener(view) { _, _ ->
+            WindowInsetsCompat.CONSUMED
+        }
+
+        fun setProxy(viewGroup: View, listener: InsetsListener? = null): ViewInsetsController {
+            viewGroup as ViewGroup
+            val controller = ViewInsetsController(
+                view = viewGroup,
+                destination = Destination.None,
+                withProxy = true,
+                typeMask = defaultTypeMask,
+                listener = listener,
+            )
+            ViewCompat.setOnApplyWindowInsetsListener(viewGroup, controller)
+            return controller
+        }
+
+        fun dispatchChildrenWindowInsets(viewGroup: View, insets: WindowInsetsCompat) {
+            viewGroup as ViewGroup
+            val windowInsets = insets.toWindowInsets()
+            for (index in 0 until viewGroup.childCount) {
+                val child = viewGroup.getChildAt(index)
+                child.dispatchApplyWindowInsets(windowInsets)
+            }
+        }
     }
 
-    private enum class Destination {
-        PADDING, MARGIN
+    private sealed class Destination(
+        val applyStart: Boolean,
+        val applyTop: Boolean,
+        val applyEnd: Boolean,
+        val applyBottom: Boolean,
+    ) {
+        object None : Destination(false, false, false, false)
+        class Padding(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) : Destination(start, top, end, bottom)
+        class Margin(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) : Destination(start, top, end, bottom)
     }
 
     private var insetStart = 0
@@ -84,16 +118,16 @@ class ViewInsetsController private constructor(
     private var insetEnd = 0
     private var insetBottom = 0
 
-    private var listener: InsetsListener? = null
     private val isRtlEnabled get() = view.resources.configuration.layoutDirection == LayoutDirection.RTL
 
     override fun onApplyWindowInsets(view: View, windowInsets: WindowInsetsCompat): WindowInsetsCompat {
         when (destination) {
-            Destination.PADDING -> view.updatePadding(windowInsets)
-            Destination.MARGIN -> view.updateMargin(windowInsets)
+            Destination.None -> Unit
+            is Destination.Padding -> view.updatePadding(windowInsets)
+            is Destination.Margin -> view.updateMargin(windowInsets)
         }
         if (withProxy) {
-            ViewGroupInsetsProxy.dispatchChildrenWindowInsets(view, windowInsets)
+            dispatchChildrenWindowInsets(view, windowInsets)
         }
         listener?.invoke(view, windowInsets)
         return WindowInsetsCompat.CONSUMED
@@ -118,22 +152,22 @@ class ViewInsetsController private constructor(
     private fun View.updatePadding(windowInsets: WindowInsetsCompat) {
         val insets = windowInsets.getInsets(typeMask)
         var start = paddingStart
-        if (applyStart) {
+        if (destination.applyStart) {
             start += insets.start - insetStart
             insetStart = insets.start
         }
         var top = paddingTop
-        if (applyTop) {
+        if (destination.applyTop) {
             top += insets.top - insetTop
             insetTop = insets.top
         }
         var end = paddingEnd
-        if (applyEnd) {
+        if (destination.applyEnd) {
             end += insets.end - insetEnd
             insetEnd = insets.end
         }
         var bottom = paddingBottom
-        if (applyBottom) {
+        if (destination.applyBottom) {
             bottom += insets.bottom - insetBottom
             insetBottom = insets.bottom
         }
@@ -147,22 +181,22 @@ class ViewInsetsController private constructor(
         (layoutParams as ViewGroup.MarginLayoutParams).run {
             val insets = windowInsets.getInsets(typeMask)
             var start = marginStart
-            if (applyStart) {
+            if (destination.applyStart) {
                 start += insets.start - insetStart
                 insetStart = insets.start
             }
             var top = topMargin
-            if (applyTop) {
+            if (destination.applyTop) {
                 top += insets.top - insetTop
                 insetTop = insets.top
             }
             var end = marginEnd
-            if (applyEnd) {
+            if (destination.applyEnd) {
                 end += insets.end - insetEnd
                 insetEnd = insets.end
             }
             var bottom = bottomMargin
-            if (applyBottom) {
+            if (destination.applyBottom) {
                 bottom += insets.bottom - insetBottom
                 insetBottom = insets.bottom
             }
