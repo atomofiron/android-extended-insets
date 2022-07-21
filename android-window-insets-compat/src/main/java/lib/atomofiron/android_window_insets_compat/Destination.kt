@@ -22,7 +22,8 @@ internal sealed class Destination(
     val applyEnd: Boolean,
     val applyBottom: Boolean,
 ) {
-    val isNotEmpty = applyStart || applyTop || applyEnd || applyBottom
+    val isEmpty = !applyStart && !applyTop && !applyEnd && !applyBottom
+    val isNotEmpty = !isEmpty
 
     class Padding(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) : Destination(start, top, end, bottom)
     class Margin(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) : Destination(start, top, end, bottom)

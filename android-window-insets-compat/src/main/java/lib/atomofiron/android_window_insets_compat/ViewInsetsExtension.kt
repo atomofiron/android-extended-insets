@@ -22,7 +22,7 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
-
+import java.lang.IllegalArgumentException
 
 
 typealias InsetsListener = (View, WindowInsetsCompat) -> Unit
@@ -77,6 +77,9 @@ fun View.applyPaddingInsets(
     listener: InsetsListener? = null,
 ): ViewInsetsKeeper {
     val destination = Destination.Padding(start, top, end, bottom)
+    if (withProxying && destination.isEmpty) {
+        throw IllegalArgumentException("Use View.insetsProxying()")
+    }
     return applyInsets(destination, withProxying, typeMask, listener)!!
 }
 
@@ -104,6 +107,9 @@ fun View.applyMarginInsets(
     listener: InsetsListener? = null,
 ): ViewInsetsKeeper {
     val destination = Destination.Margin(start, top, end, bottom)
+    if (withProxying && destination.isEmpty) {
+        throw IllegalArgumentException("Use View.insetsProxying()")
+    }
     return applyInsets(destination, withProxying, typeMask, listener)!!
 }
 
