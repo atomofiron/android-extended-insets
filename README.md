@@ -1,6 +1,10 @@
-# How to use for example
 [![](https://jitpack.io/v/atomofiron/android-window-insets-compat.svg)](https://jitpack.io/#atomofiron/android-window-insets-compat)
 
+# Demo
+![screenshot](https://github.com/Atomofiron/android-window-insets-compat/blob/main/stuff/insets_port.png)
+![screenshot](https://github.com/Atomofiron/android-window-insets-compat/blob/main/stuff/insets_land.png)
+
+# How to use for example
 ```gradle
 repositories {
     // ...
@@ -8,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.atomofiron:android-window-insets-compat:1.0.0'
+    implementation 'com.github.atomofiron:android-window-insets-compat:1.1.0'
 }
 ```
 
@@ -17,11 +21,12 @@ fun onViewCreated(view: View) {
 
     // ...
 
-    ViewGroupInsetsProxy.set(view)
-    ViewGroupInsetsProxy.set(swipeRefreshLayout)
-    ViewInsetsController.bindPadding(appBar, start = true, top = true, end = true)
-    ViewInsetsController.bindPadding(recyclerView, start = true, top = true, end = true, bottom = true)
-    ViewInsetsController.bindPadding(bottomBar, start = true, end = true, bottom = true)
-    ViewInsetsController.bindMargin(fab, end = true, bottom = true)
+    view as ViewGroup
+    view.insetsProxying()
+    swipeRefreshLayout.insetsProxying()
+    appBar.applyPaddingInsets(start = true, top = true, end = true)
+    recyclerView.applyPaddingInsets()
+    bottomBar.applyPaddingInsets(horizontal = true, withProxying = true)
+    fab.applyPaddingInsets(end = true, bottom = true)
 }
 ```
