@@ -1,7 +1,7 @@
 [![](https://jitpack.io/v/atomofiron/android-window-insets-compat.svg)](https://jitpack.io/#atomofiron/android-window-insets-compat)
 
 # Demo
-<img src="https://github.com/Atomofiron/android-window-insets-compat/blob/main/stuff/insets_port.png" data-canonical-src="https://github.com/Atomofiron/android-window-insets-compat/blob/main/stuff/insets_port.png" width="320" /><img src="https://github.com/Atomofiron/android-window-insets-compat/blob/main/stuff/insets_land.png" data-canonical-src="https://github.com/Atomofiron/android-window-insets-compat/blob/main/stuff/insets_land.png" width="640" />
+![screenshot](https://github.com/Atomofiron/android-window-insets-compat/blob/main/stuff/insets_demo.png)
 
 # How to use for example
 ```gradle
