@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "app.atomofiron.android_window_insets_compat"
@@ -32,5 +32,5 @@ android {
 dependencies {
     implementation project(":android-window-insets-compat")
 
-    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
 }
