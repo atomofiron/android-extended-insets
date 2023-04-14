@@ -79,7 +79,7 @@ internal class ViewInsetsDelegate(
     }
 
     private fun updatePadding(windowInsets: WindowInsetsCompat) {
-        val insets = windowInsets.getInsets(defaultTypeMask)
+        val insets = windowInsets.getInsets(typeMask)
         var start = view.paddingStart
         if (destination.applyStart) {
             start += insets.start - insetStart
