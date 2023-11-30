@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "AndroidWindowInsetsCompat"
-include ':app'
-include ':android-window-insets-compat'
+include(":app")
+include(":android-window-insets-compat")
