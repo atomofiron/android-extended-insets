@@ -1,12 +1,12 @@
 plugins {
-    //id("com.android.library")
+    id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
 }
 
 android {
-    namespace = "android-window-insets-compat"
-    compileSdk = 32
+    namespace = "app.atomofiron.android_window_insets_compat"
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 21

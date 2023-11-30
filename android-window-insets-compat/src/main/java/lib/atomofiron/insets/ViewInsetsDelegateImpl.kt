@@ -10,10 +10,8 @@ import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
-import androidx.recyclerview.widget.RecyclerView
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.Padding
-import lib.atomofiron.insets.onAttachCallback
 
 
 class ViewInsetsDelegateImpl(
@@ -75,10 +73,11 @@ class ViewInsetsDelegateImpl(
         val scrollDif = when {
             destination != Padding -> 0
             topDif == 0 && bottomDif == 0 -> 0
-            view !is RecyclerView -> 0
+            else -> 0
+            /*view !is RecyclerView -> 0
             view.scrollState != RecyclerView.SCROLL_STATE_IDLE -> 0
             view.getLastItemView()?.let { it.bottom <= (view.height - view.paddingBottom) } == true -> -bottomDif
-            else -> topDif
+            else -> topDif*/
         }
         view.updatePadding(left = leftInset, top = topInset, right = rightInset, bottom = bottomInset)
         view.scrollBy(0, scrollDif)
@@ -101,11 +100,11 @@ class ViewInsetsDelegateImpl(
     }
 }
 
-private fun RecyclerView.getLastItemView(): View? {
+/*private fun RecyclerView.getLastItemView(): View? {
     val adapter = adapter ?: return null
     return findViewHolderForAdapterPosition(adapter.itemCount.dec())?.itemView
 }
 
 private fun RecyclerView.getFirstItemView(): View? {
     return findViewHolderForAdapterPosition(0)?.itemView
-}
+}*/

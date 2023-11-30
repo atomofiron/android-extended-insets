@@ -5,7 +5,6 @@ import android.view.ViewParent
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
-import lib.atomofiron.insets.poop
 
 
 val barsWithCutout: Int = Type.systemBars() or Type.displayCutout()

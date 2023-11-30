@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "app.atomofiron.android_window_insets_compat"
-    compileSdk = 32
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "app.atomofiron.android_window_insets_compat"
         minSdk = 21
-        targetSdk = 32
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -33,5 +33,8 @@ android {
 dependencies {
     implementation(project(":android-window-insets-compat"))
 
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.10.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 }

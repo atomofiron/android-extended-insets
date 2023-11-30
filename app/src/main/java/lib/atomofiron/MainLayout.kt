@@ -1,4 +1,4 @@
-package lib.atomofiron.insets
+package lib.atomofiron
 
 import android.content.Context
 import android.util.AttributeSet

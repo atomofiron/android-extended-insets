@@ -3,7 +3,6 @@ package lib.atomofiron.insets
 import android.view.View
 import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
-import lib.atomofiron.insets.onAttachCallback
 import java.util.concurrent.CopyOnWriteArraySet
 
 class InsetsProviderImpl : InsetsProvider, InsetsListener {
