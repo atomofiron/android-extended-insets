@@ -9,7 +9,9 @@ import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updateMarginsRelative
 import androidx.core.view.updatePadding
+import androidx.core.view.updatePaddingRelative
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.Padding
 
@@ -24,6 +26,7 @@ class ViewInsetsDelegateImpl(
     private val provider: InsetsProvider?,
     private val typeMask: Int = barsWithCutout,
 ) : ViewInsetsDelegate, InsetsListener {
+
     private val left = if (view.layoutDirection == View.LAYOUT_DIRECTION_RTL) end else start
     private val right = if (view.layoutDirection == View.LAYOUT_DIRECTION_RTL) start else end
 
@@ -46,13 +49,23 @@ class ViewInsetsDelegateImpl(
     override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) = apply(windowInsets)
 
     override fun updatePaddingRelative(start: Int, top: Int, end: Int, bottom: Int) {
-        updateOriginal(start, top, end, bottom)
-        applyPadding()
+        if (destination == Padding) {
+            updateOriginal(start, top, end, bottom)
+            applyPadding()
+        } else {
+            view.updateLayoutParams<MarginLayoutParams> {
+                updateMarginsRelative(start, top, end, bottom)
+            }
+        }
     }
 
     override fun updateMarginRelative(start: Int, top: Int, end: Int, bottom: Int) {
-        updateOriginal(start, top, end, bottom)
-        applyMargin()
+        if (destination == Margin) {
+            updateOriginal(start, top, end, bottom)
+            applyMargin()
+        } else {
+            view.updatePaddingRelative(start, top, end, bottom)
+        }
     }
 
     override fun apply(windowInsets: WindowInsetsCompat) {
@@ -64,23 +77,11 @@ class ViewInsetsDelegateImpl(
     }
 
     private fun applyPadding() {
-        val leftInset = originalLeft + if (left) insets.left else 0
-        val topInset = originalTop + if (top) insets.top else 0
-        val rightInset = originalRight + if (right) insets.right else 0
-        val bottomInset = originalBottom + if (bottom) insets.bottom else 0
-        val topDif = view.paddingTop - topInset
-        val bottomDif = view.paddingBottom - bottomInset
-        val scrollDif = when {
-            destination != Padding -> 0
-            topDif == 0 && bottomDif == 0 -> 0
-            else -> 0
-            /*view !is RecyclerView -> 0
-            view.scrollState != RecyclerView.SCROLL_STATE_IDLE -> 0
-            view.getLastItemView()?.let { it.bottom <= (view.height - view.paddingBottom) } == true -> -bottomDif
-            else -> topDif*/
-        }
-        view.updatePadding(left = leftInset, top = topInset, right = rightInset, bottom = bottomInset)
-        view.scrollBy(0, scrollDif)
+        val left = originalLeft + if (left) insets.left else 0
+        val top = originalTop + if (top) insets.top else 0
+        val right = originalRight + if (right) insets.right else 0
+        val bottom = originalBottom + if (bottom) insets.bottom else 0
+        view.updatePadding(left, top, right, bottom)
     }
 
     private fun applyMargin() {
@@ -99,12 +100,3 @@ class ViewInsetsDelegateImpl(
         originalBottom = bottom
     }
 }
-
-/*private fun RecyclerView.getLastItemView(): View? {
-    val adapter = adapter ?: return null
-    return findViewHolderForAdapterPosition(adapter.itemCount.dec())?.itemView
-}
-
-private fun RecyclerView.getFirstItemView(): View? {
-    return findViewHolderForAdapterPosition(0)?.itemView
-}*/

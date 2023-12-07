@@ -9,10 +9,12 @@ fun interface InsetsListener {
 }
 
 fun interface InsetsModifier {
-    fun getInsets(windowInsets: WindowInsetsCompat): WindowInsetsCompat
+    fun getInsets(hasListeners: Boolean, windowInsets: WindowInsetsCompat): WindowInsetsCompat
 }
 
 interface InsetsProvider {
+    val current: WindowInsetsCompat
+
     fun onInit(thisView: View)
     fun addListener(listener: InsetsListener)
     fun removeListener(listener: InsetsListener)

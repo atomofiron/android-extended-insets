@@ -15,7 +15,9 @@ fun WindowInsetsCompat.systemBars(): Insets = getInsets(Type.systemBars())
 
 fun WindowInsetsCompat.barsWithCutout(): Insets = getInsets(barsWithCutout)
 
-fun Insets.isNone() = this == Insets.NONE
+fun WindowInsetsCompat.isEmpty(typeMask: Int): Boolean = getInsets(typeMask).isEmpty()
+
+fun Insets.isEmpty() = this == Insets.NONE
 
 fun ViewParent.getInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.getInsetsProvider()
@@ -51,7 +53,7 @@ fun View.syncInsetsMargin(
     ViewInsetsDelegateImpl(this, start, top, end, bottom, InsetsDestination.Margin, provider)
 }
 
-fun View.insetsPadding(
+fun View.insetsPaddingDelegate(
     start: Boolean = false,
     top: Boolean = false,
     end: Boolean = false,
@@ -68,10 +70,10 @@ fun View.insetsMarginDelegate(
 
 inline fun InsetsProvider.composeInsets(
     vararg delegates: ViewInsetsDelegate,
-    crossinline transformation: (WindowInsetsCompat) -> WindowInsetsCompat,
+    crossinline transformation: (hasListeners: Boolean, WindowInsetsCompat) -> WindowInsetsCompat,
 ) {
-    setInsetsModifier { windowInsets ->
+    setInsetsModifier { hasListeners, windowInsets ->
         delegates.forEach { it.apply(windowInsets) }
-        transformation(windowInsets)
+        transformation(hasListeners, windowInsets)
     }
 }
