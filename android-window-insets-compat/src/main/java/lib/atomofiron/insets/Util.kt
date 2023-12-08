@@ -14,10 +14,10 @@ val View.visibleHeight: Int get() = if (isVisible) height else 0
 fun View.onAttachCallback(
     onAttach: (View) -> Unit,
     onDetach: (View) -> Unit,
-) {
+): View.OnAttachStateChangeListener {
     if (isAttachedToWindow) onAttach(this)
-    addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+    return object : View.OnAttachStateChangeListener {
         override fun onViewAttachedToWindow(view: View) = onAttach(view)
         override fun onViewDetachedFromWindow(view: View) = onDetach(view)
-    })
+    }.also { addOnAttachStateChangeListener(it) }
 }

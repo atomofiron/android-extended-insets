@@ -23,55 +23,13 @@ fun ViewParent.getInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.getInsetsProvider()
 }
 
-fun View.syncInsetsPadding() = syncInsetsPadding(this.parent)
-
-fun View.syncInsetsPadding(parent: ViewParent = this.parent) = syncInsetsPadding(parent, start = true, top = true, end = true, bottom = true)
-
-fun View.syncInsetsPadding(
-    parent: ViewParent = this.parent,
-    start: Boolean = false,
-    top: Boolean = false,
-    end: Boolean = false,
-    bottom: Boolean = false,
-) {
-    val provider = parent.getInsetsProvider() ?: return poop("null for ${resources.getResourceEntryName(id)}")
-    ViewInsetsDelegateImpl(this, start, top, end, bottom, InsetsDestination.Padding, provider)
-}
-
-fun View.syncInsetsMargin() = syncInsetsMargin(this.parent)
-
-fun View.syncInsetsMargin(parent: ViewParent = this.parent) = syncInsetsMargin(parent, start = true, top = true, end = true, bottom = true)
-
-fun View.syncInsetsMargin(
-    parent: ViewParent = this.parent,
-    start: Boolean = false,
-    top: Boolean = false,
-    end: Boolean = false,
-    bottom: Boolean = false,
-) {
-    val provider = parent.getInsetsProvider() ?: return poop("null for ${resources.getResourceEntryName(id)}")
-    ViewInsetsDelegateImpl(this, start, top, end, bottom, InsetsDestination.Margin, provider)
-}
-
-fun View.insetsPaddingDelegate(
-    start: Boolean = false,
-    top: Boolean = false,
-    end: Boolean = false,
-    bottom: Boolean = false,
-): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, start, top, end, bottom, InsetsDestination.Padding, provider = null)
-
-fun View.insetsMarginDelegate(
-    start: Boolean = false,
-    top: Boolean = false,
-    end: Boolean = false,
-    bottom: Boolean = false,
-): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, start, top, end, bottom, InsetsDestination.Margin, provider = null)
-
+fun View.syncInsets(): ViewInsetsDelegate = ViewInsetsDelegateImpl(this)
 
 inline fun InsetsProvider.composeInsets(
     vararg delegates: ViewInsetsDelegate,
     crossinline transformation: (hasListeners: Boolean, WindowInsetsCompat) -> WindowInsetsCompat,
 ) {
+    delegates.forEach { it.detach() }
     setInsetsModifier { hasListeners, windowInsets ->
         delegates.forEach { it.apply(windowInsets) }
         transformation(hasListeners, windowInsets)

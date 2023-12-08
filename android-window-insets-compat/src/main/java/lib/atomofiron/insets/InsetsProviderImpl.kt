@@ -3,8 +3,9 @@ package lib.atomofiron.insets
 import android.view.View
 import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
-import java.util.concurrent.CopyOnWriteArraySet
 
+
+private const val INVALID_INSETS_LISTENER_KEY = 0
 
 private data class SrcState(
     val windowInsets: WindowInsetsCompat = WindowInsetsCompat.CONSUMED,
@@ -12,7 +13,7 @@ private data class SrcState(
     val hasListeners: Boolean = false,
 )
 
-class InsetsProviderImpl : InsetsProvider, InsetsListener {
+class InsetsProviderImpl : InsetsProvider {
 
     private var srcState = SrcState()
         set(value) {
@@ -24,20 +25,21 @@ class InsetsProviderImpl : InsetsProvider, InsetsListener {
             field = value
             notifyListeners(value)
         }
-    private val listeners = CopyOnWriteArraySet<InsetsListener>()
+    private val listeners = hashMapOf<Int, InsetsListener>()
     private var insetsModifier: InsetsModifier? = null
     private var provider: InsetsProvider? = null
     private var thisView: View? = null
+    private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
 
     override fun onInit(thisView: View) {
         this.thisView = thisView
         thisView.onAttachCallback(
             onAttach = {
                 provider = thisView.parent.getInsetsProvider()
-                provider?.addListener(this)
+                provider?.addInsetsListener(this)
             },
             onDetach = {
-                provider?.removeListener(this)
+                provider?.removeInsetsListener(this)
                 provider = null
             },
         )
@@ -48,14 +50,22 @@ class InsetsProviderImpl : InsetsProvider, InsetsListener {
         srcState = srcState.copy(hasModifier = true)
     }
 
-    override fun addListener(listener: InsetsListener) {
+    override fun addInsetsListener(listener: InsetsListener): Int {
+        val key = nextKey++
         srcState = srcState.copy(hasListeners = true)
-        listeners.add(listener)
+        listeners[key] = listener
         listener.onApplyWindowInsets(current)
+        return key
     }
 
-    override fun removeListener(listener: InsetsListener) {
-        if (listeners.remove(listener)) {
+    override fun removeInsetsListener(listener: InsetsListener) {
+        val entry = listeners.entries.find { it.value === listener }
+        entry ?: return
+        removeInsetsListener(entry.key)
+    }
+
+    override fun removeInsetsListener(key: Int) {
+        if (listeners.remove(key) != null) {
             srcState = srcState.copy(hasListeners = listeners.isNotEmpty())
         }
     }
@@ -80,7 +90,7 @@ class InsetsProviderImpl : InsetsProvider, InsetsListener {
 
     private fun notifyListeners(windowInsets: WindowInsetsCompat) {
         listeners.forEach {
-            it.onApplyWindowInsets(windowInsets)
+            it.value.onApplyWindowInsets(windowInsets)
         }
     }
 }

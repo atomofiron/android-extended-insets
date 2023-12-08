@@ -12,12 +12,13 @@ fun interface InsetsModifier {
     fun getInsets(hasListeners: Boolean, windowInsets: WindowInsetsCompat): WindowInsetsCompat
 }
 
-interface InsetsProvider {
+interface InsetsProvider : InsetsListener {
     val current: WindowInsetsCompat
 
     fun onInit(thisView: View)
-    fun addListener(listener: InsetsListener)
-    fun removeListener(listener: InsetsListener)
+    fun addInsetsListener(listener: InsetsListener): Int
+    fun removeInsetsListener(listener: InsetsListener)
+    fun removeInsetsListener(key: Int)
     fun setInsetsModifier(modifier: InsetsModifier)
     // the one of the two entry points for system window insets
     // and hidden supertype override View.dispatchApplyWindowInsets(WindowInsets),
@@ -26,11 +27,12 @@ interface InsetsProvider {
 }
 
 enum class InsetsDestination {
-    Padding, Margin
+    None, Padding, Margin
 }
 
 interface ViewInsetsDelegate {
-    fun updatePaddingRelative(start: Int, top: Int, end: Int, bottom: Int)
-    fun updateMarginRelative(start: Int, top: Int, end: Int, bottom: Int)
+    fun padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
+    fun margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
     fun apply(windowInsets: WindowInsetsCompat)
+    fun detach()
 }
