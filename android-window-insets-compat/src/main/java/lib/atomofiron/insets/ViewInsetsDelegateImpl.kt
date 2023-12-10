@@ -37,7 +37,7 @@ class ViewInsetsDelegateImpl(
     init {
         attachListener = view.onAttachCallback(
             onAttach = {
-                provider = view.parent.getInsetsProvider()
+                provider = view.parent.findInsetsProvider()
                 provider?.addInsetsListener(this)
             },
             onDetach = {
@@ -45,6 +45,11 @@ class ViewInsetsDelegateImpl(
                 provider = null
             },
         )
+    }
+
+    override fun detachInsetsProvider() {
+        provider?.removeInsetsListener(this)
+        view.removeOnAttachStateChangeListener(attachListener)
     }
 
     override fun padding(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean): ViewInsetsDelegate {
@@ -67,14 +72,7 @@ class ViewInsetsDelegateImpl(
         return this
     }
 
-    override fun detach() {
-        provider?.removeInsetsListener(this)
-        view.removeOnAttachStateChangeListener(attachListener)
-    }
-
-    override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) = apply(windowInsets)
-
-    override fun apply(windowInsets: WindowInsetsCompat) {
+    override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
         insets = windowInsets.getInsets(typeMask)
         applyPadding()
         applyMargin()
@@ -124,5 +122,7 @@ class ViewInsetsDelegateImpl(
         stockTop = if (top == Margin) view.marginTop else view.paddingTop
         stockRight = if (right == Margin) view.marginRight else view.paddingRight
         stockBottom = if (bottom == Margin) view.marginBottom else view.paddingBottom
+        applyPadding()
+        applyMargin()
     }
 }

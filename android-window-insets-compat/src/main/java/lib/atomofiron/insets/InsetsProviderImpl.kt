@@ -17,13 +17,16 @@ class InsetsProviderImpl : InsetsProvider {
 
     private var srcState = SrcState()
         set(value) {
+            // don't compare!
             field = value
             updateCurrent(value)
         }
     override var current = WindowInsetsCompat.CONSUMED
         private set(value) {
-            field = value
-            notifyListeners(value)
+            if (field != value) {
+                field = value
+                notifyListeners(value)
+            }
         }
     private val listeners = hashMapOf<Int, InsetsListener>()
     private var insetsModifier: InsetsModifier? = null
@@ -31,15 +34,15 @@ class InsetsProviderImpl : InsetsProvider {
     private var thisView: View? = null
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
 
-    override fun onInit(thisView: View) {
-        this.thisView = thisView
-        thisView.onAttachCallback(
+    override fun View.onInit() {
+        thisView = this
+        onAttachCallback(
             onAttach = {
-                provider = thisView.parent.getInsetsProvider()
-                provider?.addInsetsListener(this)
+                provider = parent.findInsetsProvider()
+                provider?.addInsetsListener(this@InsetsProviderImpl)
             },
             onDetach = {
-                provider?.removeInsetsListener(this)
+                provider?.removeInsetsListener(this@InsetsProviderImpl)
                 provider = null
             },
         )
@@ -51,6 +54,12 @@ class InsetsProviderImpl : InsetsProvider {
     }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
+        if (listener === thisView || listener === this) {
+            throw IllegalArgumentException()
+        }
+        listeners.entries
+            .find { it.value === listener }
+            ?.let { return it.key }
         val key = nextKey++
         srcState = srcState.copy(hasListeners = true)
         listeners[key] = listener

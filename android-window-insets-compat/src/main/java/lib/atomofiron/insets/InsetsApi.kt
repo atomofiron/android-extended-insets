@@ -15,7 +15,7 @@ fun interface InsetsModifier {
 interface InsetsProvider : InsetsListener {
     val current: WindowInsetsCompat
 
-    fun onInit(thisView: View)
+    fun View.onInit()
     fun addInsetsListener(listener: InsetsListener): Int
     fun removeInsetsListener(listener: InsetsListener)
     fun removeInsetsListener(key: Int)
@@ -33,6 +33,6 @@ enum class InsetsDestination {
 interface ViewInsetsDelegate {
     fun padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
     fun margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
-    fun apply(windowInsets: WindowInsetsCompat)
-    fun detach()
+    fun detachInsetsProvider()
+    fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
 }

@@ -19,19 +19,19 @@ fun WindowInsetsCompat.isEmpty(typeMask: Int): Boolean = getInsets(typeMask).isE
 
 fun Insets.isEmpty() = this == Insets.NONE
 
-fun ViewParent.getInsetsProvider(): InsetsProvider? {
-    return (this as? InsetsProvider) ?: parent?.getInsetsProvider()
+fun ViewParent.findInsetsProvider(): InsetsProvider? {
+    return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
 }
 
-fun View.syncInsets(): ViewInsetsDelegate = ViewInsetsDelegateImpl(this)
+fun View.syncInsets(typeMask: Int = barsWithCutout): ViewInsetsDelegate = ViewInsetsDelegateImpl(this)
 
 inline fun InsetsProvider.composeInsets(
     vararg delegates: ViewInsetsDelegate,
     crossinline transformation: (hasListeners: Boolean, WindowInsetsCompat) -> WindowInsetsCompat,
 ) {
-    delegates.forEach { it.detach() }
+    delegates.forEach { it.detachInsetsProvider() }
     setInsetsModifier { hasListeners, windowInsets ->
-        delegates.forEach { it.apply(windowInsets) }
+        delegates.forEach { it.onApplyWindowInsets(windowInsets) }
         transformation(hasListeners, windowInsets)
     }
 }

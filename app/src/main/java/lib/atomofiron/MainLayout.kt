@@ -13,6 +13,6 @@ class MainLayout @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : ConstraintLayout(context, attrs, defStyleAttr), InsetsProvider by InsetsProviderImpl() {
     init {
-        onInit(this)
+        onInit()
     }
 }
