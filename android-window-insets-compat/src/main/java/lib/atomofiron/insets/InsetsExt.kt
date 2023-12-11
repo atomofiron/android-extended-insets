@@ -23,7 +23,10 @@ fun ViewParent.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
 }
 
-fun View.syncInsets(typeMask: Int = barsWithCutout): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, typeMask)
+fun View.syncInsets(
+    dependency: Boolean = false,
+    typeMask: Int = barsWithCutout,
+): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, dependency, typeMask)
 
 inline fun InsetsProvider.composeInsets(
     vararg delegates: ViewInsetsDelegate,
@@ -34,4 +37,15 @@ inline fun InsetsProvider.composeInsets(
         delegates.forEach { it.onApplyWindowInsets(windowInsets) }
         transformation(hasListeners, windowInsets)
     }
+}
+
+fun View.onAttachCallback(
+    onAttach: (View) -> Unit,
+    onDetach: (View) -> Unit,
+): View.OnAttachStateChangeListener {
+    if (isAttachedToWindow) onAttach(this)
+    return object : View.OnAttachStateChangeListener {
+        override fun onViewAttachedToWindow(view: View) = onAttach(view)
+        override fun onViewDetachedFromWindow(view: View) = onDetach(view)
+    }.also { addOnAttachStateChangeListener(it) }
 }

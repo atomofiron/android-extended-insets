@@ -11,11 +11,13 @@ import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import lib.atomofiron.insets.InsetsDestination.Margin
+import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
 
 
 class ViewInsetsDelegateImpl(
     private val view: View,
+    dependency: Boolean,
     private val typeMask: Int = barsWithCutout,
 ) : ViewInsetsDelegate, InsetsListener {
 
@@ -24,10 +26,10 @@ class ViewInsetsDelegateImpl(
     private var stockRight = 0
     private var stockBottom = 0
 
-    private var dstLeft = InsetsDestination.None
-    private var dstTop = InsetsDestination.None
-    private var dstRight = InsetsDestination.None
-    private var dstBottom = InsetsDestination.None
+    private var dstLeft = None
+    private var dstTop = None
+    private var dstRight = None
+    private var dstBottom = None
 
     private var insets = Insets.NONE
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
@@ -45,11 +47,23 @@ class ViewInsetsDelegateImpl(
                 provider = null
             },
         )
+        if (dependency) {
+            view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+                if ((right != left || oldRight != oldLeft) && (dstLeft != None || dstRight != None)) {
+                    view.requestApplyInsets()
+                } else if ((bottom != top || oldBottom != oldTop) && (dstTop != None || dstBottom != None)) {
+                    view.requestApplyInsets()
+                }
+            }
+        }
     }
 
-    override fun detachInsetsProvider() {
+    override fun detachInsetsProvider(): ViewInsetsDelegate {
         provider?.removeInsetsListener(this)
         view.removeOnAttachStateChangeListener(attachListener)
+        applyPadding(Insets.NONE)
+        applyMargin(Insets.NONE)
+        return this
     }
 
     override fun padding(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean): ViewInsetsDelegate {
@@ -72,13 +86,18 @@ class ViewInsetsDelegateImpl(
         return this
     }
 
-    override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
-        insets = windowInsets.getInsets(typeMask)
-        applyPadding()
-        applyMargin()
+    override fun reset(): ViewInsetsDelegate {
+        sync(None, None, None, None)
+        return this
     }
 
-    private fun applyPadding() {
+    override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
+        insets = windowInsets.getInsets(typeMask)
+        applyPadding(insets)
+        applyMargin(insets)
+    }
+
+    private fun applyPadding(insets: Insets) {
         if (!syncAny(Padding)) return
         view.updatePadding(
             left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
@@ -88,7 +107,7 @@ class ViewInsetsDelegateImpl(
         )
     }
 
-    private fun applyMargin() {
+    private fun applyMargin(insets: Insets) {
         if (!syncAny(Margin)) return
         view.updateLayoutParams<MarginLayoutParams> {
             leftMargin = if (dstLeft == Margin) stockLeft + insets.left else view.marginLeft
@@ -114,6 +133,8 @@ class ViewInsetsDelegateImpl(
         right: InsetsDestination,
         bottom: InsetsDestination,
     ) {
+        if (syncAny(Padding)) applyPadding(Insets.NONE)
+        if (syncAny(Margin)) applyMargin(Insets.NONE)
         dstLeft = left
         dstTop = top
         dstRight = right
@@ -122,7 +143,7 @@ class ViewInsetsDelegateImpl(
         stockTop = if (top == Margin) view.marginTop else view.paddingTop
         stockRight = if (right == Margin) view.marginRight else view.paddingRight
         stockBottom = if (bottom == Margin) view.marginBottom else view.paddingBottom
-        applyPadding()
-        applyMargin()
+        applyPadding(insets)
+        applyMargin(insets)
     }
 }
