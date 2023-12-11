@@ -35,7 +35,7 @@ internal class ViewInsetsDelegate(
     private var insetEnd = 0
     private var insetBottom = 0
 
-    private val isRtlEnabled get() = view.resources.configuration.layoutDirection == LayoutDirection.RTL
+    private val isRtlEnabled get() = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
 
     private val Insets.start: Int get() = if (isRtlEnabled) right else left
     private val Insets.end: Int get() = if (isRtlEnabled) left else right

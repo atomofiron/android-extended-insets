@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.atomofiron:android-window-insets-compat:1.1.0'
+    implementation 'com.github.atomofiron:android-window-insets-compat:1.1.1'
 }
 ```
 
@@ -21,11 +21,17 @@ fun onViewCreated(view: View) {
     // ...
 
     view as ViewGroup
+
     view.insetsProxying()
+    
     swipeRefreshLayout.insetsProxying()
+    
     appBar.applyPaddingInsets(start = true, top = true, end = true)
+    
     recyclerView.applyPaddingInsets()
+    
     bottomBar.applyPaddingInsets(horizontal = true, withProxying = true)
+    
     fab.applyPaddingInsets(end = true, bottom = true)
 }
 ```

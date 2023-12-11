@@ -22,6 +22,7 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
+import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import java.lang.IllegalArgumentException
 
 
@@ -32,6 +33,7 @@ interface ViewInsetsKeeper {
     fun updateMargin(start: Int? = null, top: Int? = null, end: Int? = null, bottom: Int? = null)
 }
 
+@InsetsType
 val defaultTypeMask = Type.systemBars() or Type.ime() or Type.displayCutout()
 
 fun View.insetsProxying(
