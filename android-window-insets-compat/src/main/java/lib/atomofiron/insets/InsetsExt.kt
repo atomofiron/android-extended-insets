@@ -23,7 +23,7 @@ fun ViewParent.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
 }
 
-fun View.syncInsets(typeMask: Int = barsWithCutout): ViewInsetsDelegate = ViewInsetsDelegateImpl(this)
+fun View.syncInsets(typeMask: Int = barsWithCutout): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, typeMask)
 
 inline fun InsetsProvider.composeInsets(
     vararg delegates: ViewInsetsDelegate,
