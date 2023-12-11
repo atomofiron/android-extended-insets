@@ -2,83 +2,111 @@ package lib.atomofiron.demo
 
 import android.app.Activity
 import android.os.Bundle
-import android.view.View
-import android.view.ViewGroup
 import android.widget.RadioGroup
+import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.isVisible
 import app.atomofiron.android_window_insets_compat.R
-import lib.atomofiron.android_window_insets_compat.*
+import app.atomofiron.android_window_insets_compat.databinding.ActivityDemoBinding
+import com.google.android.material.materialswitch.MaterialSwitch
+import lib.atomofiron.insets.ViewInsetsDelegate
+import lib.atomofiron.insets.composeInsets
+import lib.atomofiron.insets.isEmpty
+import lib.atomofiron.insets.syncInsets
+import lib.atomofiron.insets.systemBars
 
 class DemoActivity : Activity() {
 
-    private lateinit var root: View
-    private lateinit var viewStart: View
-    private lateinit var viewTop: View
-    private lateinit var viewEnd: View
-    private lateinit var viewBottom: View
+    private var systemBarsBehavior = false
+
+    private lateinit var startDelegate: ViewInsetsDelegate
+    private lateinit var topDelegate: ViewInsetsDelegate
+    private lateinit var endDelegate: ViewInsetsDelegate
+    private lateinit var bottomDelegate: ViewInsetsDelegate
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_demo)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        root = findViewById(R.id.main_root)
-        viewStart = findViewById(R.id.view_start)
-        viewTop = findViewById(R.id.view_top)
-        viewEnd = findViewById(R.id.view_end)
-        viewBottom = findViewById(R.id.view_bottom)
+        ActivityDemoBinding.inflate(layoutInflater).apply {
+            setContentView(root)
 
-        val radioDestination = findViewById<RadioGroup>(R.id.radio_destination)
-        radioDestination.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.radio_padding -> applyPadding()
-                R.id.radio_margin -> applyMargin()
+            configureInsets()
+
+            switchConnection.setOnCheckedChangeListener { _, isChecked ->
+                viewTop.isVisible = isChecked
             }
+            switchEat.setOnCheckedChangeListener { _, isChecked ->
+                viewBottom.isVisible = isChecked
+            }
+            val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+            switchFullscreen.setOnClickListener { switch ->
+                switch as MaterialSwitch
+                insetsController.run {
+                    if (switch.isChecked) hide(Type.systemBars()) else show(Type.systemBars())
+                }
+                insetsController.systemBarsBehavior = when {
+                    systemBarsBehavior -> WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    else -> WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
+                }
+                if (switch.isChecked) {
+                    systemBarsBehavior = !systemBarsBehavior
+                }
+            }
+            radioDestination.setOnCheckedChangeListener { _, checkedId ->
+                when (checkedId) {
+                    R.id.radio_padding -> byPadding()
+                    R.id.radio_margin -> byMargin()
+                }
+            }
+            radioDestination.check(R.id.radio_padding)
         }
-        radioDestination.check(R.id.radio_padding)
-
-        root.insetsProxying()
     }
 
-    private fun applyPadding() {
-        resetMargin()
-        viewStart.applyPaddingInsets(start = true)
-        viewTop.applyPaddingInsets(start = true, top = true, end = true)
-        viewEnd.applyPaddingInsets(end = true)
-        viewBottom.applyPaddingInsets(start = true, bottom = true, end = true)
+    private fun ActivityDemoBinding.configureInsets() {
+        startDelegate = viewStart.syncInsets()
+        topDelegate = viewTop.syncInsets(dependency = true)
+        endDelegate = viewEnd.syncInsets()
+        bottomDelegate = viewBottom.syncInsets(dependency = true)
+
+        root.composeInsets(
+            // these receive original insets (from parent provider or stock system window insets)
+            topDelegate,
+            bottomPanel.syncInsets(dependency = true).padding(start = true, end = true, bottom = true),
+        ) { _, windowInsets -> // insets modifier
+            switchFullscreen.isChecked = windowInsets.isEmpty(Type.systemBars())
+            val overlay = Insets.of(0, viewTop.visibleHeight, 0, bottomPanel.height)
+            val insets = Insets.max(windowInsets.systemBars(), overlay)
+            WindowInsetsCompat.Builder(windowInsets)
+                .setInsets(Type.systemBars(), insets)
+                .build()
+        }
+        fragmentsContainer.composeInsets(bottomDelegate) { _, windowInsets ->
+            val overlay = Insets.of(0, 0, 0, viewBottom.visibleHeight)
+            val insets = Insets.max(windowInsets.systemBars(), overlay)
+            WindowInsetsCompat.Builder(windowInsets)
+                .setInsets(Type.systemBars(), insets)
+                .build()
+        }
+    }
+
+    private fun ActivityDemoBinding.byPadding() {
+        startDelegate.reset().padding(start = true)
+        topDelegate.reset().padding(start = true, top = true, end = true)
+        endDelegate.reset().padding(end = true)
+        bottomDelegate.reset().padding(start = true, bottom = true, end = true)
         root.requestApplyInsets()
     }
 
-    private fun applyMargin() {
-        resetPadding()
-        viewStart.applyMarginInsets(start = true)
-        viewTop.applyMarginInsets(start = true, top = true, end = true)
-        viewEnd.applyMarginInsets(end = true)
-        viewBottom.applyMarginInsets(start = true, bottom = true, end = true)
+    private fun ActivityDemoBinding.byMargin() {
+        startDelegate.reset().margin(start = true)
+        topDelegate.reset().margin(start = true, top = true, end = true)
+        endDelegate.reset().margin(end = true)
+        bottomDelegate.reset().margin(start = true, bottom = true, end = true)
         root.requestApplyInsets()
-    }
-
-    private fun resetPadding() {
-        viewStart.setPaddingRelative(0, 0, 0, 0)
-        viewTop.setPaddingRelative(0, 0, 0, 0)
-        viewEnd.setPaddingRelative(0, 0, 0, 0)
-        viewBottom.setPaddingRelative(0, 0, 0, 0)
-    }
-
-    private fun resetMargin() {
-        viewStart.resetMargin()
-        viewTop.resetMargin()
-        viewEnd.resetMargin()
-        viewBottom.resetMargin()
-    }
-
-    private fun View.resetMargin() {
-        this.layoutParams = (layoutParams as ViewGroup.MarginLayoutParams).apply {
-            marginStart = 0
-            topMargin = 0
-            marginEnd = 0
-            bottomMargin = 0
-        }
     }
 }

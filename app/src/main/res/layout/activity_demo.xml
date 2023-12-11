@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<lib.atomofiron.demo.AppRootLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_root"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
+    <lib.atomofiron.demo.AppRootLayout
+        android:id="@+id/fragments_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
     <RadioGroup
         android:id="@+id/radio_destination"
         android:layout_width="wrap_content"
@@ -34,8 +40,8 @@
         android:layout_gravity="center_vertical|start"
         android:text="Start"
         android:textSize="20sp"
-        android:textColor="@color/white"
-        android:background="@color/teal_700"
+        android:textColor="?colorOnPrimaryContainer"
+        android:background="?colorPrimaryContainer"
         />
     <TextView
         android:id="@+id/view_top"
@@ -45,8 +51,8 @@
         android:gravity="center_horizontal"
         android:text="Start + Top + End"
         android:textSize="20sp"
-        android:textColor="@color/white"
-        android:background="@color/teal_700"
+        android:textColor="?colorOnPrimaryContainer"
+        android:background="?colorPrimaryContainer"
         android:drawableStart="@drawable/ic_android"
         android:drawableEnd="@drawable/ic_android"
         android:singleLine="true"
@@ -59,8 +65,8 @@
         android:layout_gravity="center_vertical|end"
         android:text="End"
         android:textSize="20sp"
-        android:textColor="@color/white"
-        android:background="@color/teal_700"
+        android:textColor="?colorOnPrimaryContainer"
+        android:background="?colorPrimaryContainer"
         />
     <TextView
         android:id="@+id/view_bottom"
@@ -70,11 +76,60 @@
         android:gravity="center_horizontal"
         android:text="Start + Bottom + End"
         android:textSize="20sp"
-        android:textColor="@color/white"
-        android:background="@color/teal_700"
+        android:textColor="?colorOnPrimaryContainer"
+        android:background="?colorPrimaryContainer"
         android:drawableStart="@drawable/ic_android"
         android:drawableEnd="@drawable/ic_android"
         android:singleLine="true"
         android:ellipsize="middle"
         />
-</FrameLayout>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/bottom_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:paddingHorizontal="8dp"
+        android:background="@drawable/bg_bottom_panel"
+        android:backgroundTint="?android:attr/colorBackground"
+        android:clickable="true"
+        android:focusable="false"
+        >
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_connection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Top bar"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="24dp"
+            android:checked="true"
+            app:switchPadding="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_fullscreen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FS"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="24dp"
+            app:switchPadding="8dp"
+            app:layout_constraintStart_toEndOf="@+id/switch_connection"
+            app:layout_constraintEnd_toStartOf="@+id/switch_eat"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_eat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bottom bar"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="24dp"
+            android:checked="true"
+            app:switchPadding="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</lib.atomofiron.demo.AppRootLayout>
