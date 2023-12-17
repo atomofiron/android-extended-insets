@@ -9,7 +9,7 @@ import androidx.core.view.WindowInsetsCompat.Type
 
 val barsWithCutout: Int = Type.systemBars() or Type.displayCutout()
 
-fun WindowInsetsCompat.cutout(): Insets = getInsets(Type.displayCutout())
+fun WindowInsetsCompat.displayCutout(): Insets = getInsets(Type.displayCutout())
 
 fun WindowInsetsCompat.systemBars(): Insets = getInsets(Type.systemBars())
 
@@ -38,6 +38,22 @@ inline fun InsetsProvider.composeInsets(
         transformation(hasListeners, windowInsets)
     }
 }
+
+inline operator fun <T : ExtendedWindowInsets.Type> T.invoke(
+    windowInsets: WindowInsetsCompat,
+    block: T.() -> Int,
+): Insets {
+    return windowInsets.getInsets(block())
+}
+
+inline operator fun <T : ExtendedWindowInsets.Type> WindowInsetsCompat.invoke(
+    companion: T,
+    block: T.() -> Int,
+): Insets {
+    return getInsets(companion.block())
+}
+
+operator fun WindowInsetsCompat.get(type: Int): Insets = getInsets(type)
 
 fun View.onAttachCallback(
     onAttach: (View) -> Unit,

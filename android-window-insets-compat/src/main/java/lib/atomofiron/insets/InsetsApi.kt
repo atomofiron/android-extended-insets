@@ -24,6 +24,7 @@ interface InsetsProvider : InsetsListener {
     // and hidden supertype override View.dispatchApplyWindowInsets(WindowInsets),
     // that allows not to set a insets listener that can be replaced with another one
     fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets
+    fun requestInsets()
 }
 
 enum class InsetsDestination {
