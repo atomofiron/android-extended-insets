@@ -50,16 +50,16 @@ class ViewInsetsDelegateImpl(
         if (dependency) {
             view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
                 if ((right != left || oldRight != oldLeft) && (dstLeft != None || dstRight != None)) {
-                    view.requestApplyInsets()
+                    provider?.requestInsets()
                 } else if ((bottom != top || oldBottom != oldTop) && (dstTop != None || dstBottom != None)) {
-                    view.requestApplyInsets()
+                    provider?.requestInsets()
                 }
             }
         }
     }
 
     override fun detachInsetsProvider(): ViewInsetsDelegate {
-        provider?.removeInsetsListener(this)
+        this.provider?.removeInsetsListener(this)
         view.removeOnAttachStateChangeListener(attachListener)
         applyPadding(Insets.NONE)
         applyMargin(Insets.NONE)

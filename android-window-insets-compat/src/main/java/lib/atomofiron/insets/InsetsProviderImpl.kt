@@ -88,6 +88,8 @@ class InsetsProviderImpl : InsetsProvider {
         return windowInsets
     }
 
+    override fun requestInsets() = updateCurrent(srcState)
+
     // the one of the two entry points for system window insets
     override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
         srcState = srcState.copy(windowInsets = windowInsets)

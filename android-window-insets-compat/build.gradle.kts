@@ -10,6 +10,8 @@ android {
 
     defaultConfig {
         minSdk = 21
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -29,6 +31,7 @@ android {
 
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
+    testImplementation("junit:junit:4.13.2")
 }
 
 publishing {
