@@ -35,6 +35,6 @@ interface ViewInsetsDelegate {
     fun padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
     fun margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
     fun reset(): ViewInsetsDelegate
-    fun detachInsetsProvider(): ViewInsetsDelegate
+    fun unsubscribeInsets(): ViewInsetsDelegate
     fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
 }
