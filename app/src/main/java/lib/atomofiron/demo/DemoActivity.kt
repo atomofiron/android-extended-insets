@@ -2,7 +2,6 @@ package lib.atomofiron.demo
 
 import android.app.Activity
 import android.os.Bundle
-import android.widget.RadioGroup
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,6 +16,7 @@ import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.syncInsets
 import lib.atomofiron.insets.systemBars
+import lib.atomofiron.visibleHeight
 
 class DemoActivity : Activity() {
 
@@ -94,19 +94,17 @@ class DemoActivity : Activity() {
         }
     }
 
-    private fun ActivityDemoBinding.byPadding() {
+    private fun byPadding() {
         startDelegate.reset().padding(start = true)
         topDelegate.reset().padding(start = true, top = true, end = true)
         endDelegate.reset().padding(end = true)
         bottomDelegate.reset().padding(start = true, bottom = true, end = true)
-        root.requestApplyInsets()
     }
 
-    private fun ActivityDemoBinding.byMargin() {
+    private fun byMargin() {
         startDelegate.reset().margin(start = true)
         topDelegate.reset().margin(start = true, top = true, end = true)
         endDelegate.reset().margin(end = true)
         bottomDelegate.reset().margin(start = true, bottom = true, end = true)
-        root.requestApplyInsets()
     }
 }
