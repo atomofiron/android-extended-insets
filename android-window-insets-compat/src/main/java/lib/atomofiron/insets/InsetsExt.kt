@@ -32,7 +32,7 @@ inline fun InsetsProvider.composeInsets(
     vararg delegates: ViewInsetsDelegate,
     crossinline transformation: (hasListeners: Boolean, WindowInsetsCompat) -> WindowInsetsCompat,
 ) {
-    delegates.forEach { it.detachInsetsProvider() }
+    delegates.forEach { it.unsubscribeInsets() }
     setInsetsModifier { hasListeners, windowInsets ->
         delegates.forEach { it.onApplyWindowInsets(windowInsets) }
         transformation(hasListeners, windowInsets)

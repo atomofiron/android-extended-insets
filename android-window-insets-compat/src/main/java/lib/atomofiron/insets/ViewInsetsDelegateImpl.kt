@@ -34,16 +34,16 @@ class ViewInsetsDelegateImpl(
     private var insets = Insets.NONE
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
     private var provider: InsetsProvider? = null
-    private var attachListener: View.OnAttachStateChangeListener? = null
+    private var listener: InsetsListener? = this
 
     init {
-        attachListener = view.onAttachCallback(
+        view.onAttachCallback(
             onAttach = {
                 provider = view.parent.findInsetsProvider()
-                provider?.addInsetsListener(this)
+                provider?.addInsetsListener(listener ?: return@onAttachCallback)
             },
             onDetach = {
-                provider?.removeInsetsListener(this)
+                provider?.removeInsetsListener(listener ?: return@onAttachCallback)
                 provider = null
             },
         )
@@ -58,11 +58,9 @@ class ViewInsetsDelegateImpl(
         }
     }
 
-    override fun detachInsetsProvider(): ViewInsetsDelegate {
-        this.provider?.removeInsetsListener(this)
-        view.removeOnAttachStateChangeListener(attachListener)
-        applyPadding(Insets.NONE)
-        applyMargin(Insets.NONE)
+    override fun unsubscribeInsets(): ViewInsetsDelegate {
+        provider?.removeInsetsListener(this)
+        listener = null
         return this
     }
 
