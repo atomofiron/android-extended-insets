@@ -15,8 +15,6 @@ import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.syncInsets
 import lib.atomofiron.insets.systemBars
-import lib.atomofiron.visibleHeight
-import lib.atomofiron.visibleHeightBottom
 
 class DemoActivity : Activity() {
 
