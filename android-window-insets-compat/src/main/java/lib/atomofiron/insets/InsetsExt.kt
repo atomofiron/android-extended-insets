@@ -29,6 +29,7 @@ fun View.syncInsets(
 ): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, dependency, typeMask)
 
 inline fun InsetsProvider.composeInsets(
+    // these receive original insets (from parent provider or stock system window insets)
     vararg delegates: ViewInsetsDelegate,
     crossinline transformation: (hasListeners: Boolean, WindowInsetsCompat) -> WindowInsetsCompat,
 ) {

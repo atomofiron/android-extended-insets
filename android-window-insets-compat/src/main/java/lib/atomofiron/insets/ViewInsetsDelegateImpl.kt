@@ -49,9 +49,9 @@ class ViewInsetsDelegateImpl(
         )
         if (dependency) {
             view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-                if ((right != left || oldRight != oldLeft) && (dstLeft != None || dstRight != None)) {
+                if ((left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)) {
                     provider?.requestInsets()
-                } else if ((bottom != top || oldBottom != oldTop) && (dstTop != None || dstBottom != None)) {
+                } else if ((top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)) {
                     provider?.requestInsets()
                 }
             }
