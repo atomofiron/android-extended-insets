@@ -8,10 +8,73 @@
     android:layout_height="match_parent"
     >
     <lib.atomofiron.demo.InsetsProviderFrameLayout
-        android:id="@+id/fragments_container"
+        android:id="@+id/intermediate"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        />
+        >
+        <lib.atomofiron.demo.InsetsProviderFrameLayout
+            android:id="@+id/fragments_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:layout_margin="16dp"
+                />
+        </lib.atomofiron.demo.InsetsProviderFrameLayout>
+        <TextView
+            android:id="@+id/view_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|start"
+            android:text="Start"
+            android:textSize="20sp"
+            android:textColor="?colorOnPrimaryContainer"
+            android:background="?colorPrimaryContainer"
+            />
+        <TextView
+            android:id="@+id/view_top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:gravity="center_horizontal"
+            android:text="Start + Top + End"
+            android:textSize="20sp"
+            android:textColor="?colorOnPrimaryContainer"
+            android:background="?colorPrimaryContainer"
+            android:singleLine="true"
+            android:ellipsize="middle"
+            app:drawableStartCompat="@drawable/ic_android"
+            app:drawableEndCompat="@drawable/ic_android" />
+        <TextView
+            android:id="@+id/view_end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:text="End"
+            android:textSize="20sp"
+            android:textColor="?colorOnPrimaryContainer"
+            android:background="?colorPrimaryContainer"
+            />
+        <TextView
+            android:id="@+id/view_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:gravity="center_horizontal"
+            android:text="Start + Bottom + End"
+            android:textSize="20sp"
+            android:textColor="?colorOnPrimaryContainer"
+            android:background="?colorPrimaryContainer"
+            android:drawableStart="@drawable/ic_android"
+            android:drawableEnd="@drawable/ic_android"
+            android:singleLine="true"
+            android:ellipsize="middle"
+            />
+    </lib.atomofiron.demo.InsetsProviderFrameLayout>
     <RadioGroup
         android:id="@+id/radio_destination"
         android:layout_width="wrap_content"
@@ -33,56 +96,6 @@
             android:padding="16dp"
             />
     </RadioGroup>
-    <TextView
-        android:id="@+id/view_start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|start"
-        android:text="Start"
-        android:textSize="20sp"
-        android:textColor="?colorOnPrimaryContainer"
-        android:background="?colorPrimaryContainer"
-        />
-    <TextView
-        android:id="@+id/view_top"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:gravity="center_horizontal"
-        android:text="Start + Top + End"
-        android:textSize="20sp"
-        android:textColor="?colorOnPrimaryContainer"
-        android:background="?colorPrimaryContainer"
-        android:drawableStart="@drawable/ic_android"
-        android:drawableEnd="@drawable/ic_android"
-        android:singleLine="true"
-        android:ellipsize="middle"
-        />
-    <TextView
-        android:id="@+id/view_end"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|end"
-        android:text="End"
-        android:textSize="20sp"
-        android:textColor="?colorOnPrimaryContainer"
-        android:background="?colorPrimaryContainer"
-        />
-    <TextView
-        android:id="@+id/view_bottom"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:gravity="center_horizontal"
-        android:text="Start + Bottom + End"
-        android:textSize="20sp"
-        android:textColor="?colorOnPrimaryContainer"
-        android:background="?colorPrimaryContainer"
-        android:drawableStart="@drawable/ic_android"
-        android:drawableEnd="@drawable/ic_android"
-        android:singleLine="true"
-        android:ellipsize="middle"
-        />
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottom_panel"
         android:layout_width="match_parent"

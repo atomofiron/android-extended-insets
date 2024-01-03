@@ -7,7 +7,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.isVisible
 import app.atomofiron.android_window_insets_compat.R
 import app.atomofiron.android_window_insets_compat.databinding.ActivityDemoBinding
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -17,6 +16,7 @@ import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.syncInsets
 import lib.atomofiron.insets.systemBars
 import lib.atomofiron.visibleHeight
+import lib.atomofiron.visibleHeightBottom
 
 class DemoActivity : Activity() {
 
@@ -37,11 +37,13 @@ class DemoActivity : Activity() {
 
             configureInsets()
 
+            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top, intermediate::requestInsets)
+            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom, intermediate::requestInsets)
             switchConnection.setOnCheckedChangeListener { _, isChecked ->
-                viewTop.isVisible = isChecked
+                if (isChecked) topCtrl.show() else topCtrl.hide()
             }
             switchEat.setOnCheckedChangeListener { _, isChecked ->
-                viewBottom.isVisible = isChecked
+                if (isChecked) bottomCtrl.show() else bottomCtrl.hide()
             }
             val insetsController = WindowInsetsControllerCompat(window, window.decorView)
             switchFullscreen.setOnClickListener { switch ->
@@ -72,21 +74,20 @@ class DemoActivity : Activity() {
         topDelegate = viewTop.syncInsets(dependency = true)
         endDelegate = viewEnd.syncInsets()
         bottomDelegate = viewBottom.syncInsets(dependency = true)
+        fab.syncInsets().margin(end = true, bottom = true)
 
         root.composeInsets(
-            // these receive original insets (from parent provider or stock system window insets)
-            topDelegate,
             bottomPanel.syncInsets(dependency = true).padding(start = true, end = true, bottom = true),
         ) { _, windowInsets -> // insets modifier
             switchFullscreen.isChecked = windowInsets.isEmpty(Type.systemBars())
-            val overlay = Insets.of(0, viewTop.visibleHeight, 0, bottomPanel.height)
+            val overlay = Insets.of(0, 0, 0, bottomPanel.visibleHeightBottom)
             val insets = Insets.max(windowInsets.systemBars(), overlay)
             WindowInsetsCompat.Builder(windowInsets)
                 .setInsets(Type.systemBars(), insets)
                 .build()
         }
-        fragmentsContainer.composeInsets(bottomDelegate) { _, windowInsets ->
-            val overlay = Insets.of(0, 0, 0, viewBottom.visibleHeight)
+        intermediate.composeInsets(topDelegate, bottomDelegate) { _, windowInsets ->
+            val overlay = Insets.of(0, viewTop.visibleHeight, 0, viewBottom.visibleHeightBottom)
             val insets = Insets.max(windowInsets.systemBars(), overlay)
             WindowInsetsCompat.Builder(windowInsets)
                 .setInsets(Type.systemBars(), insets)
