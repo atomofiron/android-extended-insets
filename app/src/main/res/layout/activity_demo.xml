@@ -33,7 +33,7 @@
                 android:layout_margin="16dp"
                 />
         </lib.atomofiron.demo.InsetsProviderFrameLayout>
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/view_start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
             android:textColor="?colorOnPrimaryContainer"
             android:background="?colorPrimaryContainer"
             />
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/view_top"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -55,9 +55,11 @@
             android:background="?colorPrimaryContainer"
             android:singleLine="true"
             android:ellipsize="middle"
+            android:paddingVertical="4dp"
             app:drawableStartCompat="@drawable/ic_android"
-            app:drawableEndCompat="@drawable/ic_android" />
-        <TextView
+            app:drawableEndCompat="@drawable/ic_android"
+            />
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/view_end"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -67,7 +69,7 @@
             android:textColor="?colorOnPrimaryContainer"
             android:background="?colorPrimaryContainer"
             />
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/view_bottom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -77,10 +79,11 @@
             android:textSize="20sp"
             android:textColor="?colorOnPrimaryContainer"
             android:background="?colorPrimaryContainer"
-            android:drawableStart="@drawable/ic_android"
-            android:drawableEnd="@drawable/ic_android"
             android:singleLine="true"
             android:ellipsize="middle"
+            android:paddingVertical="4dp"
+            app:drawableStartCompat="@drawable/ic_android"
+            app:drawableEndCompat="@drawable/ic_android"
             />
     </lib.atomofiron.demo.InsetsProviderFrameLayout>
     <RadioGroup
