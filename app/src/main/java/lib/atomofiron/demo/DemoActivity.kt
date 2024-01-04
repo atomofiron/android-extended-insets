@@ -31,7 +31,7 @@ class DemoActivity : Activity() {
 
         ActivityDemoBinding.inflate(layoutInflater).apply {
             setContentView(root)
-            root.foreground = cutout
+            //root.foreground = cutout
 
             configureInsets()
 

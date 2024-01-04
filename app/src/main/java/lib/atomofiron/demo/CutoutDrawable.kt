@@ -52,7 +52,7 @@ class CutoutDrawable : Drawable() {
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 
     override fun draw(canvas: Canvas) {
-        val centerX = bounds.centerY().toFloat()
+        val centerX = bounds.centerX().toFloat()
         val centerY = bounds.centerY().toFloat()
         when (gravity) {
             Gravity.Left -> {
