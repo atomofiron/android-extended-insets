@@ -21,9 +21,7 @@ class DemoActivity : Activity() {
     private var systemBarsBehavior = false
     private val cutout = CutoutDrawable()
 
-    private lateinit var startDelegate: ViewInsetsDelegate
     private lateinit var topDelegate: ViewInsetsDelegate
-    private lateinit var endDelegate: ViewInsetsDelegate
     private lateinit var bottomDelegate: ViewInsetsDelegate
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,9 +68,7 @@ class DemoActivity : Activity() {
     }
 
     private fun ActivityDemoBinding.configureInsets() {
-        startDelegate = viewStart.syncInsets()
         topDelegate = viewTop.syncInsets(dependency = true)
-        endDelegate = viewEnd.syncInsets()
         bottomDelegate = viewBottom.syncInsets(dependency = true)
         fab.syncInsets().margin(end = true, bottom = true)
         toolbar.syncInsets().margin(start = true, top = true, end = true)
@@ -98,16 +94,12 @@ class DemoActivity : Activity() {
     }
 
     private fun byPadding() {
-        startDelegate.reset().padding(start = true)
         topDelegate.reset().padding(start = true, top = true, end = true)
-        endDelegate.reset().padding(end = true)
         bottomDelegate.reset().padding(start = true, bottom = true, end = true)
     }
 
     private fun byMargin() {
-        startDelegate.reset().margin(start = true)
         topDelegate.reset().margin(start = true, top = true, end = true)
-        endDelegate.reset().margin(end = true)
         bottomDelegate.reset().margin(start = true, bottom = true, end = true)
     }
 
