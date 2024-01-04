@@ -24,6 +24,7 @@
                 app:title="MaterialToolbar"
                 app:navigationIcon="@drawable/ic_back"
                 app:navigationIconTint="?colorControlNormal"
+                app:menu="@menu/main"
                 />
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fab"
