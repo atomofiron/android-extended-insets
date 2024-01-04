@@ -19,15 +19,16 @@ class ViewTranslationAnimator(
 
     private var anim: ValueAnimator? = null
 
+    private val maxOffset get() = when (gravity) {
+        Gravity.Top -> -view.bottom
+        Gravity.Bottom -> (view.parent as View).height - view.top
+    }.toFloat()
+
     fun hide() {
         reset()
         val translation = view.translationY
-        val target = when (gravity) {
-            Gravity.Top -> -view.height
-            Gravity.Bottom -> view.height
-        }.toFloat()
-        anim = ValueAnimator.ofFloat(translation, target).apply {
-            duration = (300f / view.height * (view.height - abs(translation))).toLong()
+        anim = ValueAnimator.ofFloat(translation, maxOffset).apply {
+            duration = (300f / abs(maxOffset) * (abs(maxOffset - translation))).toLong()
             interpolator = AccelerateInterpolator()
             addUpdateListener(this@ViewTranslationAnimator)
             addListener(onEnd = { reset() })
@@ -39,7 +40,7 @@ class ViewTranslationAnimator(
         reset()
         val translation = view.translationY
         anim = ValueAnimator.ofFloat(translation, 0f).apply {
-            duration = (500f / view.height * abs(translation)).toLong()
+            duration = abs((500f / maxOffset * translation)).toLong()
             interpolator = DecelerateInterpolator(4f)
             addUpdateListener(this@ViewTranslationAnimator)
             addListener(onEnd = { reset() })

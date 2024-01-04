@@ -15,9 +15,9 @@ fun <T> Iterable<T>.sumBy(zero: T? = null, action: T.(T) -> T): T {
     return sum
 }
 
-val View.visibleHeight: Int get() = if (isVisible) height + translationY.toInt() else 0
+val View.visibleHeight: Int get() = if (isVisible) bottom + translationY.toInt() else 0
 
 val View.visibleHeightBottom: Int get() = when {
-    isVisible -> height + ((parent as View).height - bottom) - translationY.toInt()
+    isVisible -> (parent as View).height - top - translationY.toInt()
     else -> 0
 }
