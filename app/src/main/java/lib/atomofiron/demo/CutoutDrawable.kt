@@ -18,9 +18,9 @@ class CutoutDrawable : Drawable() {
 
     private val paint = Paint()
     private val path = Path()
-    private val haloColor = Color.parseColor("#111111")
-    private val lensColor = Color.parseColor("#111122")
-    private val glareColor = Color.parseColor("#1a1a22")
+    private val holeColor = Color.parseColor("#101010")
+    private val lensColor = Color.parseColor("#000010")
+    private val glareColor = Color.parseColor("#161620")
 
     private var gravity = Gravity.Top
 
@@ -69,7 +69,7 @@ class CutoutDrawable : Drawable() {
         paint.color = Color.BLACK
         canvas.drawPath(path, paint)
         canvas.translate(0f, SIZE / 2)
-        paint.color = haloColor
+        paint.color = holeColor
         canvas.drawCircle(0f, 0f, 24f, paint)
         paint.color = lensColor
         canvas.drawCircle(0f, 0f, 16f, paint)
