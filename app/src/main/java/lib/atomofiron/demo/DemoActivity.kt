@@ -18,8 +18,7 @@ import lib.atomofiron.insets.systemBars
 
 class DemoActivity : Activity() {
 
-    private var systemBarsBehavior = false
-    private val cutout = CutoutDrawable()
+    private val cutoutDrawable = CutoutDrawable()
 
     private lateinit var topDelegate: ViewInsetsDelegate
     private lateinit var bottomDelegate: ViewInsetsDelegate
@@ -31,7 +30,7 @@ class DemoActivity : Activity() {
 
         ActivityDemoBinding.inflate(layoutInflater).apply {
             setContentView(root)
-            //root.foreground = cutout
+            //root.foreground = cutoutDrawable
 
             configureInsets()
 
@@ -44,6 +43,7 @@ class DemoActivity : Activity() {
                 if (isChecked) bottomCtrl.show() else bottomCtrl.hide()
             }
             val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+            var systemBarsBehavior = false
             switchFullscreen.setOnClickListener { switch ->
                 switch as MaterialSwitch
                 insetsController.run {
@@ -106,9 +106,9 @@ class DemoActivity : Activity() {
     private fun syncCutout(windowInsets: WindowInsetsCompat) {
         val insets = windowInsets.getInsets(Type.displayCutout())
         when {
-            insets.left > 0 -> cutout.left()
-            insets.top > 0 -> cutout.top()
-            insets.right > 0 -> cutout.right()
+            insets.left > 0 -> cutoutDrawable.left()
+            insets.top > 0 -> cutoutDrawable.top()
+            insets.right > 0 -> cutoutDrawable.right()
         }
     }
 }
