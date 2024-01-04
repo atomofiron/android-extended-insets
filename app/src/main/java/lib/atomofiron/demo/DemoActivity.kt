@@ -73,6 +73,7 @@ class DemoActivity : Activity() {
         endDelegate = viewEnd.syncInsets()
         bottomDelegate = viewBottom.syncInsets(dependency = true)
         fab.syncInsets().margin(end = true, bottom = true)
+        toolbar.syncInsets().margin(start = true, top = true, end = true)
 
         root.composeInsets(
             bottomPanel.syncInsets(dependency = true).padding(start = true, end = true, bottom = true),
