@@ -12,7 +12,7 @@
 /build
 /captures
 /app/build
-/android-window-insets-compat/build
+/insets/build
 .externalNativeBuild
 .cxx
 local.properties
