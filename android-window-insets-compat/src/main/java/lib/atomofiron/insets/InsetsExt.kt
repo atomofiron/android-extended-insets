@@ -24,23 +24,28 @@ fun ViewParent.findInsetsProvider(): InsetsProvider? {
 }
 
 fun View.syncInsets(
-    dependency: Boolean = false,
     typeMask: Int = barsWithCutout,
+    dependency: Boolean = false,
 ): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, dependency, typeMask)
 
 inline fun InsetsProvider.composeInsets(
     // these receive original insets (from parent provider or stock system window insets)
     vararg delegates: ViewInsetsDelegate,
-    crossinline transformation: (hasListeners: Boolean, WindowInsetsCompat) -> WindowInsetsCompat,
+    crossinline transformation: (hasListeners: Boolean, ExtendedWindowInsets) -> WindowInsetsCompat,
 ) {
     delegates.forEach { it.unsubscribeInsets() }
     setInsetsModifier { hasListeners, windowInsets ->
         delegates.forEach { it.onApplyWindowInsets(windowInsets) }
-        transformation(hasListeners, windowInsets)
+        transformation(hasListeners, windowInsets).toExtended()
     }
 }
 
-inline operator fun <T : ExtendedWindowInsets.Type> T.invoke(
+fun WindowInsetsCompat.toExtended() = when (this) {
+    is ExtendedWindowInsets -> this
+    else -> ExtendedWindowInsets(this)
+}
+
+inline fun <T : ExtendedWindowInsets.Type> T.from(
     windowInsets: WindowInsetsCompat,
     block: T.() -> Int,
 ): Insets {

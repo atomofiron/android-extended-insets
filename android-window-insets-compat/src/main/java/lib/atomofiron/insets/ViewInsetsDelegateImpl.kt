@@ -90,6 +90,13 @@ class ViewInsetsDelegateImpl(
     }
 
     override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
+        // there is no need to turn into ExtendedWindowInsets
+        insets = windowInsets.getInsets(typeMask)
+        applyPadding(insets)
+        applyMargin(insets)
+    }
+
+    override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         insets = windowInsets.getInsets(typeMask)
         applyPadding(insets)
         applyMargin(insets)
