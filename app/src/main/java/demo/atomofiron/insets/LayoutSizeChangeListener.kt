@@ -1,4 +1,4 @@
-package lib.atomofiron.demo
+package demo.atomofiron.insets
 
 import android.view.View
 

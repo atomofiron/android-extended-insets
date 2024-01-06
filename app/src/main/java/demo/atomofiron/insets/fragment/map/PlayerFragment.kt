@@ -1,11 +1,11 @@
-package lib.atomofiron.demo.fragment.map
+package demo.atomofiron.insets.fragment.map
 
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import app.atomofiron.android_window_insets_compat.R
-import app.atomofiron.android_window_insets_compat.databinding.FragmentPlayerBinding
-import lib.atomofiron.demo.fragment.list.ListFragment
+import demo.atomofiron.insets.R
+import demo.atomofiron.insets.databinding.FragmentPlayerBinding
+import demo.atomofiron.insets.fragment.list.ListFragment
 import lib.atomofiron.insets.syncInsets
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {

@@ -1,4 +1,4 @@
-package lib.atomofiron.demo
+package demo.atomofiron.insets
 
 import androidx.core.graphics.Insets
 import lib.atomofiron.insets.ExtendedWindowInsets

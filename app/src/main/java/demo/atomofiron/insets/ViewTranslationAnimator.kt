@@ -1,4 +1,4 @@
-package lib.atomofiron.demo
+package demo.atomofiron.insets
 
 import android.animation.ValueAnimator
 import android.view.View

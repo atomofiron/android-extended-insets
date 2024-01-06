@@ -1,4 +1,4 @@
-package lib.atomofiron.demo.fragment.map
+package demo.atomofiron.insets.fragment.map
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import app.atomofiron.android_window_insets_compat.R
-import app.atomofiron.android_window_insets_compat.databinding.ItemStringBinding
+import demo.atomofiron.insets.R
+import demo.atomofiron.insets.databinding.ItemStringBinding
 
 data class TagItem(val value: String)
 

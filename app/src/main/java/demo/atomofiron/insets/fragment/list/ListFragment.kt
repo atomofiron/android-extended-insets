@@ -1,10 +1,10 @@
-package lib.atomofiron.demo.fragment.list
+package demo.atomofiron.insets.fragment.list
 
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import app.atomofiron.android_window_insets_compat.R
-import app.atomofiron.android_window_insets_compat.databinding.FragmentListBinding
+import demo.atomofiron.insets.R
+import demo.atomofiron.insets.databinding.FragmentListBinding
 import lib.atomofiron.insets.syncInsets
 
 class ListFragment : Fragment(R.layout.fragment_list) {

@@ -1,4 +1,4 @@
-package lib.atomofiron.demo
+package demo.atomofiron.insets
 
 import android.app.Activity
 import android.os.Bundle
@@ -6,8 +6,7 @@ import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import app.atomofiron.android_window_insets_compat.R
-import app.atomofiron.android_window_insets_compat.databinding.ActivityDemoBinding
+import demo.atomofiron.insets.databinding.ActivityDemoBinding
 import com.google.android.material.materialswitch.MaterialSwitch
 import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type

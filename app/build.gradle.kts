@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "app.atomofiron.android_window_insets_compat"
+    namespace = "demo.atomofiron.insets"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "app.atomofiron.android_window_insets_compat"
+        applicationId = "demo.atomofiron.insets"
         minSdk = 21
         targetSdk = 34
         versionCode = 1
