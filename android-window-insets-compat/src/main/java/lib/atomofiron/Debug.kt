@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.View
 import android.view.View.MeasureSpec
 
+val Any.simpleName: String get() = javaClass.simpleName
+
 @SuppressLint("ResourceType")
 fun View.id(): String {
     return when {
@@ -14,7 +16,7 @@ fun View.id(): String {
 }
 
 fun Any?.poop(s: String) {
-    Log.e("atomofiron", "[${this?.javaClass?.simpleName}] $s")
+    Log.e("atomofiron", "[${this?.simpleName}] $s")
 }
 
 fun Int.mode(): String = when (MeasureSpec.getMode(this)) {
