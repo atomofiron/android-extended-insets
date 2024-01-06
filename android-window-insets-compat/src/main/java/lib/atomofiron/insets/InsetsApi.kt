@@ -5,11 +5,11 @@ import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 
 fun interface InsetsListener {
-    fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
+    fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
 fun interface InsetsModifier {
-    fun getInsets(hasListeners: Boolean, windowInsets: WindowInsetsCompat): WindowInsetsCompat
+    fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): WindowInsetsCompat
 }
 
 interface InsetsProvider : InsetsListener {

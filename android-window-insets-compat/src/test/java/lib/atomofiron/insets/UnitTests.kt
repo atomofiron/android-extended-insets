@@ -18,7 +18,7 @@ class UnitTests {
     }
 
     // associate your custom type with ExtendedWindowInsets
-    operator fun ExtendedWindowInsets.invoke(block: CustomType.() -> Int): Insets = get(CustomType.block())
+    private operator fun ExtendedWindowInsets.invoke(block: CustomType.() -> Int): Insets = get(CustomType.block())
 
     @Test
     fun ext_window_insets() {
@@ -31,7 +31,7 @@ class UnitTests {
             .set(CustomType.testType2, ascent)
             .set(CustomType.testType3, descent)
             .build()
-        val actual1 = CustomType(windowInsets) { testType1 }
+        val actual1 = CustomType.from(windowInsets) { testType1 }
         val actual2 = windowInsets(CustomType) { testType2 }
         val actual3 = windowInsets { testType3 }
         val actual4 = windowInsets { testType1 or testType2 or testType3 }

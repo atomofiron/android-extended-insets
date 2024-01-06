@@ -8,7 +8,7 @@ import androidx.core.view.WindowInsetsCompat
 private const val INVALID_INSETS_LISTENER_KEY = 0
 
 private data class SrcState(
-    val windowInsets: WindowInsetsCompat = WindowInsetsCompat.CONSUMED,
+    val windowInsets: ExtendedWindowInsets = ExtendedWindowInsets.CONSUMED,
     val hasModifier: Boolean = false,
     val hasListeners: Boolean = false,
 )
@@ -21,7 +21,7 @@ class InsetsProviderImpl : InsetsProvider {
             field = value
             updateCurrent(value)
         }
-    override var current = WindowInsetsCompat.CONSUMED
+    override var current = ExtendedWindowInsets.CONSUMED
         private set(value) {
             if (field != value) {
                 field = value
@@ -83,7 +83,7 @@ class InsetsProviderImpl : InsetsProvider {
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (provider == null) {
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
-            srcState = srcState.copy(windowInsets = windowInsetsCompat)
+            srcState = srcState.copy(windowInsets = windowInsetsCompat.toExtended())
         }
         return windowInsets
     }
@@ -91,15 +91,18 @@ class InsetsProviderImpl : InsetsProvider {
     override fun requestInsets() = updateCurrent(srcState)
 
     // the one of the two entry points for system window insets
-    override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
+    override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         srcState = srcState.copy(windowInsets = windowInsets)
     }
 
     private fun updateCurrent(srcState: SrcState) {
-        current = insetsModifier?.getInsets(listeners.isNotEmpty(), srcState.windowInsets) ?: srcState.windowInsets
+        current = insetsModifier
+            ?.transform(listeners.isNotEmpty(), srcState.windowInsets)
+            ?.toExtended()
+            ?: srcState.windowInsets
     }
 
-    private fun notifyListeners(windowInsets: WindowInsetsCompat) {
+    private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
         listeners.forEach {
             it.value.onApplyWindowInsets(windowInsets)
         }

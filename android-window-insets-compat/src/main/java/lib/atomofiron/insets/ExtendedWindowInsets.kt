@@ -23,6 +23,9 @@ class ExtendedWindowInsets private constructor(
     private val extended: Array<InsetsValue>,
     windowInsets: WindowInsetsCompat?,
 ) : WindowInsetsCompat(windowInsets) {
+    companion object {
+        val CONSUMED = ExtendedWindowInsets(WindowInsetsCompat.CONSUMED)
+    }
 
     abstract class Type {
 
@@ -36,7 +39,10 @@ class ExtendedWindowInsets private constructor(
         val ime: Int get() = WindowInsetsCompat.Type.ime()
         val captionBar: Int get() = WindowInsetsCompat.Type.captionBar()
 
-        fun next(): Int = next.apply { next = shl(1) }
+        fun next(): Int = when (next) {
+            0 -> throw ExtendedInsetsTypeMaskOverflow()
+            else -> next.apply { next = shl(1) }
+        }
 
         companion object : Type() {
 
@@ -56,6 +62,14 @@ class ExtendedWindowInsets private constructor(
 
     operator fun get(type: Int): Insets = super.getInsets(type).union(type)
 
+    override fun equals(other: Any?): Boolean {
+        return when (other) {
+            null -> return false
+            !is ExtendedWindowInsets -> extended.isEmpty() && super.equals(other)
+            else -> other.extended.contentEquals(extended)
+        }
+    }
+
     private fun Insets.union(type: Int): Insets {
         val values = intArrayOf(left, top, right, bottom)
         var cursor = FIRST
@@ -73,6 +87,8 @@ class ExtendedWindowInsets private constructor(
         return Insets.of(values[0], values[1], values[2], values[3])
     }
 
+    override fun hashCode(): Int = 31 * extended.contentHashCode() + super.hashCode()
+
     class Builder private constructor(
         custom: Array<InsetsValue>?,
         windowInsets: WindowInsetsCompat?,
@@ -80,9 +96,7 @@ class ExtendedWindowInsets private constructor(
         private val extended: Array<InsetsValue> = custom ?: emptyCustom()
         private val builder = WindowInsetsCompat.Builder(windowInsets ?: CONSUMED)
 
-        constructor() : this(custom = null, windowInsets = null) {
-            Type { statusBars }
-        }
+        constructor() : this(custom = null, windowInsets = null)
 
         constructor(windowInsets: WindowInsets?, view: View? = null) : this(null, windowInsets?.let { toWindowInsetsCompat(it, view) })
 
@@ -90,7 +104,8 @@ class ExtendedWindowInsets private constructor(
 
         constructor(extendedInsets: ExtendedWindowInsets?) : this(extendedInsets?.extended?.clone(), extendedInsets)
 
-        operator fun set(type: Int, insets: Insets): Builder {
+        // compatible with the WindowInsetsCompat api
+        fun setInsets(type: Int, insets: Insets): Builder {
             builder.setInsets(type, insets)
             var cursor = FIRST
             var index = 0
@@ -103,6 +118,8 @@ class ExtendedWindowInsets private constructor(
             }
             return this
         }
+
+        operator fun set(type: Int, insets: Insets): Builder = setInsets(type, insets)
 
         fun build() = ExtendedWindowInsets(extended.clone(), builder.build())
     }
@@ -133,3 +150,5 @@ value class InsetsValue(
 
     fun toInsets() = Insets.of(left, top, right, bottom)
 }
+
+class ExtendedInsetsTypeMaskOverflow : Exception()
