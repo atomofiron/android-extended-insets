@@ -94,7 +94,7 @@ class ExtendedWindowInsets private constructor(
         windowInsets: WindowInsetsCompat?,
     ) {
         private val extended: Array<InsetsValue> = custom ?: emptyCustom()
-        private val builder = WindowInsetsCompat.Builder(windowInsets ?: CONSUMED)
+        private val builder = WindowInsetsCompat.Builder(windowInsets ?: WindowInsetsCompat.CONSUMED)
 
         constructor() : this(custom = null, windowInsets = null)
 
