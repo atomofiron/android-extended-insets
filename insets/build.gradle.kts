@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "app.atomofiron.android_window_insets_compat"
+    namespace = "lib.atomofiron.insets"
     compileSdk = 34
 
     defaultConfig {
@@ -27,6 +27,11 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
@@ -37,9 +42,9 @@ dependencies {
 publishing {
     publications {
         register<MavenPublication>("release") {
-            groupId = "com.github.atomofiron"
-            artifactId = "android-window-insets-compat"
-            version = "1.0.0"
+            groupId = "io.github.atomofiron"
+            artifactId = "extended-insets"
+            version = "2.0.0"
 
             afterEvaluate {
                 from(components["release"])
