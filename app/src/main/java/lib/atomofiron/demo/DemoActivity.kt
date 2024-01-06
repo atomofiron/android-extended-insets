@@ -5,16 +5,16 @@ import android.os.Bundle
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.WindowInsetsControllerCompat
 import app.atomofiron.android_window_insets_compat.R
 import app.atomofiron.android_window_insets_compat.databinding.ActivityDemoBinding
 import com.google.android.material.materialswitch.MaterialSwitch
+import lib.atomofiron.insets.ExtendedWindowInsets
+import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import lib.atomofiron.insets.ViewInsetsDelegate
 import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.syncInsets
-import lib.atomofiron.insets.systemBars
 
 class DemoActivity : Activity() {
 
@@ -47,7 +47,7 @@ class DemoActivity : Activity() {
             switchFullscreen.setOnClickListener { switch ->
                 switch as MaterialSwitch
                 insetsController.run {
-                    if (switch.isChecked) hide(Type.systemBars()) else show(Type.systemBars())
+                    if (switch.isChecked) hide(Type.systemBars) else show(Type.systemBars)
                 }
                 insetsController.systemBarsBehavior = when {
                     systemBarsBehavior -> WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -69,26 +69,24 @@ class DemoActivity : Activity() {
 
     private fun ActivityDemoBinding.configureInsets() {
         topDelegate = viewTop.syncInsets(dependency = true)
-        bottomDelegate = viewBottom.syncInsets(dependency = true)
-        fab.syncInsets().margin(end = true, bottom = true)
-        toolbar.syncInsets().margin(start = true, top = true, end = true)
+        bottomDelegate = viewBottom.syncInsets(ExtType.all, dependency = true)
+        fab.syncInsets(ExtType.all).margin(end = true, bottom = true)
+        toolbar.syncInsets(ExtType.all).margin(start = true, top = true, end = true)
 
         root.composeInsets(
             bottomPanel.syncInsets(dependency = true).padding(start = true, end = true, bottom = true),
         ) { _, windowInsets -> // insets modifier
             syncCutout(windowInsets)
-            switchFullscreen.isChecked = windowInsets.isEmpty(Type.systemBars())
-            val overlay = Insets.of(0, 0, 0, bottomPanel.visibleHeightBottom)
-            val insets = Insets.max(windowInsets.systemBars(), overlay)
-            WindowInsetsCompat.Builder(windowInsets)
-                .setInsets(Type.systemBars(), insets)
+            switchFullscreen.isChecked = windowInsets.isEmpty(Type.systemBars)
+            val insets = Insets.of(0, 0, 0, bottomPanel.visibleHeightBottom)
+            ExtendedWindowInsets.Builder(windowInsets)
+                .setInsets(ExtType.togglePanel, insets)
                 .build()
         }
         intermediate.composeInsets(topDelegate, bottomDelegate) { _, windowInsets ->
-            val overlay = Insets.of(0, viewTop.visibleHeight, 0, viewBottom.visibleHeightBottom)
-            val insets = Insets.max(windowInsets.systemBars(), overlay)
-            WindowInsetsCompat.Builder(windowInsets)
-                .setInsets(Type.systemBars(), insets)
+            val insets = Insets.of(0, viewTop.visibleHeight, 0, viewBottom.visibleHeightBottom)
+            ExtendedWindowInsets.Builder(windowInsets)
+                .setInsets(ExtType.verticalPanels, insets)
                 .build()
         }
     }
@@ -104,7 +102,7 @@ class DemoActivity : Activity() {
     }
 
     private fun syncCutout(windowInsets: WindowInsetsCompat) {
-        val insets = windowInsets.getInsets(Type.displayCutout())
+        val insets = windowInsets.getInsets(Type.displayCutout)
         when {
             insets.left > 0 -> cutoutDrawable.left()
             insets.top > 0 -> cutoutDrawable.top()
