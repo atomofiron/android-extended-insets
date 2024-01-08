@@ -137,8 +137,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:paddingHorizontal="8dp"
-        android:background="@drawable/bg_bottom_panel"
-        android:backgroundTint="?android:attr/colorBackground"
         android:clickable="true"
         android:focusable="false"
         >
