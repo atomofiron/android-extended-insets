@@ -65,9 +65,9 @@ class ExtendedWindowInsets private constructor(
     override fun equals(other: Any?): Boolean {
         return when (other) {
             null -> return false
-            !is ExtendedWindowInsets -> extended.isEmpty() && super.equals(other)
+            !is ExtendedWindowInsets -> extended.isEmpty()
             else -> other.extended.contentEquals(extended)
-        }
+        } && super.equals(other)
     }
 
     private fun Insets.union(type: Int): Insets {
