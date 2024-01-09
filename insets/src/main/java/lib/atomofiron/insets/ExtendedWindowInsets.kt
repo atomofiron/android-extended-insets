@@ -19,7 +19,7 @@ private var next = FIRST
 
 private fun emptyExtended(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
 
-private val emptyExtended: Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
+private val emptyExtended: Array<InsetsValue> = emptyExtended()
 
 class ExtendedWindowInsets private constructor(
     private val extended: Array<InsetsValue>,
