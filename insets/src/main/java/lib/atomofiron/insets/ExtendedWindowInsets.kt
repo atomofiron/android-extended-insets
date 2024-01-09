@@ -17,7 +17,9 @@ private const val LIMIT = Int.SIZE_BITS - OFFSET
 private const val FIRST = 1.shl(OFFSET)
 private var next = FIRST
 
-private fun emptyCustom(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
+private fun emptyExtended(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
+
+private val emptyExtended: Array<InsetsValue> = emptyExtended()
 
 class ExtendedWindowInsets private constructor(
     private val extended: Array<InsetsValue>,
@@ -56,18 +58,16 @@ class ExtendedWindowInsets private constructor(
 
     constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let { toWindowInsetsCompat(it, view) })
 
-    constructor(windowInsets: WindowInsetsCompat?) : this(emptyCustom(), windowInsets)
+    constructor(windowInsets: WindowInsetsCompat?) : this(emptyExtended(), windowInsets)
 
     override fun getInsets(typeMask: Int): Insets = get(typeMask)
 
     operator fun get(type: Int): Insets = super.getInsets(type).union(type)
 
     override fun equals(other: Any?): Boolean {
-        return when (other) {
-            null -> return false
-            !is ExtendedWindowInsets -> extended.isEmpty()
-            else -> other.extended.contentEquals(extended)
-        } && super.equals(other)
+        other ?: return false
+        val otherExtended = (other as? ExtendedWindowInsets)?.extended ?: emptyExtended
+        return otherExtended.contentEquals(extended) && super.equals(other)
     }
 
     private fun Insets.union(type: Int): Insets {
@@ -93,7 +93,7 @@ class ExtendedWindowInsets private constructor(
         custom: Array<InsetsValue>?,
         windowInsets: WindowInsetsCompat?,
     ) {
-        private val extended: Array<InsetsValue> = custom ?: emptyCustom()
+        private val extended: Array<InsetsValue> = custom ?: emptyExtended()
         private val builder = WindowInsetsCompat.Builder(windowInsets ?: WindowInsetsCompat.CONSUMED)
 
         constructor() : this(custom = null, windowInsets = null)
