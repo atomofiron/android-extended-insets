@@ -44,7 +44,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "io.github.atomofiron"
             artifactId = "extended-insets"
-            version = "2.0.0"
+            version = "2.0.0-rc0"
 
             afterEvaluate {
                 from(components["release"])
