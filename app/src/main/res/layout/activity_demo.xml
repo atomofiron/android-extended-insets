@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<demo.atomofiron.insets.InsetsProviderFrameLayout
+<lib.atomofiron.insets.InsetsProviderFrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_root"
@@ -7,12 +7,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
-    <demo.atomofiron.insets.InsetsProviderFrameLayout
+    <lib.atomofiron.insets.InsetsProviderFrameLayout
         android:id="@+id/intermediate"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
-        <demo.atomofiron.insets.InsetsProviderFrameLayout
+        <lib.atomofiron.insets.InsetsProviderFrameLayout
             android:id="@+id/fragments_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -34,7 +34,7 @@
                 android:layout_margin="16dp"
                 android:src="@drawable/ic_android"
                 />
-        </demo.atomofiron.insets.InsetsProviderFrameLayout>
+        </lib.atomofiron.insets.InsetsProviderFrameLayout>
         <LinearLayout
             android:id="@+id/view_top"
             android:layout_width="match_parent"
@@ -109,28 +109,7 @@
                 android:gravity="end"
                 />
         </LinearLayout>
-    </demo.atomofiron.insets.InsetsProviderFrameLayout>
-    <RadioGroup
-        android:id="@+id/radio_destination"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        >
-        <RadioButton
-            android:id="@+id/radio_padding"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Padding"
-            android:padding="16dp"
-            />
-        <RadioButton
-            android:id="@+id/radio_margin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Margin"
-            android:padding="16dp"
-            />
-    </RadioGroup>
+    </lib.atomofiron.insets.InsetsProviderFrameLayout>
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottom_panel"
         android:layout_width="match_parent"
@@ -178,4 +157,4 @@
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</demo.atomofiron.insets.InsetsProviderFrameLayout>
+</lib.atomofiron.insets.InsetsProviderFrameLayout>

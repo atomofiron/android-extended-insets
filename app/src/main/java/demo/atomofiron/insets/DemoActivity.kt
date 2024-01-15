@@ -10,7 +10,6 @@ import demo.atomofiron.insets.databinding.ActivityDemoBinding
 import com.google.android.material.materialswitch.MaterialSwitch
 import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
-import lib.atomofiron.insets.ViewInsetsDelegate
 import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.syncInsets
@@ -18,9 +17,6 @@ import lib.atomofiron.insets.syncInsets
 class DemoActivity : Activity() {
 
     private val cutoutDrawable = CutoutDrawable()
-
-    private lateinit var topDelegate: ViewInsetsDelegate
-    private lateinit var bottomDelegate: ViewInsetsDelegate
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,19 +53,16 @@ class DemoActivity : Activity() {
                     systemBarsBehavior = !systemBarsBehavior
                 }
             }
-            radioDestination.setOnCheckedChangeListener { _, checkedId ->
-                when (checkedId) {
-                    R.id.radio_padding -> byPadding()
-                    R.id.radio_margin -> byMargin()
-                }
-            }
-            radioDestination.check(R.id.radio_padding)
         }
     }
 
     private fun ActivityDemoBinding.configureInsets() {
-        topDelegate = viewTop.syncInsets(dependency = true)
-        bottomDelegate = viewBottom.syncInsets(ExtType.all, dependency = true)
+        val topDelegate = viewTop.syncInsets(dependency = true)
+            .margin(start = true, end = true)
+            .padding(top = true)
+        val bottomDelegate = viewBottom.syncInsets(ExtType.all, dependency = true)
+            .margin(start = true, end = true)
+            .padding(bottom = true)
         fab.syncInsets(ExtType.all).margin(end = true, bottom = true)
         toolbar.syncInsets(ExtType.all).margin(start = true, top = true, end = true)
 
@@ -89,16 +82,6 @@ class DemoActivity : Activity() {
                 .setInsets(ExtType.verticalPanels, insets)
                 .build()
         }
-    }
-
-    private fun byPadding() {
-        topDelegate.reset().padding(start = true, top = true, end = true)
-        bottomDelegate.reset().padding(start = true, bottom = true, end = true)
-    }
-
-    private fun byMargin() {
-        topDelegate.reset().margin(start = true, top = true, end = true)
-        bottomDelegate.reset().margin(start = true, bottom = true, end = true)
     }
 
     private fun syncCutout(windowInsets: WindowInsetsCompat) {
