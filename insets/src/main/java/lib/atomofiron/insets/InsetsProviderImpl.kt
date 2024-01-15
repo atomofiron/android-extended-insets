@@ -5,7 +5,7 @@ import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 
 
-private const val INVALID_INSETS_LISTENER_KEY = 0
+const val INVALID_INSETS_LISTENER_KEY = 0
 
 private data class SrcState(
     val windowInsets: ExtendedWindowInsets = ExtendedWindowInsets.CONSUMED,
@@ -17,14 +17,15 @@ class InsetsProviderImpl : InsetsProvider {
 
     private var srcState = SrcState()
         set(value) {
-            logd("${thisView?.nameAndId()} new state? ${field != value}")
-            // don't compare!
-            field = value
-            updateCurrent(value)
+            logd { "${thisView?.nameWithId()} new state? ${field != value}" }
+            if (value.hasModifier || field != value) {
+                field = value
+                updateCurrent(value)
+            }
         }
     override var current = ExtendedWindowInsets.CONSUMED
         private set(value) {
-            logd("${thisView?.nameAndId()} new current? ${field != value}")
+            logd { "${thisView?.nameWithId()} new current? ${field != value}" }
             if (field != value) {
                 field = value
                 notifyListeners(value)
@@ -51,7 +52,7 @@ class InsetsProviderImpl : InsetsProvider {
     }
 
     override fun setInsetsModifier(modifier: InsetsModifier) {
-        logd("${thisView?.nameAndId()} set modifier")
+        logd { "${thisView?.nameWithId()} set modifier" }
         insetsModifier = modifier
         srcState = srcState.copy(hasModifier = true)
     }
@@ -60,7 +61,7 @@ class InsetsProviderImpl : InsetsProvider {
         if (listener === thisView || listener === this) {
             throw IllegalArgumentException()
         }
-        logd("${thisView?.nameAndId()} set modifier")
+        logd { "${thisView?.nameWithId()} set modifier" }
         listeners.entries
             .find { it.value === listener }
             ?.let { return it.key }
@@ -100,7 +101,7 @@ class InsetsProviderImpl : InsetsProvider {
     }
 
     private fun updateCurrent(srcState: SrcState) {
-        logd("${thisView?.nameAndId()} update current with modifier? ${insetsModifier != null}")
+        logd { "${thisView?.nameWithId()} update current with modifier? ${insetsModifier != null}" }
         current = insetsModifier
             ?.transform(listeners.isNotEmpty(), srcState.windowInsets)
             ?.toExtended()

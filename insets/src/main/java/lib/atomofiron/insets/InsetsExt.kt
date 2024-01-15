@@ -23,6 +23,13 @@ fun ViewParent.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
 }
 
+fun View.addInsetsListener(listener: InsetsListener): Int {
+    val provider = (this as? InsetsProvider) ?: parent.findInsetsProvider()
+    val key = provider?.addInsetsListener(listener)
+    key ?: logd { "${nameWithId()} insets provider not found" }
+    return key ?: INVALID_INSETS_LISTENER_KEY
+}
+
 fun View.syncInsets(
     typeMask: Int = barsWithCutout,
     dependency: Boolean = false,
