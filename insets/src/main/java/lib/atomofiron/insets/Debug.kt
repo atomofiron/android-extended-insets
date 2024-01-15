@@ -6,10 +6,10 @@ import android.view.View
 
 var debugInsets: Boolean = false
 
-val Any.simpleName: String get() = javaClass.simpleName
+internal val Any.simpleName: String get() = javaClass.simpleName
 
 @SuppressLint("ResourceType")
-fun View.nameAndId(): String {
+internal fun View.nameWithId(): String {
     val id = when {
         id <= 0 -> id.toString()
         else -> resources.getResourceEntryName(id)
@@ -17,11 +17,11 @@ fun View.nameAndId(): String {
     return "$simpleName(id=$id)"
 }
 
-fun Any?.logd(s: String) {
-    if (debugInsets) Log.d("ExtInsets", "[${this?.simpleName}] $s")
+internal inline fun Any?.logd(message: () -> String) {
+    if (debugInsets) Log.d("ExtInsets", "[${this?.simpleName}] ${message()}")
 }
 
-fun Int.bits(): String {
+internal fun Int.bits(): String {
     val value = toUInt()
     val builder = StringBuilder(32)
     var cursor = 1u.shl(31)

@@ -10,7 +10,6 @@ import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
-import lib.atomofiron.insets.bits
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
@@ -41,11 +40,11 @@ class ViewInsetsDelegateImpl(
         view.onAttachCallback(
             onAttach = {
                 provider = view.parent.findInsetsProvider()
-                logd("${view.nameAndId()} onAttach provider? ${provider != null}")
+                logd { "${view.nameWithId()} onAttach provider? ${provider != null}" }
                 provider?.addInsetsListener(listener ?: return@onAttachCallback)
             },
             onDetach = {
-                logd("${view.nameAndId()} onDetach provider? ${provider != null}")
+                logd { "${view.nameWithId()} onDetach provider? ${provider != null}" }
                 provider?.removeInsetsListener(listener ?: return@onAttachCallback)
                 provider = null
             },
@@ -55,7 +54,7 @@ class ViewInsetsDelegateImpl(
                 val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
                 val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
                 if (horizontally || vertically) {
-                    logd("${view.nameAndId()} request insets? ${provider != null}")
+                    logd { "${view.nameWithId()} request insets? ${provider != null}" }
                     provider?.requestInsets()
                 }
             }
@@ -63,7 +62,7 @@ class ViewInsetsDelegateImpl(
     }
 
     override fun unsubscribeInsets(): ViewInsetsDelegate {
-        logd("${view.nameAndId()} unsubscribe insets? ${provider != null}")
+        logd { "${view.nameWithId()} unsubscribe insets? ${provider != null}" }
         provider?.removeInsetsListener(this)
         listener = null
         return this
@@ -92,7 +91,7 @@ class ViewInsetsDelegateImpl(
     }
 
     override fun reset(): ViewInsetsDelegate {
-        logd("${view.nameAndId()} reset")
+        logd { "${view.nameWithId()} reset" }
         sync(None, None, None, None)
         return this
     }
@@ -164,7 +163,15 @@ class ViewInsetsDelegateImpl(
     }
 
     private fun logDestinations(type: String, start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) {
-        logd("${view.nameAndId()} $type:${if (start) " start" else ""}${if (top) " top" else ""}${if (end) " end" else ""}${if (bottom) " bottom" else ""}")
+        logd {
+            val sides = mutableListOf<String>().apply {
+                if (start) add("start")
+                if (top) add("top")
+                if (end) add("end")
+                if (bottom) add("bottom")
+            }.joinToString()
+            "${view.nameWithId()} +sync $type: $sides"
+        }
     }
 
     private fun logInsets(insets: Insets) {
@@ -173,12 +180,6 @@ class ViewInsetsDelegateImpl(
         val top = if (dstTop == None) "" else insets.top.toString()
         val right = if (dstRight == None) "" else insets.right.toString()
         val bottom = if (dstBottom == None) "" else insets.bottom.toString()
-        logd("${view.nameAndId()} ${dstLeft.letter}$left ${dstTop.letter}$top ${dstRight.letter}$right ${dstBottom.letter}$bottom, ${typeMask.bits()}")
-    }
-
-    private val InsetsDestination.letter: Char get() = when (this) {
-        None -> 'n'
-        Margin -> 'm'
-        Padding -> 'p'
+        logd { "${view.nameWithId()} ${dstLeft.letter}$left ${dstTop.letter}$top ${dstRight.letter}$right ${dstBottom.letter}$bottom, ${typeMask.bits()}" }
     }
 }

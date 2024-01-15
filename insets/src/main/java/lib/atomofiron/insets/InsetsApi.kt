@@ -27,8 +27,8 @@ interface InsetsProvider : InsetsListener {
     fun requestInsets()
 }
 
-enum class InsetsDestination {
-    None, Padding, Margin
+internal enum class InsetsDestination(val letter: Char) {
+    None('n'), Padding('p'), Margin('m');
 }
 
 interface ViewInsetsDelegate {
