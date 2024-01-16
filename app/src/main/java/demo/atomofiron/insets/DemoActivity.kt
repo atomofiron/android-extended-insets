@@ -22,7 +22,14 @@ class DemoActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        //lib.atomofiron.insets.debugInsets = true
+        /*lib.atomofiron.insets.debugInsets = true
+        lib.atomofiron.insets.customTypeNameProvider = {
+            when (it) {
+                ExtType.togglePanel -> "togglePanel"
+                ExtType.verticalPanels -> "verticalPanels"
+                else -> null
+            }
+        }*/
 
         ActivityDemoBinding.inflate(layoutInflater).apply {
             setContentView(root)

@@ -16,7 +16,7 @@ fun View.id(): String {
 }
 
 fun Any?.poop(s: String) {
-    Log.e("atomofiron", "[${this?.simpleName}] $s")
+    Log.e("ExtInsets", "[${this?.simpleName}] $s")
 }
 
 fun Int.mode(): String = when (MeasureSpec.getMode(this)) {
@@ -27,7 +27,7 @@ fun Int.mode(): String = when (MeasureSpec.getMode(this)) {
 }
 
 fun Int.bits(
-    prefix: String = "0x",
+    prefix: String = "0b",
     zero: Char = '0',
     one: Char = '1',
     full: Boolean = false,
@@ -35,7 +35,7 @@ fun Int.bits(
 ): String = toULong().bits(prefix, zero, one, 32, full, oneDigitAtLeast)
 
 fun ULong.bits(
-    prefix: String = "0x",
+    prefix: String = "0b",
     zero: Char = '0',
     one: Char = '1',
     full: Boolean = false,
