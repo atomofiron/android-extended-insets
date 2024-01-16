@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import demo.atomofiron.insets.R
 import demo.atomofiron.insets.databinding.ItemStringBinding
+import lib.atomofiron.insets.padding
 import lib.atomofiron.insets.syncInsets
 
 data class StringItem(val value: String)

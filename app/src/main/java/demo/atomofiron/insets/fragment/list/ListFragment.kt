@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import demo.atomofiron.insets.R
 import demo.atomofiron.insets.databinding.FragmentListBinding
+import lib.atomofiron.insets.padding
 import lib.atomofiron.insets.syncInsets
 
 class ListFragment : Fragment(R.layout.fragment_list) {
@@ -14,7 +15,7 @@ class ListFragment : Fragment(R.layout.fragment_list) {
         val binding = FragmentListBinding.bind(view)
         binding.apply {
             root.adapter = StringAdapter()
-            root.syncInsets().padding(top = true, bottom = true)
+            root.syncInsets().padding(vertical = true)
         }
     }
 }
