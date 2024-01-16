@@ -32,6 +32,7 @@ class ViewInsetsDelegateImpl(
     private var dstBottom = None
 
     private var insets = Insets.NONE
+    private var windowInsets = WindowInsetsCompat.CONSUMED
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
     private var provider: InsetsProvider? = null
     private var listener: InsetsListener? = this
@@ -98,15 +99,17 @@ class ViewInsetsDelegateImpl(
 
     override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
         // there is no need to turn into ExtendedWindowInsets
+        this.windowInsets = windowInsets
         insets = windowInsets.getInsets(typeMask)
-        logInsets(insets)
+        logInsets()
         applyPadding(insets)
         applyMargin(insets)
     }
 
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
+        this.windowInsets = windowInsets
         insets = windowInsets.getInsets(typeMask)
-        logInsets(insets)
+        logInsets()
         applyPadding(insets)
         applyMargin(insets)
     }
@@ -157,12 +160,12 @@ class ViewInsetsDelegateImpl(
         stockTop = if (top == Margin) view.marginTop else view.paddingTop
         stockRight = if (right == Margin) view.marginRight else view.paddingRight
         stockBottom = if (bottom == Margin) view.marginBottom else view.paddingBottom
-        logInsets(insets)
+        logInsets()
         applyPadding(insets)
         applyMargin(insets)
     }
 
-    private fun logDestinations(type: String, start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) {
+    private fun logDestinations(destination: String, start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) {
         logd {
             val sides = mutableListOf<String>().apply {
                 if (start) add("start")
@@ -170,16 +173,17 @@ class ViewInsetsDelegateImpl(
                 if (end) add("end")
                 if (bottom) add("bottom")
             }.joinToString()
-            "${view.nameWithId()} +sync $type: $sides"
+            "${view.nameWithId()} +sync $destination: $sides"
         }
     }
 
-    private fun logInsets(insets: Insets) {
+    private fun logInsets() {
         if (!debugInsets) return
-        val left = if (dstLeft == None) "" else insets.left.toString()
-        val top = if (dstTop == None) "" else insets.top.toString()
-        val right = if (dstRight == None) "" else insets.right.toString()
-        val bottom = if (dstBottom == None) "" else insets.bottom.toString()
-        logd { "${view.nameWithId()} ${dstLeft.letter}$left ${dstTop.letter}$top ${dstRight.letter}$right ${dstBottom.letter}$bottom, ${typeMask.bits()}" }
+        val left = if (dstLeft.isNone) "" else insets.left.toString()
+        val top = if (dstTop.isNone) "" else insets.top.toString()
+        val right = if (dstRight.isNone) "" else insets.right.toString()
+        val bottom = if (dstBottom.isNone) "" else insets.bottom.toString()
+        val types = typeMask.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
+        logd { "${view.nameWithId()} ${dstLeft.letter}$left ${dstTop.letter}$top ${dstRight.letter}$right ${dstBottom.letter}$bottom, $types" }
     }
 }

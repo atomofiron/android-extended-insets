@@ -9,12 +9,11 @@ import kotlin.math.max
 
 // WindowInsetsCompat.Type.SIZE = 9
 private const val OFFSET = 9
-private const val LIMIT = Int.SIZE_BITS - OFFSET
-// 9 bits from the right are for system window insets
-// /-------custom--------\/system-\
-// 10101010101010101010101010101010
-// ^-last          FIRST-^
-private const val FIRST = 1.shl(OFFSET)
+private const val LIMIT = Int.SIZE_BITS - OFFSET - 1 // one for the sign
+//  /-------custom-------\/system-\
+// 01010101010101010101010101010101
+//  ^-last         FIRST-^
+internal const val FIRST = 1.shl(OFFSET)
 private var next = FIRST
 
 private fun emptyExtended(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
@@ -41,8 +40,8 @@ class ExtendedWindowInsets private constructor(
         val ime: Int get() = WindowInsetsCompat.Type.ime()
         val captionBar: Int get() = WindowInsetsCompat.Type.captionBar()
 
-        fun next(): Int = when (next) {
-            0 -> throw ExtendedInsetsTypeMaskOverflow()
+        fun next(): Int = when {
+            next <= 0 -> throw ExtendedInsetsTypeMaskOverflow()
             else -> next.apply { next = shl(1) }
         }
 
@@ -129,7 +128,7 @@ class ExtendedWindowInsets private constructor(
 private const val PART_MASK = 0b1111111111111111uL
 
 @JvmInline
-value class InsetsValue(
+internal value class InsetsValue(
     //                                                 /--PART_MASK---\
     // 1010101010101010101010101010101010101010101010101010101010101010
     // \-----left-----/\-----top------/\-----right----/\----bottom----/
@@ -150,5 +149,3 @@ value class InsetsValue(
 
     fun toInsets() = Insets.of(left, top, right, bottom)
 }
-
-class ExtendedInsetsTypeMaskOverflow : Exception()

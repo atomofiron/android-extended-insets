@@ -27,8 +27,8 @@ interface InsetsProvider : InsetsListener {
     fun requestInsets()
 }
 
-internal enum class InsetsDestination(val letter: Char) {
-    None('n'), Padding('p'), Margin('m');
+internal enum class InsetsDestination(val letter: Char, val isNone: Boolean) {
+    None('n', true), Padding('p', false), Margin('m', false);
 }
 
 interface ViewInsetsDelegate {
@@ -38,3 +38,5 @@ interface ViewInsetsDelegate {
     fun unsubscribeInsets(): ViewInsetsDelegate
     fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
 }
+
+class ExtendedInsetsTypeMaskOverflow : Exception()
