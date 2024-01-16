@@ -20,7 +20,11 @@ val View.visibleHeight: Int get() = when {
     else -> 0
 }.coerceAtLeast(0)
 
-val View.visibleHeightBottom: Int get() = when {
-    isVisible -> (parent as View).height - top - translationY.toInt()
-    else -> 0
-}.coerceAtLeast(0)
+val View.visibleHeightBottom: Int get() {
+    val top = top + translationY.toInt()
+    return when {
+        !isVisible -> 0
+        isInLayout && top == 0 -> 0
+        else -> (parent as View).height - top
+    }.coerceAtLeast(0)
+}
