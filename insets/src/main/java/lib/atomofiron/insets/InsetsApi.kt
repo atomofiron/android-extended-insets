@@ -27,16 +27,27 @@ interface InsetsProvider : InsetsListener {
     fun requestInsets()
 }
 
-internal enum class InsetsDestination(val letter: Char, val isNone: Boolean) {
-    None('n', true), Padding('p', false), Margin('m', false);
+interface ViewInsetsConfig {
+    fun padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsConfig
+    fun margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsConfig
 }
 
 interface ViewInsetsDelegate {
-    fun padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
-    fun margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsDelegate
-    fun reset(): ViewInsetsDelegate
+    fun applyInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
+    fun applyInsets(start: InsetsDestination? = null, top: InsetsDestination? = null, end: InsetsDestination? = null, bottom: InsetsDestination? = null): ViewInsetsDelegate
     fun unsubscribeInsets(): ViewInsetsDelegate
     fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
 }
 
+enum class InsetsDestination(
+    internal val label: String,
+    internal val isNone: Boolean,
+) {
+    None("none", true), Padding("padding", false), Margin("margin", false);
+
+    internal val letter: Char = label.first()
+}
+
 class ExtendedInsetsTypeMaskOverflow : Exception()
+
+class MultipleViewInsetsDelegate(message: String?) : Exception(message ?: "")

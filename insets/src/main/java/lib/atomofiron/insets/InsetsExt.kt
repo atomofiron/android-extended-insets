@@ -5,6 +5,7 @@ import android.view.ViewParent
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
+import lib.atomofiron.insets.InsetsDestination.*
 
 
 val barsWithCutout: Int = Type.systemBars() or Type.displayCutout()
@@ -33,7 +34,41 @@ fun View.addInsetsListener(listener: InsetsListener): Int {
 fun View.syncInsets(
     typeMask: Int = barsWithCutout,
     dependency: Boolean = false,
-): ViewInsetsDelegate = ViewInsetsDelegateImpl(this, dependency, typeMask)
+    block: (ViewInsetsConfig.() -> Unit)? = null,
+): ViewInsetsDelegate {
+    return block?.let {
+        val config = ViewInsetsConfigImpl().apply(it)
+        ViewInsetsDelegateImpl(this, dependency, typeMask, config.dstStart, config.dstTop, config.dstEnd, config.dstBottom)
+    } ?: ViewInsetsDelegateImpl(this, dependency, typeMask)
+}
+
+fun ViewInsetsDelegate.padding(top: Boolean = false, horizontal: Boolean = false, bottom: Boolean = false)
+    = padding(start = horizontal, top = top, end = horizontal, bottom = bottom)
+
+fun ViewInsetsDelegate.margin(top: Boolean = false, horizontal: Boolean = false, bottom: Boolean = false)
+    = margin(start = horizontal, top = top, end = horizontal, bottom = bottom)
+
+fun ViewInsetsDelegate.padding(horizontal: Boolean = false, vertical: Boolean = false)
+    = padding(start = horizontal, top = vertical, end = horizontal, bottom = vertical)
+
+fun ViewInsetsDelegate.margin(horizontal: Boolean = false, vertical: Boolean = false)
+    = margin(start = horizontal, top = vertical, end = horizontal, bottom = vertical)
+
+fun ViewInsetsDelegate.padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false)
+    = applyInsets(
+        start = Padding.takeIf { start },
+        top = Padding.takeIf { top },
+        end = Padding.takeIf { end },
+        bottom = Padding.takeIf { bottom },
+    )
+
+fun ViewInsetsDelegate.margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false)
+    = applyInsets(
+        start = Margin.takeIf { start },
+        top = Margin.takeIf { top },
+        end = Margin.takeIf { end },
+        bottom = Margin.takeIf { bottom },
+    )
 
 inline fun InsetsProvider.composeInsets(
     // these receive original insets (from parent provider or stock system window insets)
@@ -73,8 +108,16 @@ fun View.onAttachCallback(
     onDetach: (View) -> Unit,
 ): View.OnAttachStateChangeListener {
     if (isAttachedToWindow) onAttach(this)
+    val ex = Exception()
     return object : View.OnAttachStateChangeListener {
-        override fun onViewAttachedToWindow(view: View) = onAttach(view)
+        override fun onViewAttachedToWindow(view: View) {
+            try {
+                onAttach(view)
+            } catch (e: java.lang.Exception) {
+                ex.printStackTrace()
+                throw e
+            }
+        }
         override fun onViewDetachedFromWindow(view: View) = onDetach(view)
     }.also { addOnAttachStateChangeListener(it) }
 }
