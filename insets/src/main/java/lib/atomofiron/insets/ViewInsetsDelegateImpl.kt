@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Yaroslav Nesterov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package lib.atomofiron.insets
 
 import android.view.View
@@ -15,10 +31,14 @@ import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
 
 
-class ViewInsetsDelegateImpl(
-    private val view: View,
+internal class ViewInsetsDelegateImpl(
+    internal val view: View,
     dependency: Boolean,
     private val typeMask: Int = barsWithCutout,
+    dstStart: InsetsDestination = None,
+    private var dstTop: InsetsDestination = None,
+    dstEnd: InsetsDestination = None,
+    private var dstBottom: InsetsDestination = None,
 ) : ViewInsetsDelegate, InsetsListener {
 
     private var stockLeft = 0
@@ -26,16 +46,14 @@ class ViewInsetsDelegateImpl(
     private var stockRight = 0
     private var stockBottom = 0
 
-    private var dstLeft = None
-    private var dstTop = None
-    private var dstRight = None
-    private var dstBottom = None
-
     private var insets = Insets.NONE
     private var windowInsets = WindowInsetsCompat.CONSUMED
-    private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
     private var provider: InsetsProvider? = null
     private var listener: InsetsListener? = this
+    private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
+
+    private var dstLeft = if (isRtl) dstEnd else dstStart
+    private var dstRight = if (isRtl) dstStart else dstEnd
 
     init {
         view.onAttachCallback(
@@ -69,31 +87,27 @@ class ViewInsetsDelegateImpl(
         return this
     }
 
-    override fun padding(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean): ViewInsetsDelegate {
-        logDestinations("padding", start, top, end, bottom)
-        sync(
-            left = if (start && !isRtl || end && isRtl) Padding else dstLeft,
-            top = if (top) Padding else dstTop,
-            right = if (start && isRtl || end && !isRtl) Padding else dstRight,
-            bottom = if (bottom) Padding else dstBottom,
-        )
+    override fun applyInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
+        val config = ViewInsetsConfigImpl().apply(block)
+        applyInsets(config.dstStart, config.dstTop, config.dstEnd, config.dstBottom)
         return this
     }
 
-    override fun margin(start: Boolean, top: Boolean, end: Boolean, bottom: Boolean): ViewInsetsDelegate {
-        logDestinations("margin", start, top, end, bottom)
-        sync(
-            left = if (start && !isRtl || end && isRtl) Margin else dstLeft,
-            top = if (top) Margin else dstTop,
-            right = if (start && isRtl || end && !isRtl) Margin else dstRight,
-            bottom = if (bottom) Margin else dstBottom,
-        )
-        return this
-    }
-
-    override fun reset(): ViewInsetsDelegate {
-        logd { "${view.nameWithId()} reset" }
-        sync(None, None, None, None)
+    override fun applyInsets(start: InsetsDestination?, top: InsetsDestination?, end: InsetsDestination?, bottom: InsetsDestination?): ViewInsetsDelegate {
+        if (isAny(Padding)) applyPadding(Insets.NONE)
+        if (isAny(Margin)) applyMargin(Insets.NONE)
+        dstLeft = (if (isRtl) end else start) ?: dstLeft
+        dstTop = top ?: dstTop
+        dstRight = (if (isRtl) start else end) ?: dstRight
+        dstBottom = bottom ?: dstBottom
+        logd { "${view.nameWithId()} apply insets (${dstLeft.label},${dstTop.label},${dstRight.label},${dstBottom.label})" }
+        stockLeft = if (dstLeft == Margin) view.marginLeft else view.paddingLeft
+        stockTop = if (dstTop == Margin) view.marginTop else view.paddingTop
+        stockRight = if (dstRight == Margin) view.marginRight else view.paddingRight
+        stockBottom = if (dstBottom == Margin) view.marginBottom else view.paddingBottom
+        logInsets()
+        applyPadding(insets)
+        applyMargin(insets)
         return this
     }
 
@@ -115,7 +129,7 @@ class ViewInsetsDelegateImpl(
     }
 
     private fun applyPadding(insets: Insets) {
-        if (!syncAny(Padding)) return
+        if (!isAny(Padding)) return
         view.updatePadding(
             left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
             top = if (dstTop == Padding) stockTop + insets.top else view.paddingTop,
@@ -125,7 +139,7 @@ class ViewInsetsDelegateImpl(
     }
 
     private fun applyMargin(insets: Insets) {
-        if (!syncAny(Margin)) return
+        if (!isAny(Margin)) return
         view.updateLayoutParams<MarginLayoutParams> {
             leftMargin = if (dstLeft == Margin) stockLeft + insets.left else view.marginLeft
             topMargin = if (dstTop == Margin) stockTop + insets.top else view.marginTop
@@ -134,46 +148,13 @@ class ViewInsetsDelegateImpl(
         }
     }
 
-    private fun syncAny(dst: InsetsDestination): Boolean {
+    private fun isAny(dst: InsetsDestination): Boolean {
         return when (dst) {
             dstLeft -> true
             dstTop -> true
             dstRight -> true
             dstBottom -> true
             else -> false
-        }
-    }
-
-    private fun sync(
-        left: InsetsDestination,
-        top: InsetsDestination,
-        right: InsetsDestination,
-        bottom: InsetsDestination,
-    ) {
-        if (syncAny(Padding)) applyPadding(Insets.NONE)
-        if (syncAny(Margin)) applyMargin(Insets.NONE)
-        dstLeft = left
-        dstTop = top
-        dstRight = right
-        dstBottom = bottom
-        stockLeft = if (left == Margin) view.marginLeft else view.paddingLeft
-        stockTop = if (top == Margin) view.marginTop else view.paddingTop
-        stockRight = if (right == Margin) view.marginRight else view.paddingRight
-        stockBottom = if (bottom == Margin) view.marginBottom else view.paddingBottom
-        logInsets()
-        applyPadding(insets)
-        applyMargin(insets)
-    }
-
-    private fun logDestinations(destination: String, start: Boolean, top: Boolean, end: Boolean, bottom: Boolean) {
-        logd {
-            val sides = mutableListOf<String>().apply {
-                if (start) add("start")
-                if (top) add("top")
-                if (end) add("end")
-                if (bottom) add("bottom")
-            }.joinToString()
-            "${view.nameWithId()} +sync $destination: $sides"
         }
     }
 

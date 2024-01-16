@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Yaroslav Nesterov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package lib.atomofiron.insets
 
 import android.view.View
@@ -13,7 +29,7 @@ private data class SrcState(
     val hasListeners: Boolean = false,
 )
 
-class InsetsProviderImpl : InsetsProvider {
+internal class InsetsProviderImpl : InsetsProvider {
 
     private var srcState = SrcState()
         set(value) {
@@ -61,10 +77,15 @@ class InsetsProviderImpl : InsetsProvider {
         if (listener === thisView || listener === this) {
             throw IllegalArgumentException()
         }
-        logd { "${thisView?.nameWithId()} set modifier" }
-        listeners.entries
-            .find { it.value === listener }
-            ?.let { return it.key }
+        listeners.entries.forEach { entry ->
+            if (entry.value === listener) {
+                logd { "${thisView?.nameWithId()} listener already added" }
+                return entry.key
+            } else {
+                listener.checkTheSameView(entry.value)
+            }
+        }
+        logd { "${thisView?.nameWithId()} add insets listener" }
         val key = nextKey++
         srcState = srcState.copy(hasListeners = true)
         listeners[key] = listener
@@ -74,12 +95,14 @@ class InsetsProviderImpl : InsetsProvider {
 
     override fun removeInsetsListener(listener: InsetsListener) {
         val entry = listeners.entries.find { it.value === listener }
-        entry ?: return
+        entry ?: return logd { "${thisView?.nameWithId()} listener already added" }
         removeInsetsListener(entry.key)
     }
 
     override fun removeInsetsListener(key: Int) {
-        if (listeners.remove(key) != null) {
+        val removed = listeners.remove(key) != null
+        logd { "${thisView?.nameWithId()} remove insets listener? $removed" }
+        if (removed) {
             srcState = srcState.copy(hasListeners = listeners.isNotEmpty())
         }
     }
@@ -112,5 +135,12 @@ class InsetsProviderImpl : InsetsProvider {
         listeners.forEach {
             it.value.onApplyWindowInsets(windowInsets)
         }
+    }
+
+    private fun InsetsListener.checkTheSameView(other: InsetsListener) = when {
+        this !is ViewInsetsDelegateImpl -> Unit
+        other !is ViewInsetsDelegateImpl -> Unit
+        other.view !== view -> Unit
+        else -> throw MultipleViewInsetsDelegate("The target view ${view.nameWithId()}")
     }
 }
