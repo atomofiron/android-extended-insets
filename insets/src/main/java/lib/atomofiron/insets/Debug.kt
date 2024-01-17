@@ -37,7 +37,7 @@ internal fun View.nameWithId(): String {
     return "$simpleName(id=$id)"
 }
 
-internal inline fun Any?.logd(message: () -> String) {
+internal inline fun <T : Any?> T.logd(message: T.() -> String) {
     if (debugInsets) Log.d("ExtInsets", "[${this?.simpleName}] ${message()}")
 }
 

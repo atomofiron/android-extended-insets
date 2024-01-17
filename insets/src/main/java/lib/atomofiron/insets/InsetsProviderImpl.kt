@@ -27,6 +27,7 @@ private data class SrcState(
     val windowInsets: ExtendedWindowInsets = ExtendedWindowInsets.CONSUMED,
     val hasModifier: Boolean = false,
     val hasListeners: Boolean = false,
+    val dependencies: Int = 0,
 )
 
 internal class InsetsProviderImpl : InsetsProvider {
@@ -85,25 +86,27 @@ internal class InsetsProviderImpl : InsetsProvider {
                 listener.checkTheSameView(entry.value)
             }
         }
-        logd { "${thisView?.nameWithId()} add insets listener" }
+        logd { "${thisView?.nameWithId()} add insets listener -> ${listeners.size.inc()}" }
         val key = nextKey++
-        srcState = srcState.copy(hasListeners = true)
+        // listeners may or may not be notified with new insets
+        srcState = srcState.copy(hasListeners = true, dependencies = listeners.dependencies(listener))
         listeners[key] = listener
+        // always notify the new one
         listener.onApplyWindowInsets(current)
         return key
     }
 
     override fun removeInsetsListener(listener: InsetsListener) {
         val entry = listeners.entries.find { it.value === listener }
-        entry ?: return logd { "${thisView?.nameWithId()} listener already added" }
+        entry ?: return logd { "${thisView?.nameWithId()} listener not found" }
         removeInsetsListener(entry.key)
     }
 
     override fun removeInsetsListener(key: Int) {
         val removed = listeners.remove(key) != null
-        logd { "${thisView?.nameWithId()} remove insets listener? $removed" }
+        logd { "${thisView?.nameWithId()} remove insets listener? $removed -> ${listeners.size}" }
         if (removed) {
-            srcState = srcState.copy(hasListeners = listeners.isNotEmpty())
+            srcState = srcState.copy(hasListeners = listeners.isNotEmpty(), dependencies = listeners.dependencies())
         }
     }
 
@@ -143,4 +146,8 @@ internal class InsetsProviderImpl : InsetsProvider {
         other.view !== view -> Unit
         else -> throw MultipleViewInsetsDelegate("The target view ${view.nameWithId()}")
     }
+}
+
+private fun Map<Int, InsetsListener>.dependencies(another: InsetsListener? = null): Int {
+    return count { it.value.dependency } + if (another?.dependency == true) 1 else 0
 }

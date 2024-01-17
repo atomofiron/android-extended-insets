@@ -21,6 +21,7 @@ import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 
 fun interface InsetsListener {
+    val dependency: Boolean get() = false
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
@@ -43,19 +44,8 @@ interface InsetsProvider : InsetsListener {
     fun requestInsets()
 }
 
-interface ViewInsetsConfig {
-    fun padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsConfig
-    fun margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false): ViewInsetsConfig
-}
-
 interface ViewInsetsDelegate {
     fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun withInsets(
-        start: InsetsDestination? = null,
-        top: InsetsDestination? = null,
-        end: InsetsDestination? = null,
-        bottom: InsetsDestination? = null,
-    ): ViewInsetsDelegate
     fun unsubscribeInsets(): ViewInsetsDelegate
     fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
 }
@@ -69,6 +59,16 @@ enum class InsetsDestination(
     internal val letter: Char = label.first()
 }
 
+data class InsetsCombining(
+    val combiningTypeMask: Int = 0,
+    val minStart: Int = 0,
+    val minTop: Int = 0,
+    val minEnd: Int = 0,
+    val minBottom: Int = 0,
+)
+
 class ExtendedInsetsTypeMaskOverflow : Exception()
 
 class MultipleViewInsetsDelegate(message: String?) : Exception(message ?: "")
+
+class NoMarginLayoutParams(message: String?) : Exception(message ?: "")
