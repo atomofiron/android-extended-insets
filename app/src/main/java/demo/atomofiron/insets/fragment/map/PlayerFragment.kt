@@ -7,7 +7,7 @@ import demo.atomofiron.insets.R
 import demo.atomofiron.insets.databinding.FragmentPlayerBinding
 import demo.atomofiron.insets.fragment.list.ListFragment
 import lib.atomofiron.insets.margin
-import lib.atomofiron.insets.syncInsets
+import lib.atomofiron.insets.withInsets
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
 
@@ -15,9 +15,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         super.onViewCreated(view, savedInstanceState)
 
         FragmentPlayerBinding.bind(view).apply {
-            searchBar.syncInsets().margin(top = true, horizontal = true)
-            btnStart.syncInsets().margin(start = true, bottom = true)
-            btnEnd.syncInsets().margin(end = true, bottom = true)
+            searchBar.withInsets().margin(top = true, horizontal = true)
+            btnStart.withInsets().margin(start = true, bottom = true)
+            btnEnd.withInsets().margin(end = true, bottom = true)
             btnStart.setOnClickListener { showAnotherFragment(true) }
             btnEnd.setOnClickListener { showAnotherFragment(false) }
         }

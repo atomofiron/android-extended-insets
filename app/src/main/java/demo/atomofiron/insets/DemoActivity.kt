@@ -14,7 +14,7 @@ import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.margin
 import lib.atomofiron.insets.padding
-import lib.atomofiron.insets.syncInsets
+import lib.atomofiron.insets.withInsets
 
 class DemoActivity : Activity() {
 
@@ -66,17 +66,17 @@ class DemoActivity : Activity() {
     }
 
     private fun ActivityDemoBinding.configureInsets() {
-        val topDelegate = viewTop.syncInsets(dependency = true) {
+        val topDelegate = viewTop.withInsets(dependency = true) {
             margin(start = true, end = true).padding(top = true)
         }
-        val bottomDelegate = viewBottom.syncInsets(ExtType.all, dependency = true) {
+        val bottomDelegate = viewBottom.withInsets(ExtType.all, dependency = true) {
             margin(start = true, end = true).padding(bottom = true)
         }
-        fab.syncInsets(ExtType.all).margin(end = true, bottom = true)
-        toolbar.syncInsets(ExtType.all).margin(top = true, horizontal = true)
+        fab.withInsets(ExtType.all).margin(end = true, bottom = true)
+        toolbar.withInsets(ExtType.all).margin(top = true, horizontal = true)
 
         root.composeInsets(
-            bottomPanel.syncInsets(dependency = true).padding(horizontal = true, bottom = true),
+            bottomPanel.withInsets(dependency = true).padding(horizontal = true, bottom = true),
         ) { _, windowInsets -> // insets modifier
             syncCutout(windowInsets)
             switchFullscreen.isChecked = windowInsets.isEmpty(Type.systemBars)
