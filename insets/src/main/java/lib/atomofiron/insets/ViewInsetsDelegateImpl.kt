@@ -29,12 +29,15 @@ import androidx.core.view.updatePadding
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
+import kotlin.math.max
 
+private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
 
 internal class ViewInsetsDelegateImpl(
     internal val view: View,
-    dependency: Boolean,
     private val typeMask: Int = barsWithCutout,
+    private val insetsCombining: InsetsCombining? = null,
+    override val dependency: Boolean,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
@@ -56,14 +59,15 @@ internal class ViewInsetsDelegateImpl(
     private var dstRight = if (isRtl) dstStart else dstEnd
 
     init {
+        saveStock()
         view.onAttachCallback(
             onAttach = {
                 provider = view.parent.findInsetsProvider()
-                logd { "${view.nameWithId()} onAttach provider? ${provider != null}" }
+                logd { "${view.nameWithId()} onAttach provider? ${provider != null}, listener? ${listener != null}" }
                 provider?.addInsetsListener(listener ?: return@onAttachCallback)
             },
             onDetach = {
-                logd { "${view.nameWithId()} onDetach provider? ${provider != null}" }
+                logd { "${view.nameWithId()} onDetach provider? ${provider != null}, listener? ${listener != null}" }
                 provider?.removeInsetsListener(listener ?: return@onAttachCallback)
                 provider = null
             },
@@ -88,41 +92,44 @@ internal class ViewInsetsDelegateImpl(
     }
 
     override fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
-        val config = ViewInsetsConfigImpl().apply(block)
-        withInsets(config.dstStart, config.dstTop, config.dstEnd, config.dstBottom)
-        return this
-    }
-
-    override fun withInsets(start: InsetsDestination?, top: InsetsDestination?, end: InsetsDestination?, bottom: InsetsDestination?): ViewInsetsDelegate {
-        if (isAny(Padding)) applyPadding(Insets.NONE)
-        if (isAny(Margin)) applyMargin(Insets.NONE)
-        dstLeft = (if (isRtl) end else start) ?: dstLeft
-        dstTop = top ?: dstTop
-        dstRight = (if (isRtl) start else end) ?: dstRight
-        dstBottom = bottom ?: dstBottom
-        logd { "${view.nameWithId()} with insets [${dstLeft.label},${dstTop.label},${dstRight.label},${dstBottom.label}]" }
-        stockLeft = if (dstLeft == Margin) view.marginLeft else view.paddingLeft
-        stockTop = if (dstTop == Margin) view.marginTop else view.paddingTop
-        stockRight = if (dstRight == Margin) view.marginRight else view.paddingRight
-        stockBottom = if (dstBottom == Margin) view.marginBottom else view.paddingBottom
-        logInsets()
-        applyPadding(insets)
-        applyMargin(insets)
+        val config = ViewInsetsConfig().apply(block)
+        config.logd { "${view.nameWithId()} with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
+        if (isAny(Padding) && insets.isNotEmpty()) applyPadding(Insets.NONE)
+        if (isAny(Margin) && insets.isNotEmpty()) applyMargin(Insets.NONE)
+        dstLeft = if (isRtl) config.dstEnd else config.dstStart
+        dstTop = config.dstTop
+        dstRight = if (isRtl) config.dstStart else config.dstEnd
+        dstBottom = config.dstBottom
+        saveStock()
+        applyInsets()
         return this
     }
 
     override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
         // there is no need to turn into ExtendedWindowInsets
         this.windowInsets = windowInsets
-        insets = windowInsets.getInsets(typeMask)
-        logInsets()
-        applyPadding(insets)
-        applyMargin(insets)
+        insets = insetsCombining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
+        applyInsets()
     }
 
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         this.windowInsets = windowInsets
-        insets = windowInsets.getInsets(typeMask)
+        insets = insetsCombining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
+        applyInsets()
+    }
+
+    private fun saveStock() {
+        val params = when {
+            isAny(Margin) -> getMarginLayoutParamsOrThrow()
+            else -> stubMarginLayoutParams
+        }
+        stockLeft = if (dstLeft == Margin) params.leftMargin else view.paddingLeft
+        stockTop = if (dstTop == Margin) params.topMargin else view.paddingTop
+        stockRight = if (dstRight == Margin) params.rightMargin else view.paddingRight
+        stockBottom = if (dstBottom == Margin) params.bottomMargin else view.paddingBottom
+    }
+
+    private fun applyInsets() {
         logInsets()
         applyPadding(insets)
         applyMargin(insets)
@@ -140,6 +147,7 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyMargin(insets: Insets) {
         if (!isAny(Margin)) return
+        getMarginLayoutParamsOrThrow()
         view.updateLayoutParams<MarginLayoutParams> {
             leftMargin = if (dstLeft == Margin) stockLeft + insets.left else view.marginLeft
             topMargin = if (dstTop == Margin) stockTop + insets.top else view.marginTop
@@ -158,6 +166,30 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
+    private fun getMarginLayoutParamsOrThrow(): MarginLayoutParams {
+        return view.layoutParams as? MarginLayoutParams ?: throw NoMarginLayoutParams(view.nameWithId())
+    }
+
+    private fun InsetsCombining.combine(windowInsets: WindowInsetsCompat): Insets {
+        val minSubLeft = if (isRtl) minEnd else minStart
+        val minSubRight = if (isRtl) minStart else minEnd
+        val stock = Insets.of(max(stockLeft, minSubLeft), max(stockTop, minTop), max(stockRight, minSubRight), max(stockBottom, minBottom))
+        if (stock.isEmpty()) {
+            return windowInsets.getInsets(typeMask)
+        }
+        val mask = combiningTypeMask and typeMask
+        val other = windowInsets.getInsets(typeMask and mask.inv())
+        if (mask == 0) {
+            return other
+        }
+        val space = windowInsets.getInsets(mask)
+        if (space.isEmpty()) {
+            return other
+        }
+        val subtracted = Insets.subtract(space, stock)
+        return Insets.max(other, subtracted)
+    }
+
     private fun logInsets() {
         if (!debugInsets) return
         val left = if (dstLeft.isNone) "" else insets.left.toString()
@@ -165,6 +197,6 @@ internal class ViewInsetsDelegateImpl(
         val right = if (dstRight.isNone) "" else insets.right.toString()
         val bottom = if (dstBottom.isNone) "" else insets.bottom.toString()
         val types = typeMask.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
-        logd { "${view.nameWithId()} applied[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types" }
+        logd { "${view.nameWithId()} insets[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types" }
     }
 }
