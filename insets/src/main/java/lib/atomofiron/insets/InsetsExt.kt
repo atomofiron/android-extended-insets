@@ -21,7 +21,8 @@ import android.view.ViewParent
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
-import lib.atomofiron.insets.InsetsDestination.*
+import lib.atomofiron.insets.InsetsDestination.Margin
+import lib.atomofiron.insets.InsetsDestination.Padding
 
 
 val barsWithCutout: Int = Type.systemBars() or Type.displayCutout()
@@ -47,7 +48,7 @@ fun View.addInsetsListener(listener: InsetsListener): Int {
     return key ?: INVALID_INSETS_LISTENER_KEY
 }
 
-fun View.syncInsets(
+fun View.withInsets(
     typeMask: Int = barsWithCutout,
     dependency: Boolean = false,
     block: (ViewInsetsConfig.() -> Unit)? = null,
@@ -71,7 +72,7 @@ fun ViewInsetsDelegate.margin(horizontal: Boolean = false, vertical: Boolean = f
     = margin(start = horizontal, top = vertical, end = horizontal, bottom = vertical)
 
 fun ViewInsetsDelegate.padding(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false)
-    = applyInsets(
+    = withInsets(
         start = Padding.takeIf { start },
         top = Padding.takeIf { top },
         end = Padding.takeIf { end },
@@ -79,7 +80,7 @@ fun ViewInsetsDelegate.padding(start: Boolean = false, top: Boolean = false, end
     )
 
 fun ViewInsetsDelegate.margin(start: Boolean = false, top: Boolean = false, end: Boolean = false, bottom: Boolean = false)
-    = applyInsets(
+    = withInsets(
         start = Margin.takeIf { start },
         top = Margin.takeIf { top },
         end = Margin.takeIf { end },
