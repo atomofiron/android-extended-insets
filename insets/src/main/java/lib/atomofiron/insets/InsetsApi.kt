@@ -49,8 +49,13 @@ interface ViewInsetsConfig {
 }
 
 interface ViewInsetsDelegate {
-    fun applyInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun applyInsets(start: InsetsDestination? = null, top: InsetsDestination? = null, end: InsetsDestination? = null, bottom: InsetsDestination? = null): ViewInsetsDelegate
+    fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
+    fun withInsets(
+        start: InsetsDestination? = null,
+        top: InsetsDestination? = null,
+        end: InsetsDestination? = null,
+        bottom: InsetsDestination? = null,
+    ): ViewInsetsDelegate
     fun unsubscribeInsets(): ViewInsetsDelegate
     fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
 }

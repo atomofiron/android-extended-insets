@@ -87,20 +87,20 @@ internal class ViewInsetsDelegateImpl(
         return this
     }
 
-    override fun applyInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
+    override fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
         val config = ViewInsetsConfigImpl().apply(block)
-        applyInsets(config.dstStart, config.dstTop, config.dstEnd, config.dstBottom)
+        withInsets(config.dstStart, config.dstTop, config.dstEnd, config.dstBottom)
         return this
     }
 
-    override fun applyInsets(start: InsetsDestination?, top: InsetsDestination?, end: InsetsDestination?, bottom: InsetsDestination?): ViewInsetsDelegate {
+    override fun withInsets(start: InsetsDestination?, top: InsetsDestination?, end: InsetsDestination?, bottom: InsetsDestination?): ViewInsetsDelegate {
         if (isAny(Padding)) applyPadding(Insets.NONE)
         if (isAny(Margin)) applyMargin(Insets.NONE)
         dstLeft = (if (isRtl) end else start) ?: dstLeft
         dstTop = top ?: dstTop
         dstRight = (if (isRtl) start else end) ?: dstRight
         dstBottom = bottom ?: dstBottom
-        logd { "${view.nameWithId()} apply insets (${dstLeft.label},${dstTop.label},${dstRight.label},${dstBottom.label})" }
+        logd { "${view.nameWithId()} with insets [${dstLeft.label},${dstTop.label},${dstRight.label},${dstBottom.label}]" }
         stockLeft = if (dstLeft == Margin) view.marginLeft else view.paddingLeft
         stockTop = if (dstTop == Margin) view.marginTop else view.paddingTop
         stockRight = if (dstRight == Margin) view.marginRight else view.paddingRight
@@ -165,6 +165,6 @@ internal class ViewInsetsDelegateImpl(
         val right = if (dstRight.isNone) "" else insets.right.toString()
         val bottom = if (dstBottom.isNone) "" else insets.bottom.toString()
         val types = typeMask.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
-        logd { "${view.nameWithId()} ${dstLeft.letter}$left ${dstTop.letter}$top ${dstRight.letter}$right ${dstBottom.letter}$bottom, $types" }
+        logd { "${view.nameWithId()} applied[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types" }
     }
 }
