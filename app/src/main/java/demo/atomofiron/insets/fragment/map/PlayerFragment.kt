@@ -3,11 +3,12 @@ package demo.atomofiron.insets.fragment.map
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import demo.atomofiron.insets.ExtType
 import demo.atomofiron.insets.R
 import demo.atomofiron.insets.databinding.FragmentPlayerBinding
 import demo.atomofiron.insets.fragment.list.ListFragment
-import lib.atomofiron.insets.margin
-import lib.atomofiron.insets.withInsets
+import lib.atomofiron.insets.insetsCombining
+import lib.atomofiron.insets.withInsetsMargin
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
 
@@ -15,9 +16,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         super.onViewCreated(view, savedInstanceState)
 
         FragmentPlayerBinding.bind(view).apply {
-            searchBar.withInsets().margin(top = true, horizontal = true)
-            btnStart.withInsets().margin(start = true, bottom = true)
-            btnEnd.withInsets().margin(end = true, bottom = true)
+            searchBar.withInsetsMargin(ExtType.common, insetsCombining, dependency = true, top = true, horizontal = true)
+            btnStart.withInsetsMargin(ExtType.common, insetsCombining, dependency = true, start = true, bottom = true)
+            btnEnd.withInsetsMargin(ExtType.common, insetsCombining, dependency = true, end = true, bottom = true)
             btnStart.setOnClickListener { showAnotherFragment(true) }
             btnEnd.setOnClickListener { showAnotherFragment(false) }
         }

@@ -6,7 +6,7 @@ import lib.atomofiron.insets.ExtendedWindowInsets
 object ExtType : ExtendedWindowInsets.Type() {
     val verticalPanels = next()
     val togglePanel = next()
-    val all = verticalPanels or togglePanel or systemBars or displayCutout
+    val common = verticalPanels or togglePanel or systemBars or displayCutout
 }
 
 // associate your custom type with ExtendedWindowInsets

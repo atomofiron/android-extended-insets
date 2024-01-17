@@ -15,12 +15,12 @@ fun <T> Iterable<T>.sumBy(zero: T? = null, action: T.(T) -> T): T {
     return sum
 }
 
-val View.visibleHeight: Int get() = when {
+val View.visibleTopHeight: Int get() = when {
     isVisible -> bottom + translationY.toInt()
     else -> 0
 }.coerceAtLeast(0)
 
-val View.visibleHeightBottom: Int get() {
+val View.visibleBottomHeight: Int get() {
     val top = top + translationY.toInt()
     return when {
         !isVisible -> 0

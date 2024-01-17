@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?colorSurface"
     >
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -12,9 +13,9 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_field"
         android:orientation="horizontal"
-        android:layout_margin="8dp"
+        android:layout_margin="16dp"
         android:gravity="center_vertical"
-        android:backgroundTint="?android:attr/colorBackground"
+        android:backgroundTint="?colorSurfaceContainerHighest"
         app:layout_constraintTop_toTopOf="parent"
         >
         <ImageView
@@ -54,6 +55,7 @@
         android:text="Here"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         />
     <Button
         android:id="@+id/btn_end"
@@ -64,5 +66,6 @@
         android:text="There"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         />
 </androidx.constraintlayout.widget.ConstraintLayout>

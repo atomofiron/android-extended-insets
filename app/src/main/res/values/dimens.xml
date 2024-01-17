@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="corner">16dp</dimen>
+    <dimen name="common_padding">16dp</dimen>
+    <dimen name="toolbar_navigation_padding">16dp</dimen>
+    <dimen name="toolbar_menu_padding">10dp</dimen>
 </resources>
