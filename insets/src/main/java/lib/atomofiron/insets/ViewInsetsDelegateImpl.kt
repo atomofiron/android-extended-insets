@@ -17,6 +17,7 @@
 package lib.atomofiron.insets
 
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
@@ -54,6 +55,7 @@ internal class ViewInsetsDelegateImpl(
     private var provider: InsetsProvider? = null
     private var listener: InsetsListener? = this
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
+    private var scrollOnPaddingTopChanged = false
 
     private var dstLeft = if (isRtl) dstEnd else dstStart
     private var dstRight = if (isRtl) dstStart else dstEnd
@@ -118,6 +120,10 @@ internal class ViewInsetsDelegateImpl(
         applyInsets()
     }
 
+    override fun scrollOnPaddingTopChanged() {
+        scrollOnPaddingTopChanged = true
+    }
+
     private fun saveStock() {
         val params = when {
             isAny(Margin) -> getMarginLayoutParamsOrThrow()
@@ -137,12 +143,17 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyPadding(insets: Insets) {
         if (!isAny(Padding)) return
+        val paddingTop = view.paddingTop
+        val scrollOnPaddingTopChanged = scrollOnPaddingTopChanged && ((view as? ViewGroup)?.getChildAt(0)?.top ?: -1) == paddingTop
         view.updatePadding(
             left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
             top = if (dstTop == Padding) stockTop + insets.top else view.paddingTop,
             right = if (dstRight == Padding) stockRight + insets.right else view.paddingRight,
             bottom = if (dstBottom == Padding) stockBottom + insets.bottom else view.paddingBottom,
         )
+        if (scrollOnPaddingTopChanged && paddingTop < view.paddingTop) {
+            view.scrollBy(0, paddingTop - view.paddingTop)
+        }
     }
 
     private fun applyMargin(insets: Insets) {
