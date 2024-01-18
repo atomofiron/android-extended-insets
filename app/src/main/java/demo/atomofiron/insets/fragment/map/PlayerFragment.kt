@@ -16,9 +16,10 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         super.onViewCreated(view, savedInstanceState)
 
         FragmentPlayerBinding.bind(view).apply {
-            searchBar.withInsetsMargin(ExtType.common, insetsCombining, dependency = true, top = true, horizontal = true)
-            btnStart.withInsetsMargin(ExtType.common, insetsCombining, dependency = true, start = true, bottom = true)
-            btnEnd.withInsetsMargin(ExtType.common, insetsCombining, dependency = true, end = true, bottom = true)
+            searchBar.withInsetsMargin(ExtType.common, insetsCombining, top = true, horizontal = true)
+            val insetsCombining = insetsCombining.run { copy(combiningTypeMask or ExtType.togglePanel) }
+            btnStart.withInsetsMargin(ExtType.common, insetsCombining, start = true, bottom = true)
+            btnEnd.withInsetsMargin(ExtType.common, insetsCombining, end = true, bottom = true)
             btnStart.setOnClickListener { showAnotherFragment(true) }
             btnEnd.setOnClickListener { showAnotherFragment(false) }
         }
