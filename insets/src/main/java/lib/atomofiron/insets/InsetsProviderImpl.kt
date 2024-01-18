@@ -30,12 +30,12 @@ private data class SrcState(
     val dependencies: Int = 0,
 )
 
-internal class InsetsProviderImpl : InsetsProvider {
+internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeListener {
 
     private var srcState = SrcState()
         set(value) {
             logd { "${thisView?.nameWithId()} new state? ${field != value}" }
-            if (value.hasModifier || field != value) {
+            if (value.hasModifier && value.dependencies > 0 || field != value) {
                 field = value
                 updateCurrent(value)
             }
@@ -56,16 +56,20 @@ internal class InsetsProviderImpl : InsetsProvider {
 
     override fun View.onInit() {
         thisView = this
-        onAttachCallback(
-            onAttach = {
-                provider = parent.findInsetsProvider()
-                provider?.addInsetsListener(this@InsetsProviderImpl)
-            },
-            onDetach = {
-                provider?.removeInsetsListener(this@InsetsProviderImpl)
-                provider = null
-            },
-        )
+        addOnAttachStateChangeListener(this@InsetsProviderImpl)
+        if (isAttachedToWindow) onViewAttachedToWindow(this)
+    }
+
+    override fun onViewAttachedToWindow(view: View) {
+        provider = view.parent.findInsetsProvider()
+        this.logd { "${view.nameWithId()} onAttach parent provider? ${provider != null}" }
+        provider?.addInsetsListener(this)
+    }
+
+    override fun onViewDetachedFromWindow(view: View) {
+        logd { "${view.nameWithId()} onDetach parent provider? ${provider != null}" }
+        provider?.removeInsetsListener(this)
+        provider = null
     }
 
     override fun setInsetsModifier(modifier: InsetsModifier) {
