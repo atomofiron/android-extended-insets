@@ -135,8 +135,8 @@ internal class InsetsProviderImpl : InsetsProvider {
     }
 
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
-        listeners.forEach {
-            it.value.onApplyWindowInsets(windowInsets)
+        listeners.values.toTypedArray().forEach {
+            it.onApplyWindowInsets(windowInsets)
         }
     }
 
