@@ -30,7 +30,7 @@ fun interface InsetsModifier {
 }
 
 interface InsetsProvider : InsetsListener {
-    val current: WindowInsetsCompat
+    val current: ExtendedWindowInsets
 
     fun View.onInit()
     fun addInsetsListener(listener: InsetsListener): Int
@@ -44,11 +44,9 @@ interface InsetsProvider : InsetsListener {
     fun requestInsets()
 }
 
-interface ViewInsetsDelegate {
+interface ViewInsetsDelegate : InsetsListener {
     fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun unsubscribeInsets(): ViewInsetsDelegate
-    fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
-    fun scrollOnPaddingTopChanged()
+    fun detachFromProvider(): ViewInsetsDelegate
 }
 
 enum class InsetsDestination(

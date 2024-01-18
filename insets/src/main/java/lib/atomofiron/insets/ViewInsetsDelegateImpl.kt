@@ -20,11 +20,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.core.graphics.Insets
+import androidx.core.view.ScrollingView
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.marginBottom
-import androidx.core.view.marginLeft
-import androidx.core.view.marginRight
-import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import lib.atomofiron.insets.InsetsDestination.Margin
@@ -43,7 +40,7 @@ internal class ViewInsetsDelegateImpl(
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
     private var dstBottom: InsetsDestination = None,
-) : ViewInsetsDelegate, InsetsListener {
+) : ViewInsetsDelegate, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private var stockLeft = 0
     private var stockTop = 0
@@ -55,38 +52,31 @@ internal class ViewInsetsDelegateImpl(
     private var provider: InsetsProvider? = null
     private var listener: InsetsListener? = this
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
-    private var scrollOnPaddingTopChanged = false
+    private var postRequestLayoutOnNextLayout = false
 
     private var dstLeft = if (isRtl) dstEnd else dstStart
     private var dstRight = if (isRtl) dstStart else dstEnd
 
     init {
         saveStock()
-        view.onAttachCallback(
-            onAttach = {
-                provider = view.parent.findInsetsProvider()
-                logd { "${view.nameWithId()} onAttach provider? ${provider != null}, listener? ${listener != null}" }
-                provider?.addInsetsListener(listener ?: return@onAttachCallback)
-            },
-            onDetach = {
-                logd { "${view.nameWithId()} onDetach provider? ${provider != null}, listener? ${listener != null}" }
-                provider?.removeInsetsListener(listener ?: return@onAttachCallback)
-                provider = null
-            },
-        )
-        if (dependency) {
-            view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-                val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
-                val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
-                if (horizontally || vertically) {
-                    logd { "${view.nameWithId()} request insets? ${provider != null}" }
-                    provider?.requestInsets()
-                }
-            }
-        }
+        view.addOnAttachStateChangeListener(this)
+        if (view.isAttachedToWindow) onViewAttachedToWindow(view)
+        view.addOnLayoutChangeListener(this)
     }
 
-    override fun unsubscribeInsets(): ViewInsetsDelegate {
+    override fun onViewAttachedToWindow(view: View) {
+        provider = view.parent.findInsetsProvider()
+        logd { "${view.nameWithId()} onAttach provider? ${provider != null}, listener? ${listener != null}" }
+        provider?.addInsetsListener(listener ?: return)
+    }
+
+    override fun onViewDetachedFromWindow(view: View) {
+        logd { "${view.nameWithId()} onDetach provider? ${provider != null}, listener? ${listener != null}" }
+        provider?.removeInsetsListener(listener ?: return)
+        provider = null
+    }
+
+    override fun detachFromProvider(): ViewInsetsDelegate {
         logd { "${view.nameWithId()} unsubscribe insets? ${provider != null}" }
         provider?.removeInsetsListener(this)
         listener = null
@@ -107,21 +97,27 @@ internal class ViewInsetsDelegateImpl(
         return this
     }
 
-    override fun onApplyWindowInsets(windowInsets: WindowInsetsCompat) {
-        // there is no need to turn into ExtendedWindowInsets
-        this.windowInsets = windowInsets
-        insets = insetsCombining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
-        applyInsets()
-    }
-
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         this.windowInsets = windowInsets
-        insets = insetsCombining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
-        applyInsets()
+        val new = insetsCombining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
+        if (insets != new) {
+            insets = new
+            applyInsets()
+            if (isAny(Margin) && !view.isShown) postRequestLayoutOnNextLayout = true
+        }
     }
 
-    override fun scrollOnPaddingTopChanged() {
-        scrollOnPaddingTopChanged = true
+    override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int, ) {
+        val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
+        val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
+        if (dependency && (horizontally || vertically)) {
+            logd { "${view.nameWithId()} request insets? ${provider != null}" }
+            provider?.requestInsets()
+        }
+        if (postRequestLayoutOnNextLayout) {
+            postRequestLayoutOnNextLayout = false
+            view.post { view.requestLayout() }
+        }
     }
 
     private fun saveStock() {
@@ -144,14 +140,14 @@ internal class ViewInsetsDelegateImpl(
     private fun applyPadding(insets: Insets) {
         if (!isAny(Padding)) return
         val paddingTop = view.paddingTop
-        val scrollOnPaddingTopChanged = scrollOnPaddingTopChanged && ((view as? ViewGroup)?.getChildAt(0)?.top ?: -1) == paddingTop
+        val scrollable = view is ScrollingView && (view as? ViewGroup)?.getChildAt(0)?.top == paddingTop
         view.updatePadding(
             left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
             top = if (dstTop == Padding) stockTop + insets.top else view.paddingTop,
             right = if (dstRight == Padding) stockRight + insets.right else view.paddingRight,
             bottom = if (dstBottom == Padding) stockBottom + insets.bottom else view.paddingBottom,
         )
-        if (scrollOnPaddingTopChanged && paddingTop < view.paddingTop) {
+        if (scrollable && paddingTop < view.paddingTop) {
             view.scrollBy(0, paddingTop - view.paddingTop)
         }
     }
@@ -160,10 +156,10 @@ internal class ViewInsetsDelegateImpl(
         if (!isAny(Margin)) return
         getMarginLayoutParamsOrThrow()
         view.updateLayoutParams<MarginLayoutParams> {
-            leftMargin = if (dstLeft == Margin) stockLeft + insets.left else view.marginLeft
-            topMargin = if (dstTop == Margin) stockTop + insets.top else view.marginTop
-            rightMargin = if (dstRight == Margin) stockRight + insets.right else view.marginRight
-            bottomMargin = if (dstBottom == Margin) stockBottom + insets.bottom else view.marginBottom
+            leftMargin = if (dstLeft == Margin) stockLeft + insets.left else leftMargin
+            topMargin = if (dstTop == Margin) stockTop + insets.top else topMargin
+            rightMargin = if (dstRight == Margin) stockRight + insets.right else rightMargin
+            bottomMargin = if (dstBottom == Margin) stockBottom + insets.bottom else bottomMargin
         }
     }
 
@@ -182,9 +178,12 @@ internal class ViewInsetsDelegateImpl(
     }
 
     private fun InsetsCombining.combine(windowInsets: WindowInsetsCompat): Insets {
-        val minSubLeft = if (isRtl) minEnd else minStart
-        val minSubRight = if (isRtl) minStart else minEnd
-        val stock = Insets.of(max(stockLeft, minSubLeft), max(stockTop, minTop), max(stockRight, minSubRight), max(stockBottom, minBottom))
+        val stock = Insets.of(
+            max(stockLeft, if (isRtl) minEnd else minStart),
+            max(stockTop, minTop),
+            max(stockRight, if (isRtl) minStart else minEnd),
+            max(stockBottom, minBottom),
+        )
         if (stock.isEmpty()) {
             return windowInsets.getInsets(typeMask)
         }
@@ -202,12 +201,13 @@ internal class ViewInsetsDelegateImpl(
     }
 
     private fun logInsets() {
-        if (!debugInsets) return
-        val left = if (dstLeft.isNone) "" else insets.left.toString()
-        val top = if (dstTop.isNone) "" else insets.top.toString()
-        val right = if (dstRight.isNone) "" else insets.right.toString()
-        val bottom = if (dstBottom.isNone) "" else insets.bottom.toString()
-        val types = typeMask.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
-        logd { "${view.nameWithId()} insets[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types" }
+        logd {
+            val left = if (dstLeft.isNone) "" else insets.left.toString()
+            val top = if (dstTop.isNone) "" else insets.top.toString()
+            val right = if (dstRight.isNone) "" else insets.right.toString()
+            val bottom = if (dstBottom.isNone) "" else insets.bottom.toString()
+            val types = typeMask.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
+            "${view.nameWithId()} insets[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types"
+        }
     }
 }

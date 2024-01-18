@@ -156,7 +156,7 @@ inline fun InsetsProvider.composeInsets(
     vararg delegates: ViewInsetsDelegate,
     crossinline transformation: (hasListeners: Boolean, ExtendedWindowInsets) -> WindowInsetsCompat,
 ) {
-    delegates.forEach { it.unsubscribeInsets() }
+    delegates.forEach { it.detachFromProvider() }
     setInsetsModifier { hasListeners, windowInsets ->
         delegates.forEach { it.onApplyWindowInsets(windowInsets) }
         transformation(hasListeners, windowInsets).toExtended()
@@ -190,14 +190,3 @@ inline operator fun <T : ExtendedWindowInsets.Type> WindowInsetsCompat.invoke(
 }
 
 operator fun WindowInsetsCompat.get(type: Int): Insets = getInsets(type)
-
-fun View.onAttachCallback(
-    onAttach: (View) -> Unit,
-    onDetach: (View) -> Unit,
-): View.OnAttachStateChangeListener {
-    if (isAttachedToWindow) onAttach(this)
-    return object : View.OnAttachStateChangeListener {
-        override fun onViewAttachedToWindow(view: View) = onAttach(view)
-        override fun onViewDetachedFromWindow(view: View) = onDetach(view)
-    }.also { addOnAttachStateChangeListener(it) }
-}
