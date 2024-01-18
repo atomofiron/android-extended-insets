@@ -48,6 +48,7 @@ interface ViewInsetsDelegate {
     fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
     fun unsubscribeInsets(): ViewInsetsDelegate
     fun onApplyWindowInsets(windowInsets: WindowInsetsCompat)
+    fun scrollOnPaddingTopChanged()
 }
 
 enum class InsetsDestination(
