@@ -15,7 +15,7 @@ class ListFragment : Fragment(R.layout.fragment_list) {
         val binding = FragmentListBinding.bind(view)
         binding.apply {
             root.adapter = StringAdapter()
-            root.withInsetsPadding(ExtType.common, vertical = true)
+            root.withInsetsPadding(ExtType.common, vertical = true).scrollOnPaddingTopChanged()
         }
     }
 }
