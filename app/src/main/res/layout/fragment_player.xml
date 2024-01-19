@@ -35,6 +35,7 @@
             android:backgroundTint="?android:attr/colorBackground"
             android:paddingStart="16dp"
             android:hint="Search..."
+            android:imeOptions="flagNoExtractUi"
             android:textColor="?android:textColorPrimary"
             />
         <ImageView
