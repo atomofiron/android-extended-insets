@@ -30,6 +30,7 @@ private const val LIMIT = Int.SIZE_BITS - 1 // one for the sign
 // 01010101010101010101010101010101
 //  ^-last         FIRST-^
 internal const val FIRST = 1.shl(OFFSET)
+private const val ALL = Int.MAX_VALUE
 private var next = FIRST
 
 private fun emptyValues(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
@@ -135,6 +136,17 @@ class ExtendedWindowInsets private constructor(
             return this
         }
 
+        fun consume(insets: Insets, typeMask: Int = ALL): Builder {
+            if (insets.isEmpty()) return this
+            logConsuming(values, insets, typeMask)
+            for (i in values.indices) {
+                if ((1.shl(i) and typeMask) != 0 && !values[i].isZero) {
+                    values[i] = values[i].consume(insets)
+                }
+            }
+            return this
+        }
+
         // compatible with the WindowInsetsCompat api
         fun setInsets(type: Int, insets: Insets): Builder = set(type, insets)
 
@@ -158,14 +170,25 @@ internal value class InsetsValue(
     val right: Int get() = (value.shr(16) and PART_MASK).toInt()
     val bottom: Int get() = (value and PART_MASK).toInt()
 
-    constructor(insets: Insets) : this(
-        insets.left.toULong().shl(48) +
-                (insets.top.toULong() and PART_MASK).shl(32) +
-                (insets.right.toULong() and PART_MASK).shl(16) +
-                (insets.bottom.toULong() and PART_MASK)
+    constructor(left: Int, top: Int, right: Int, bottom: Int) : this(
+        left.toULong().shl(48) +
+                (top.toULong() and PART_MASK).shl(32) +
+                (right.toULong() and PART_MASK).shl(16) +
+                (bottom.toULong() and PART_MASK)
     )
 
+    constructor(insets: Insets) : this(insets.left, insets.top, insets.right, insets.bottom)
+
     fun toInsets() = Insets.of(left, top, right, bottom)
+
+    fun consume(insets: Insets): InsetsValue {
+        return InsetsValue(
+            (left - insets.left).coerceAtLeast(0),
+            (top - insets.top).coerceAtLeast(0),
+            (right - insets.right).coerceAtLeast(0),
+            (bottom - insets.bottom).coerceAtLeast(0),
+        )
+    }
 }
 
 private fun WindowInsetsCompat?.toValues(): Array<InsetsValue> {
@@ -176,4 +199,22 @@ private fun WindowInsetsCompat?.toValues(): Array<InsetsValue> {
         if (next.isNotEmpty()) insets[index] = InsetsValue(next)
     }
     return insets
+}
+
+private fun ExtendedWindowInsets.Builder.logConsuming(values: Array<InsetsValue>, consuming: Insets, typeMask: Int) {
+    logd(ExtendedWindowInsets::class) {
+        val consumed = mutableListOf<String>()
+        for (i in values.indices) {
+            val cursor = 1.shl(i)
+            if ((cursor and typeMask) != 0 && !values[i].isZero) {
+                val min = Insets.min(values[i].toInsets(), consuming)
+                min.takeIf { it.isNotEmpty()}?.run {
+                    val name = insetsTypeNameProvider[cursor] ?: "unknown"
+                    consumed.add("$name[$left,$top,$right,$bottom]")
+                }
+            }
+        }
+        val max = consuming.run { "[$left,$top,$right,$bottom]" }
+        "consume $max, consumed: ${consumed.joinToString(separator = " ")}"
+    }
 }

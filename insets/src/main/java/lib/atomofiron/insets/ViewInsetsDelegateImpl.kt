@@ -31,16 +31,24 @@ import kotlin.math.max
 
 private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
 
+data class Dependency(
+    val horizontal: Boolean = false,
+    val vertical: Boolean = false,
+) {
+    val any = horizontal || vertical
+}
+
 internal class ViewInsetsDelegateImpl(
     internal val view: View,
     private val typeMask: Int = barsWithCutout,
-    private val insetsCombining: InsetsCombining? = null,
-    override val dependency: Boolean,
+    private val combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
     private var dstBottom: InsetsDestination = None,
 ) : ViewInsetsDelegate, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+
+    override val isDependency: Boolean get() = dependency.any
 
     private var stockLeft = 0
     private var stockTop = 0
@@ -53,6 +61,7 @@ internal class ViewInsetsDelegateImpl(
     private var listener: InsetsListener? = this
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
     private var postRequestLayoutOnNextLayout = false
+    private var dependency = Dependency()
 
     private var dstLeft = if (isRtl) dstEnd else dstStart
     private var dstRight = if (isRtl) dstStart else dstEnd
@@ -99,7 +108,7 @@ internal class ViewInsetsDelegateImpl(
 
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         this.windowInsets = windowInsets
-        val new = insetsCombining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
+        val new = combining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
         if (insets != new) {
             insets = new
             applyInsets()
@@ -107,10 +116,20 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
+    override fun horizontalDependency(): ViewInsetsDelegate {
+        dependency = dependency.copy(horizontal = true)
+        return this
+    }
+
+    override fun verticalDependency(): ViewInsetsDelegate {
+        dependency = dependency.copy(vertical = true)
+        return this
+    }
+
     override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int, ) {
         val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
         val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
-        if (dependency && (horizontally || vertically)) {
+        if (dependency.horizontal && horizontally || dependency.vertical && vertically) {
             logd { "${view.nameWithId()} request insets? ${provider != null}" }
             provider?.requestInsets()
         }
@@ -139,16 +158,24 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyPadding(insets: Insets) {
         if (!isAny(Padding)) return
-        val paddingTop = view.paddingTop
-        val scrollable = view is ScrollingView && (view as? ViewGroup)?.getChildAt(0)?.top == paddingTop
+        val scrollingPadding = view.paddingTop.takeIf {
+            view is ScrollingView && (view as? ViewGroup)?.getChildAt(0)?.top == it
+        }
+        val oldPadding = view.takeIf { dependency.any }?.run {
+            Insets.of(paddingLeft, paddingTop, paddingRight, paddingBottom)
+        }
         view.updatePadding(
             left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
             top = if (dstTop == Padding) stockTop + insets.top else view.paddingTop,
             right = if (dstRight == Padding) stockRight + insets.right else view.paddingRight,
             bottom = if (dstBottom == Padding) stockBottom + insets.bottom else view.paddingBottom,
         )
-        if (scrollable && paddingTop < view.paddingTop) {
-            view.scrollBy(0, paddingTop - view.paddingTop)
+        scrollingPadding?.let { old ->
+            if (old < view.paddingTop) view.scrollBy(0, scrollingPadding - view.paddingTop)
+        }
+        oldPadding?.run {
+            if (dependency.horizontal) view.right += (view.paddingLeft + view.paddingRight) - (left + right)
+            if (dependency.vertical) view.bottom += (view.paddingTop + view.paddingBottom) - (top + bottom)
         }
     }
 

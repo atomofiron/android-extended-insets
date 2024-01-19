@@ -21,7 +21,7 @@ import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 
 fun interface InsetsListener {
-    val dependency: Boolean get() = false
+    val isDependency: Boolean get() = false
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
@@ -47,6 +47,8 @@ interface InsetsProvider : InsetsListener {
 interface ViewInsetsDelegate : InsetsListener {
     fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
     fun detachFromProvider(): ViewInsetsDelegate
+    fun horizontalDependency(): ViewInsetsDelegate
+    fun verticalDependency(): ViewInsetsDelegate
 }
 
 enum class InsetsDestination(

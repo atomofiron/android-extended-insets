@@ -21,10 +21,20 @@ import android.util.Log
 import android.view.View
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
+import kotlin.reflect.KClass
 
 var debugInsets: Boolean = false
-
-var customTypeNameProvider: ((Int) -> String?)? = null
+var insetsTypeNameProvider: MutableMap<Int,String> = hashMapOf(
+    Type.systemBars() to "systemBars",
+    Type.statusBars() to "statusBars",
+    Type.navigationBars() to "navigationBars",
+    Type.captionBar() to "captionBar",
+    Type.tappableElement() to "tappableElement",
+    Type.displayCutout() to "displayCutout",
+    Type.ime() to "ime",
+    Type.systemGestures() to "systemGestures",
+    Type.mandatorySystemGestures() to "mandatorySystemGestures",
+)
 
 internal val Any.simpleName: String get() = javaClass.simpleName
 
@@ -37,8 +47,9 @@ internal fun View.nameWithId(): String {
     return "$simpleName(id=$id)"
 }
 
-internal inline fun <T : Any?> T.logd(message: T.() -> String) {
-    if (debugInsets) Log.d("ExtInsets", "[${this?.simpleName}] ${message()}")
+internal inline fun <T : Any?> T.logd(parent: KClass<*>? = null, message: T.() -> String) {
+    val parentClass = parent?.simpleName?.let { "$it." } ?: ""
+    if (debugInsets) Log.d("ExtInsets", "[$parentClass${this?.simpleName}] ${message()}")
 }
 
 private class Data(
@@ -54,30 +65,29 @@ private class Data(
 
 internal fun Int.getTypes(windowInsets: WindowInsetsCompat?, left: Boolean, top: Boolean, right: Boolean, bottom: Boolean): String {
     val data = Data(windowInsets, left, top, right, bottom)
-    if (!check("systemBars", Type.systemBars(), data)) {
-        check("statusBars", Type.statusBars(), data)
-        check("navigationBars", Type.navigationBars(), data)
-        check("captionBar", Type.captionBar(), data)
+    if (!check(Type.systemBars(), data)) {
+        check(Type.statusBars(), data)
+        check(Type.navigationBars(), data)
+        check(Type.captionBar(), data)
     }
-    check("tappableElement", Type.tappableElement(), data)
-    check("displayCutout", Type.displayCutout(), data)
-    check("ime", Type.ime(), data)
-    check("systemGestures", Type.systemGestures(), data)
-    check("mandatorySystemGestures", Type.mandatorySystemGestures(), data)
-    val customTypeNameProvider = customTypeNameProvider
+    check(Type.tappableElement(), data)
+    check(Type.displayCutout(), data)
+    check(Type.ime(), data)
+    check(Type.systemGestures(), data)
+    check(Type.mandatorySystemGestures(), data)
     var cursor = FIRST
     while (this >= cursor && cursor > 0) {
         if ((this and cursor) != 0) {
-            val name = customTypeNameProvider?.invoke(cursor) ?: "unknown"
-            check(name, cursor, data)
+            check(cursor, data)
         }
         cursor = cursor.shl(1)
     }
     return "${data.dependencies.joinToString(prefix = "dependsOn[", separator = ",", postfix = "]")} ${data.not.joinToString(prefix = "not[", separator = ",", postfix = "]")}"
 }
 
-private fun Int.check(name: String, type: Int, data: Data): Boolean {
+private fun Int.check(type: Int, data: Data): Boolean {
     val matches = (this and type) == type
+    val name = insetsTypeNameProvider[type] ?: "unknown"
     when {
         !matches -> Unit
         data.depends(type) -> data.dependencies.add(name)

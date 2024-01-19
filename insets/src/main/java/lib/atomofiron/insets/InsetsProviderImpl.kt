@@ -90,7 +90,7 @@ internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeList
                 listener.checkTheSameView(entry.value)
             }
         }
-        logd { "${thisView?.nameWithId()} add insets listener -> ${listeners.size.inc()}" }
+        logd { "${thisView?.nameWithId()} add listener -> ${listeners.size.inc()}" }
         val key = nextKey++
         // listeners may or may not be notified with new insets
         srcState = srcState.copy(hasListeners = true, dependencies = listeners.dependencies(listener))
@@ -108,7 +108,7 @@ internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeList
 
     override fun removeInsetsListener(key: Int) {
         val removed = listeners.remove(key) != null
-        logd { "${thisView?.nameWithId()} remove insets listener? $removed -> ${listeners.size}" }
+        logd { "${thisView?.nameWithId()} remove listener? $removed -> ${listeners.size}" }
         if (removed) {
             srcState = srcState.copy(hasListeners = listeners.isNotEmpty(), dependencies = listeners.dependencies())
         }
@@ -153,5 +153,5 @@ internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeList
 }
 
 private fun Map<Int, InsetsListener>.dependencies(another: InsetsListener? = null): Int {
-    return count { it.value.dependency } + if (another?.dependency == true) 1 else 0
+    return count { it.value.isDependency } + if (another?.isDependency == true) 1 else 0
 }
