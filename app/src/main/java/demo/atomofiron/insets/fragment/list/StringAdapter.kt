@@ -48,8 +48,8 @@ class StringAdapter : ListAdapter<StringItem, StringItemHolder>(ItemCallbackImpl
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StringItemHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item_string, parent, false)
         val commonPadding = itemView.resources.getDimensionPixelSize(R.dimen.common_padding)
-        val insetsCombining = insetsCombining.copy(minStart = commonPadding, minEnd = commonPadding)
-        itemView.withInsetsPadding(insetsCombining = insetsCombining, start = true, end = true)
+        val combining = insetsCombining.copy(minStart = commonPadding, minEnd = commonPadding)
+        itemView.withInsetsPadding(combining = combining, start = true, end = true)
         return StringItemHolder(itemView)
     }
 

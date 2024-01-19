@@ -2,6 +2,8 @@ package demo.atomofiron.insets
 
 import android.view.View
 import androidx.core.view.isVisible
+import androidx.core.view.marginBottom
+import androidx.core.view.marginTop
 
 fun <T> Array<T>.sumBy(zero: T? = null, action: T.(T) -> T): T = asIterable().sumBy(zero, action)
 
@@ -16,7 +18,7 @@ fun <T> Iterable<T>.sumBy(zero: T? = null, action: T.(T) -> T): T {
 }
 
 val View.visibleTopHeight: Int get() = when {
-    isVisible -> bottom + translationY.toInt()
+    isVisible -> bottom - top + marginTop + translationY.toInt()
     else -> 0
 }.coerceAtLeast(0)
 
@@ -25,6 +27,6 @@ val View.visibleBottomHeight: Int get() {
     return when {
         !isVisible -> 0
         isInLayout && top == 0 -> 0
-        else -> (parent as View).height - top
+        else -> bottom - top + marginBottom
     }.coerceAtLeast(0)
 }

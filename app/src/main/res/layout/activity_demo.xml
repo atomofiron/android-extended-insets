@@ -8,154 +8,159 @@
     android:layout_height="match_parent"
     >
     <lib.atomofiron.insets.InsetsProviderFrameLayout
-        android:id="@+id/panels_container"
+        android:id="@+id/toggles_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
         <lib.atomofiron.insets.InsetsProviderFrameLayout
-            android:id="@+id/fragments_container"
+            android:id="@+id/panels_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             >
-            <com.google.android.material.appbar.MaterialToolbar
-                android:id="@+id/toolbar"
+            <lib.atomofiron.insets.InsetsProviderFrameLayout
+                android:id="@+id/fragments_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+                <com.google.android.material.appbar.MaterialToolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:title="MaterialToolbar"
+                    app:navigationIcon="@drawable/ic_back"
+                    app:navigationIconTint="?colorControlNormal"
+                    app:menu="@menu/main"
+                    />
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/fab"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|bottom"
+                    android:layout_margin="16dp"
+                    android:src="@drawable/ic_android"
+                    android:elevation="0dp"
+                    />
+            </lib.atomofiron.insets.InsetsProviderFrameLayout>
+            <LinearLayout
+                android:id="@+id/view_top"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:title="MaterialToolbar"
-                app:navigationIcon="@drawable/ic_back"
-                app:navigationIconTint="?colorControlNormal"
-                app:menu="@menu/main"
-                />
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fab"
-                android:layout_width="wrap_content"
+                android:layout_gravity="top"
+                android:background="@drawable/rounded_corners_top"
+                android:paddingVertical="4dp"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                >
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Start"
+                    android:textSize="20sp"
+                    android:textColor="?colorOnPrimaryContainer"
+                    />
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Top"
+                    android:textSize="20sp"
+                    android:textColor="?colorOnPrimaryContainer"
+                    android:gravity="center_horizontal"
+                    />
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="End"
+                    android:textSize="20sp"
+                    android:textColor="?colorOnPrimaryContainer"
+                    android:gravity="end"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/view_bottom"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end|bottom"
-                android:layout_margin="16dp"
-                android:src="@drawable/ic_android"
-                android:elevation="0dp"
-                />
+                android:layout_gravity="bottom"
+                android:background="@drawable/rounded_corners_bottom"
+                android:paddingVertical="4dp"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                >
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Start"
+                    android:textSize="20sp"
+                    android:textColor="?colorOnPrimaryContainer"
+                    />
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Bottom"
+                    android:textSize="20sp"
+                    android:textColor="?colorOnPrimaryContainer"
+                    android:gravity="center_horizontal"
+                    />
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="End"
+                    android:textSize="20sp"
+                    android:textColor="?colorOnPrimaryContainer"
+                    android:gravity="end"
+                    />
+            </LinearLayout>
         </lib.atomofiron.insets.InsetsProviderFrameLayout>
-        <LinearLayout
-            android:id="@+id/view_top"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:background="@drawable/rounded_corners_top"
-            android:paddingVertical="4dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            >
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Start"
-                android:textSize="20sp"
-                android:textColor="?colorOnPrimaryContainer"
-                />
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Top"
-                android:textSize="20sp"
-                android:textColor="?colorOnPrimaryContainer"
-                android:gravity="center_horizontal"
-                />
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="End"
-                android:textSize="20sp"
-                android:textColor="?colorOnPrimaryContainer"
-                android:gravity="end"
-                />
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/view_bottom"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/bottom_panel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:background="@drawable/rounded_corners_bottom"
-            android:paddingVertical="4dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="8dp"
+            android:clickable="true"
+            android:focusable="false"
             >
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_connection"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Start"
-                android:textSize="20sp"
-                android:textColor="?colorOnPrimaryContainer"
+                android:text="Top bar"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="24dp"
+                android:checked="true"
+                app:switchPadding="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 />
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_fullscreen"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Bottom"
-                android:textSize="20sp"
-                android:textColor="?colorOnPrimaryContainer"
-                android:gravity="center_horizontal"
+                android:text="FS"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="24dp"
+                app:switchPadding="8dp"
+                app:layout_constraintStart_toEndOf="@+id/switch_connection"
+                app:layout_constraintEnd_toStartOf="@+id/switch_eat"
+                app:layout_constraintBottom_toBottomOf="parent"
                 />
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_eat"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="End"
-                android:textSize="20sp"
-                android:textColor="?colorOnPrimaryContainer"
-                android:gravity="end"
+                android:text="Bottom bar"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="24dp"
+                android:checked="true"
+                app:switchPadding="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 />
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </lib.atomofiron.insets.InsetsProviderFrameLayout>
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/bottom_panel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:paddingHorizontal="8dp"
-        android:clickable="true"
-        android:focusable="false"
-        >
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switch_connection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Top bar"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="24dp"
-            android:checked="true"
-            app:switchPadding="8dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switch_fullscreen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FS"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="24dp"
-            app:switchPadding="8dp"
-            app:layout_constraintStart_toEndOf="@+id/switch_connection"
-            app:layout_constraintEnd_toStartOf="@+id/switch_eat"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switch_eat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bottom bar"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="24dp"
-            android:checked="true"
-            app:switchPadding="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
 </lib.atomofiron.insets.InsetsProviderFrameLayout>

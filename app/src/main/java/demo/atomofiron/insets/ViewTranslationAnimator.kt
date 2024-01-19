@@ -5,6 +5,8 @@ import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import androidx.core.animation.addListener
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import kotlin.math.abs
 
 enum class Gravity {
@@ -31,7 +33,10 @@ class ViewTranslationAnimator(
             duration = (300f / abs(maxOffset) * (abs(maxOffset - translation))).toLong()
             interpolator = AccelerateInterpolator()
             addUpdateListener(this@ViewTranslationAnimator)
-            addListener(onEnd = { reset() })
+            addListener(onEnd = {
+                view.isInvisible = true
+                reset()
+            })
             start()
         }
     }
@@ -49,6 +54,7 @@ class ViewTranslationAnimator(
     }
 
     override fun onAnimationUpdate(animation: ValueAnimator) {
+        if (view.isInvisible) view.isVisible = true
         view.translationY = animation.animatedValue as Float
         callback()
     }
