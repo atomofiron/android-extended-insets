@@ -56,21 +56,19 @@ fun View.addInsetsListener(listener: InsetsListener): Int {
 
 fun View.withInsets(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
-    dependency: Boolean = false,
+    combining: InsetsCombining? = null,
     block: (ViewInsetsConfig.() -> Unit)? = null,
 ): ViewInsetsDelegate {
     return block?.let {
         ViewInsetsConfig().apply(it).run {
-            ViewInsetsDelegateImpl(this@withInsets, typeMask, insetsCombining, dependency, dstStart, dstTop, dstEnd, dstBottom)
+            ViewInsetsDelegateImpl(this@withInsets, typeMask, combining, dstStart, dstTop, dstEnd, dstBottom)
         }
-    } ?: ViewInsetsDelegateImpl(this, typeMask, dependency = dependency)
+    } ?: ViewInsetsDelegateImpl(this, typeMask)
 }
 
 fun View.withInsetsPadding(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
-    dependency: Boolean = false,
+    combining: InsetsCombining? = null,
     start: Boolean = false,
     top: Boolean = false,
     end: Boolean = false,
@@ -78,8 +76,7 @@ fun View.withInsetsPadding(
 ): ViewInsetsDelegate = ViewInsetsDelegateImpl(
     this,
     typeMask,
-    insetsCombining,
-    dependency,
+    combining,
     if (start) Padding else None,
     if (top) Padding else None,
     if (end) Padding else None,
@@ -88,8 +85,7 @@ fun View.withInsetsPadding(
 
 fun View.withInsetsMargin(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
-    dependency: Boolean = false,
+    combining: InsetsCombining? = null,
     start: Boolean = false,
     top: Boolean = false,
     end: Boolean = false,
@@ -97,8 +93,7 @@ fun View.withInsetsMargin(
 ): ViewInsetsDelegate = ViewInsetsDelegateImpl(
     this,
     typeMask,
-    insetsCombining,
-    dependency,
+    combining,
     if (start) Margin else None,
     if (top) Margin else None,
     if (end) Margin else None,
@@ -107,49 +102,45 @@ fun View.withInsetsMargin(
 
 fun View.withInsetsPadding(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
-    dependency: Boolean = false,
+    combining: InsetsCombining? = null,
     top: Boolean = false,
     horizontal: Boolean = false,
     bottom: Boolean = false,
-) = withInsetsPadding(typeMask, insetsCombining, dependency, horizontal, top, horizontal, bottom)
+) = withInsetsPadding(typeMask, combining, horizontal, top, horizontal, bottom)
 
 fun View.withInsetsMargin(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
-    dependency: Boolean = false,
+    combining: InsetsCombining? = null,
     top: Boolean = false,
     horizontal: Boolean = false,
     bottom: Boolean = false,
-) = withInsetsMargin(typeMask, insetsCombining, dependency, horizontal, top, horizontal, bottom)
+) = withInsetsMargin(typeMask, combining, horizontal, top, horizontal, bottom)
 
 fun View.withInsetsPadding(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
-    dependency: Boolean = false,
+    combining: InsetsCombining? = null,
     horizontal: Boolean = false,
     vertical: Boolean = false,
-) = withInsetsPadding(typeMask, insetsCombining, dependency, horizontal, vertical, horizontal, vertical)
+) = withInsetsPadding(typeMask, combining, horizontal, vertical, horizontal, vertical)
 
 fun View.withInsetsMargin(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
-    dependency: Boolean = false,
+    combining: InsetsCombining? = null,
     horizontal: Boolean = false,
     vertical: Boolean = false,
-) = withInsetsMargin(typeMask, insetsCombining, dependency, horizontal, vertical, horizontal, vertical)
+) = withInsetsMargin(typeMask, combining, horizontal, vertical, horizontal, vertical)
 
 fun View.withInsetsMargin(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
+    combining: InsetsCombining? = null,
     dependency: Boolean = false,
-) = withInsetsMargin(typeMask, insetsCombining, dependency, horizontal = true, vertical = true)
+) = withInsetsMargin(typeMask, combining, horizontal = true, vertical = true)
 
 fun View.withInsetsPadding(
     typeMask: Int = barsWithCutout,
-    insetsCombining: InsetsCombining? = null,
+    combining: InsetsCombining? = null,
     dependency: Boolean = false,
-) = withInsetsPadding(typeMask, insetsCombining, dependency, horizontal = true, vertical = true)
+) = withInsetsPadding(typeMask, combining, horizontal = true, vertical = true)
 
 inline fun InsetsProvider.composeInsets(
     // these receive original insets (from parent provider or stock system window insets)
