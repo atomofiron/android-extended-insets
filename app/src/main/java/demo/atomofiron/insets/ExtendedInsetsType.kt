@@ -4,8 +4,8 @@ import androidx.core.graphics.Insets
 import lib.atomofiron.insets.ExtendedWindowInsets
 
 object ExtType : ExtendedWindowInsets.Type() {
-    val verticalPanels = next()
     val togglePanel = next()
+    val verticalPanels = next()
     val common = verticalPanels or togglePanel or systemBars or displayCutout
 }
 
