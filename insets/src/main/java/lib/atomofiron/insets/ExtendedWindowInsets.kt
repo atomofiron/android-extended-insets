@@ -25,20 +25,21 @@ import kotlin.math.max
 
 // WindowInsetsCompat.Type.SIZE = 9
 private const val OFFSET = 9
-private const val LIMIT = Int.SIZE_BITS - OFFSET - 1 // one for the sign
+private const val LIMIT = Int.SIZE_BITS - 1 // one for the sign
 //  /-------custom-------\/system-\
 // 01010101010101010101010101010101
 //  ^-last         FIRST-^
 internal const val FIRST = 1.shl(OFFSET)
 private var next = FIRST
 
-private fun emptyExtended(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
+private fun emptyValues(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
 
-private val emptyExtended: Array<InsetsValue> = emptyExtended()
+private val emptyValues: Array<InsetsValue> = emptyValues()
 
 class ExtendedWindowInsets private constructor(
-    private val extended: Array<InsetsValue>,
+    private val insets: Array<InsetsValue>,
     windowInsets: WindowInsetsCompat?,
+    // WindowInsetsCompat may be needed for getInsetsIgnoringVisibility()
 ) : WindowInsetsCompat(windowInsets) {
     companion object {
         val CONSUMED = ExtendedWindowInsets(WindowInsetsCompat.CONSUMED)
@@ -73,24 +74,16 @@ class ExtendedWindowInsets private constructor(
 
     constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let { toWindowInsetsCompat(it, view) })
 
-    constructor(windowInsets: WindowInsetsCompat?) : this(emptyExtended(), windowInsets)
+    constructor(windowInsets: WindowInsetsCompat?) : this(windowInsets.toValues(), windowInsets)
 
     override fun getInsets(typeMask: Int): Insets = get(typeMask)
 
-    operator fun get(type: Int): Insets = super.getInsets(type).union(type)
-
-    override fun equals(other: Any?): Boolean {
-        other ?: return false
-        val otherExtended = (other as? ExtendedWindowInsets)?.extended ?: emptyExtended
-        return otherExtended.contentEquals(extended) && super.equals(other)
-    }
-
-    private fun Insets.union(type: Int): Insets {
-        val values = intArrayOf(left, top, right, bottom)
-        var cursor = FIRST
+    operator fun get(type: Int): Insets {
+        val values = intArrayOf(0, 0, 0, 0)
+        var cursor = 1
         var index = 0
-        while (cursor <= type) {
-            val value = extended[index++]
+        while (cursor in 1..type) {
+            val value = insets[index++]
             if (!value.isZero && (cursor and type) != 0) {
                 values[0] = max(values[0], value.left)
                 values[1] = max(values[1], value.top)
@@ -102,41 +95,50 @@ class ExtendedWindowInsets private constructor(
         return Insets.of(values[0], values[1], values[2], values[3])
     }
 
-    override fun hashCode(): Int = 31 * extended.contentHashCode() + super.hashCode()
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        val otherValues = (other as? ExtendedWindowInsets)?.insets ?: emptyValues
+        return otherValues.contentEquals(insets) && super.equals(other)
+    }
+
+    override fun hashCode(): Int = 31 * insets.contentHashCode() + super.hashCode()
 
     class Builder private constructor(
-        custom: Array<InsetsValue>?,
-        windowInsets: WindowInsetsCompat?,
+        values: Array<InsetsValue>?,
+        // WindowInsetsCompat may be needed for getInsetsIgnoringVisibility()
+        private val windowInsets: WindowInsetsCompat?,
     ) {
-        private val extended: Array<InsetsValue> = custom ?: emptyExtended()
-        private val builder = WindowInsetsCompat.Builder(windowInsets ?: WindowInsetsCompat.CONSUMED)
+        private val values: Array<InsetsValue> = values ?: emptyValues()
 
-        constructor() : this(custom = null, windowInsets = null)
+        constructor(
+            windowInsets: WindowInsets?,
+            view: View? = null,
+        ) : this(windowInsets?.let{ toWindowInsetsCompat(windowInsets, view) })
 
-        constructor(windowInsets: WindowInsets?, view: View? = null) : this(null, windowInsets?.let { toWindowInsetsCompat(it, view) })
+        constructor(
+            windowInsets: WindowInsetsCompat? = null,
+        ) : this(windowInsets.toValues(), windowInsets)
 
-        constructor(windowInsets: WindowInsetsCompat?) : this(null, windowInsets)
+        constructor(
+            extendedInsets: ExtendedWindowInsets?,
+            windowInsets: WindowInsetsCompat?,
+        ) : this(extendedInsets?.insets?.clone(), windowInsets)
 
-        constructor(extendedInsets: ExtendedWindowInsets?) : this(extendedInsets?.extended?.clone(), extendedInsets)
-
-        // compatible with the WindowInsetsCompat api
-        fun setInsets(type: Int, insets: Insets): Builder {
-            builder.setInsets(type, insets)
-            var cursor = FIRST
-            var index = 0
-            while (cursor <= type) {
-                if (cursor and type != 0) {
-                    extended[index] = InsetsValue(insets)
+        operator fun set(type: Int, insets: Insets): Builder {
+            for (index in values.indices) {
+                val cursor = 1.shl(index)
+                when {
+                    cursor > type -> break
+                    (cursor and type) != 0 -> values[index] = InsetsValue(insets)
                 }
-                cursor = cursor.shl(1)
-                index++
             }
             return this
         }
 
-        operator fun set(type: Int, insets: Insets): Builder = setInsets(type, insets)
+        // compatible with the WindowInsetsCompat api
+        fun setInsets(type: Int, insets: Insets): Builder = set(type, insets)
 
-        fun build() = ExtendedWindowInsets(extended.clone(), builder.build())
+        fun build() = ExtendedWindowInsets(values.clone(), windowInsets)
     }
 }
 
@@ -164,4 +166,14 @@ internal value class InsetsValue(
     )
 
     fun toInsets() = Insets.of(left, top, right, bottom)
+}
+
+private fun WindowInsetsCompat?.toValues(): Array<InsetsValue> {
+    val insets = emptyValues()
+    this ?: return insets
+    for (index in insets.indices) {
+        val next = getInsets(1.shl(index))
+        if (next.isNotEmpty()) insets[index] = InsetsValue(next)
+    }
+    return insets
 }
