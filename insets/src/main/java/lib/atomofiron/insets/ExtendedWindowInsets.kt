@@ -124,6 +124,11 @@ class ExtendedWindowInsets private constructor(
             return this
         }
 
+        fun consume(typeMask: Int): Builder {
+            consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), typeMask)
+            return this
+        }
+
         fun consume(insets: Insets, typeMask: Int = ALL): Builder {
             if (insets.isEmpty()) return this
             logConsuming(values, insets, typeMask)

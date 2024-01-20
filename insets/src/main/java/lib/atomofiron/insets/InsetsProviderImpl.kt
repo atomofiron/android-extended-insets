@@ -30,7 +30,7 @@ private data class SrcState(
     val dependencies: Int = 0,
 )
 
-internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeListener {
+class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeListener {
 
     private var srcState = SrcState()
         set(value) {
