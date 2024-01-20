@@ -71,11 +71,9 @@ class ExtendedWindowInsets private constructor(
         }
     }
 
-    constructor() : this(null as WindowInsetsCompat?)
-
     constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let { toWindowInsetsCompat(it, view) })
 
-    constructor(windowInsets: WindowInsetsCompat?) : this(windowInsets.toValues(), windowInsets)
+    constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
 
     override fun getInsets(typeMask: Int): Insets = get(typeMask)
 
@@ -111,19 +109,9 @@ class ExtendedWindowInsets private constructor(
     ) {
         private val values: Array<InsetsValue> = values ?: emptyValues()
 
-        constructor(
-            windowInsets: WindowInsets?,
-            view: View? = null,
-        ) : this(windowInsets?.let{ toWindowInsetsCompat(windowInsets, view) })
+        constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let{ toWindowInsetsCompat(windowInsets, view) })
 
-        constructor(
-            windowInsets: WindowInsetsCompat? = null,
-        ) : this(windowInsets.toValues(), windowInsets)
-
-        constructor(
-            extendedInsets: ExtendedWindowInsets?,
-            windowInsets: WindowInsetsCompat?,
-        ) : this(extendedInsets?.insets?.clone(), windowInsets)
+        constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
 
         operator fun set(type: Int, insets: Insets): Builder {
             for (index in values.indices) {
@@ -209,7 +197,7 @@ private fun ExtendedWindowInsets.Builder.logConsuming(values: Array<InsetsValue>
             if ((cursor and typeMask) != 0 && !values[i].isZero) {
                 val min = Insets.min(values[i].toInsets(), consuming)
                 min.takeIf { it.isNotEmpty()}?.run {
-                    val name = insetsTypeNameProvider[cursor] ?: "unknown"
+                    val name = insetsTypeNameMap[cursor] ?: "unknown"
                     consumed.add("$name[$left,$top,$right,$bottom]")
                 }
             }

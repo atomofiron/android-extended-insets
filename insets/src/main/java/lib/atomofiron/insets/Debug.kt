@@ -24,7 +24,7 @@ import androidx.core.view.WindowInsetsCompat.Type
 import kotlin.reflect.KClass
 
 var debugInsets: Boolean = false
-var insetsTypeNameProvider: MutableMap<Int,String> = hashMapOf(
+var insetsTypeNameMap: MutableMap<Int,String> = hashMapOf(
     Type.systemBars() to "systemBars",
     Type.statusBars() to "statusBars",
     Type.navigationBars() to "navigationBars",
@@ -34,6 +34,7 @@ var insetsTypeNameProvider: MutableMap<Int,String> = hashMapOf(
     Type.ime() to "ime",
     Type.systemGestures() to "systemGestures",
     Type.mandatorySystemGestures() to "mandatorySystemGestures",
+    1.shl(8) to "windowDecor",
 )
 
 internal val Any.simpleName: String get() = javaClass.simpleName
@@ -87,7 +88,7 @@ internal fun Int.getTypes(windowInsets: WindowInsetsCompat?, left: Boolean, top:
 
 private fun Int.check(type: Int, data: Data): Boolean {
     val matches = (this and type) == type
-    val name = insetsTypeNameProvider[type] ?: "unknown"
+    val name = insetsTypeNameMap[type] ?: "unknown"
     when {
         !matches -> Unit
         data.depends(type) -> data.dependencies.add(name)
