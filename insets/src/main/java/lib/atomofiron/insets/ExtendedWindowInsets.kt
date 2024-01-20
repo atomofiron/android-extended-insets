@@ -209,7 +209,7 @@ private fun ExtendedWindowInsets.Builder.logConsuming(values: Array<InsetsValue>
             if ((cursor and typeMask) != 0 && !values[i].isZero) {
                 val min = Insets.min(values[i].toInsets(), consuming)
                 min.takeIf { it.isNotEmpty()}?.run {
-                    val name = insetsTypeNameProvider[cursor] ?: "unknown"
+                    val name = insetsTypeNameMap[cursor] ?: "unknown"
                     consumed.add("$name[$left,$top,$right,$bottom]")
                 }
             }
