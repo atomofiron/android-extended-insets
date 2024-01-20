@@ -85,11 +85,17 @@ internal class ViewInsetsDelegateImpl(
         provider = null
     }
 
-    override fun detachFromProvider(): ViewInsetsDelegate {
-        logd { "${view.nameWithId()} unsubscribe insets? ${provider != null}" }
-        provider?.removeInsetsListener(this)
+    override fun detachFromProvider() {
+        logd { "${view.nameWithId()} unsubscribe insets? ${provider != null}, listener? ${listener != null}" }
+        provider?.removeInsetsListener(listener ?: return)
         listener = null
-        return this
+    }
+
+    override fun detachFromView() {
+        logd { "${view.nameWithId()} detach? idk" }
+        detachFromProvider()
+        view.removeOnLayoutChangeListener(this)
+        view.removeOnAttachStateChangeListener(this)
     }
 
     override fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {

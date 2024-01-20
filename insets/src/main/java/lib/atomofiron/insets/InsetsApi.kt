@@ -46,9 +46,10 @@ interface InsetsProvider : InsetsListener {
 
 interface ViewInsetsDelegate : InsetsListener {
     fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun detachFromProvider(): ViewInsetsDelegate
     fun horizontalDependency(): ViewInsetsDelegate
     fun verticalDependency(): ViewInsetsDelegate
+    fun detachFromProvider()
+    fun detachFromView()
 }
 
 enum class InsetsDestination(
