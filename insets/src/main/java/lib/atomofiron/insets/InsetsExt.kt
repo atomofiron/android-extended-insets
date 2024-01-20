@@ -154,12 +154,14 @@ inline fun InsetsProvider.composeInsets(
     }
 }
 
-fun View.getInsets(typeMask: Int = barsWithCutout): WindowInsetsCompat {
+fun View.getWindowInsets(): WindowInsetsCompat {
     return (this as? InsetsProvider)?.current
         ?: parent.findInsetsProvider()?.current
         ?: ViewCompat.getRootWindowInsets(this)
         ?: WindowInsetsCompat.CONSUMED
 }
+
+fun View.getInsets(typeMask: Int = barsWithCutout): Insets = getWindowInsets().getInsets(typeMask)
 
 fun WindowInsetsCompat.toExtended() = when (this) {
     is ExtendedWindowInsets -> this
