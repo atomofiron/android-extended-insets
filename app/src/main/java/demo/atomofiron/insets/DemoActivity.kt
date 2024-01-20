@@ -28,7 +28,7 @@ class DemoActivity : AppCompatActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         lib.atomofiron.insets.debugInsets = true
-        lib.atomofiron.insets.insetsTypeNameProvider.run {
+        lib.atomofiron.insets.insetsTypeNameMap.run {
             put(ExtType.togglePanel, "togglePanel")
             put(ExtType.verticalPanels, "verticalPanels")
         }
