@@ -42,6 +42,7 @@ interface InsetsProvider : InsetsListener {
     // that allows not to set a insets listener that can be replaced with another one
     fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets
     fun requestInsets()
+    fun dropNativeInsets(drop: Boolean = true)
 }
 
 interface ViewInsetsDelegate : InsetsListener {

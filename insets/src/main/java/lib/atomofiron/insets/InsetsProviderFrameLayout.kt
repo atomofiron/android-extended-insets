@@ -26,7 +26,7 @@ class InsetsProviderFrameLayout @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
     defStyleRes: Int = 0,
-) : FrameLayout(context, attrs, defStyleAttr, defStyleRes), InsetsProvider by InsetsProviderImpl() {
+) : FrameLayout(context, attrs, defStyleAttr, defStyleRes), InsetsProvider by InsetsProviderImpl(context, attrs) {
     init {
         onInit()
     }

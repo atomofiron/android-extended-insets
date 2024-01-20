@@ -50,8 +50,14 @@ fun ViewParent.findInsetsProvider(): InsetsProvider? {
 fun View.addInsetsListener(listener: InsetsListener): Int {
     val provider = (this as? InsetsProvider) ?: parent.findInsetsProvider()
     val key = provider?.addInsetsListener(listener)
-    key ?: logd { "${nameWithId()} insets provider not found" }
+    key ?: logd { "${nameWithId()} unable add insets listener, provider not found" }
     return key ?: INVALID_INSETS_LISTENER_KEY
+}
+
+fun View.removeInsetsListener(listener: InsetsListener) {
+    val provider = (this as? InsetsProvider) ?: parent.findInsetsProvider()
+    provider?.removeInsetsListener(listener)
+        ?: logd { "${nameWithId()} unable remove insets listener, provider not found" }
 }
 
 fun View.withInsets(
@@ -143,12 +149,15 @@ fun View.withInsetsPadding(
 ) = withInsetsPadding(typeMask, combining, horizontal = true, vertical = true)
 
 inline fun InsetsProvider.composeInsets(
-    // these receive original insets (from parent provider or stock system window insets)
+    // these delegates receive original insets (from parent provider or stock system window insets)
+    delegate: ViewInsetsDelegate,
     vararg delegates: ViewInsetsDelegate,
     crossinline transformation: (hasListeners: Boolean, ExtendedWindowInsets) -> WindowInsetsCompat,
 ) {
+    delegate.detachFromProvider()
     delegates.forEach { it.detachFromProvider() }
     setInsetsModifier { hasListeners, windowInsets ->
+        delegate.onApplyWindowInsets(windowInsets)
         delegates.forEach { it.onApplyWindowInsets(windowInsets) }
         transformation(hasListeners, windowInsets).toExtended()
     }

@@ -16,8 +16,12 @@
 
 package lib.atomofiron.insets
 
+import android.content.Context
+import android.os.Build
+import android.util.AttributeSet
 import android.view.View
 import android.view.WindowInsets
+import androidx.annotation.RequiresApi
 import androidx.core.view.WindowInsetsCompat
 
 
@@ -30,7 +34,9 @@ private data class SrcState(
     val dependencies: Int = 0,
 )
 
-internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeListener {
+class InsetsProviderImpl private constructor(
+    private var dropNativeInsets: Boolean,
+) : InsetsProvider, View.OnAttachStateChangeListener {
 
     private var srcState = SrcState()
         set(value) {
@@ -53,6 +59,11 @@ internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeList
     private var provider: InsetsProvider? = null
     private var thisView: View? = null
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
+    private var dropNative = false
+
+    constructor() : this(dropNativeInsets = false)
+
+    constructor(context: Context, attrs: AttributeSet?) : this(context.dropNativeInsets(attrs))
 
     override fun View.onInit() {
         thisView = this
@@ -114,18 +125,23 @@ internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeList
         }
     }
 
-    // the one of the two entry points for system window insets
+    // the one of the two entry points for window insets
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (provider == null) {
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
             srcState = srcState.copy(windowInsets = windowInsetsCompat.toExtended())
         }
-        return windowInsets
+        return if (dropNative) WindowInsets.CONSUMED else windowInsets
     }
 
     override fun requestInsets() = updateCurrent(srcState)
 
-    // the one of the two entry points for system window insets
+    override fun dropNativeInsets(drop: Boolean) {
+        dropNativeInsets = drop
+    }
+
+    // the one of the two entry points for window insets
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         srcState = srcState.copy(windowInsets = windowInsets)
     }
@@ -143,15 +159,20 @@ internal class InsetsProviderImpl : InsetsProvider, View.OnAttachStateChangeList
             it.onApplyWindowInsets(windowInsets)
         }
     }
+}
 
-    private fun InsetsListener.checkTheSameView(other: InsetsListener) = when {
-        this !is ViewInsetsDelegateImpl -> Unit
-        other !is ViewInsetsDelegateImpl -> Unit
-        other.view !== view -> Unit
-        else -> throw MultipleViewInsetsDelegate("The target view ${view.nameWithId()}")
-    }
+private fun InsetsListener.checkTheSameView(other: InsetsListener) = when {
+    this !is ViewInsetsDelegateImpl -> Unit
+    other !is ViewInsetsDelegateImpl -> Unit
+    other.view !== view -> Unit
+    else -> throw MultipleViewInsetsDelegate("The target view ${view.nameWithId()}")
 }
 
 private fun Map<Int, InsetsListener>.dependencies(another: InsetsListener? = null): Int {
     return count { it.value.isDependency } + if (another?.isDependency == true) 1 else 0
+}
+
+private fun Context.dropNativeInsets(attrs: AttributeSet?): Boolean {
+    val array = obtainStyledAttributes(attrs, intArrayOf(R.attr.dropNativeInsets))
+    return array.getBoolean(0, false).also { array.recycle() }
 }
