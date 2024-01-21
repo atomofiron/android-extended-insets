@@ -52,6 +52,7 @@ class ExtendedWindowInsets private constructor(
         val navigationBars: Int get() = WindowInsetsCompat.Type.navigationBars()
         val systemBars: Int get() = WindowInsetsCompat.Type.systemBars()
         val displayCutout: Int get() = WindowInsetsCompat.Type.displayCutout()
+        val barsWithCutout: Int get() = systemBars or displayCutout
         val tappableElement: Int get() = WindowInsetsCompat.Type.tappableElement()
         val systemGestures: Int get() = WindowInsetsCompat.Type.systemGestures()
         val mandatorySystemGestures: Int get() = WindowInsetsCompat.Type.mandatorySystemGestures()

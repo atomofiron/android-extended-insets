@@ -13,7 +13,7 @@ class UnitTests {
     }
 
     // associate your custom type with ExtendedWindowInsets
-    private operator fun ExtendedWindowInsets.invoke(block: CustomType.() -> Int): Insets = get(CustomType.block())
+    private inline operator fun ExtendedWindowInsets.invoke(block: CustomType.() -> Int): Insets = get(CustomType.block())
 
     @Test
     fun ext_window_insets() {

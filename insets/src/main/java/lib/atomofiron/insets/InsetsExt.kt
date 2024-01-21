@@ -22,12 +22,11 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
+import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
 
-
-val barsWithCutout: Int = Type.systemBars() or Type.displayCutout()
 
 val insetsCombining = InsetsCombining(combiningTypeMask = Type.displayCutout())
 
@@ -38,6 +37,8 @@ fun WindowInsetsCompat.systemBars(): Insets = getInsets(Type.systemBars())
 fun WindowInsetsCompat.barsWithCutout(): Insets = getInsets(barsWithCutout)
 
 fun WindowInsetsCompat.isEmpty(typeMask: Int): Boolean = getInsets(typeMask).isEmpty()
+
+fun WindowInsetsCompat.isNotEmpty(typeMask: Int): Boolean = !isEmpty(typeMask)
 
 fun Insets.isEmpty() = this == Insets.NONE
 
@@ -180,15 +181,24 @@ fun WindowInsetsCompat.toExtended() = when (this) {
 inline fun <T : ExtendedWindowInsets.Type> T.from(
     windowInsets: WindowInsetsCompat,
     block: T.() -> Int,
-): Insets {
-    return windowInsets.getInsets(block())
-}
+): Insets = windowInsets.getInsets(block())
 
 inline operator fun <T : ExtendedWindowInsets.Type> WindowInsetsCompat.invoke(
     companion: T,
     block: T.() -> Int,
-): Insets {
-    return getInsets(companion.block())
-}
+): Insets = getInsets(companion.block())
 
 operator fun WindowInsetsCompat.get(type: Int): Insets = getInsets(type)
+
+fun InsetsProvider.requestInsetOnLayoutChange(
+    horizontally: Boolean = false,
+    vertically: Boolean = false,
+    vararg views: View,
+) {
+    val listener = View.OnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+        if (horizontally && (left != oldLeft || right != oldRight) || vertically && (top != oldTop || bottom != oldBottom)) {
+            requestInsets()
+        }
+    }
+    for (view in views) view.addOnLayoutChangeListener(listener)
+}

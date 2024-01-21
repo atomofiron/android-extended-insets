@@ -22,8 +22,10 @@ import android.view.ViewGroup.MarginLayoutParams
 import androidx.core.graphics.Insets
 import androidx.core.view.ScrollingView
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.marginBottom
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
@@ -164,8 +166,14 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyPadding(insets: Insets) {
         if (!isAny(Padding)) return
-        val scrollingPadding = view.paddingTop.takeIf {
+        val scrollingPaddingTop = view.paddingTop.takeIf {
             view is ScrollingView && (view as? ViewGroup)?.getChildAt(0)?.top == it
+        }
+        val scrollingPaddingBottom = view.paddingBottom.takeIf {
+            val bottomSpace = (view as? ViewGroup)
+                ?.run { getChildAt(childCount.dec()) }
+                ?.run { view.height - bottom - marginBottom }
+            view is ScrollingView && bottomSpace == it
         }
         val oldPadding = view.takeIf { dependency.any }?.run {
             Insets.of(paddingLeft, paddingTop, paddingRight, paddingBottom)
@@ -176,8 +184,10 @@ internal class ViewInsetsDelegateImpl(
             right = if (dstRight == Padding) stockRight + insets.right else view.paddingRight,
             bottom = if (dstBottom == Padding) stockBottom + insets.bottom else view.paddingBottom,
         )
-        scrollingPadding?.let { old ->
-            if (old < view.paddingTop) view.scrollBy(0, scrollingPadding - view.paddingTop)
+        scrollingPaddingTop?.let { old ->
+            if (old < view.paddingTop) view.scrollBy(0, old - view.paddingTop)
+        } ?: scrollingPaddingBottom?.let { old ->
+            if (old < view.paddingBottom) view.scrollBy(0, view.paddingBottom - old)
         }
         oldPadding?.run {
             if (dependency.horizontal) view.right += (view.paddingLeft + view.paddingRight) - (left + right)
