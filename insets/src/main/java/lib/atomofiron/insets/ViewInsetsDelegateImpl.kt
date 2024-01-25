@@ -100,7 +100,7 @@ internal class ViewInsetsDelegateImpl(
         view.removeOnAttachStateChangeListener(this)
     }
 
-    override fun withInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
+    override fun changeInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
         val config = ViewInsetsConfig().apply(block)
         config.logd { "${view.nameWithId()} with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
         if (isAny(Padding) && insets.isNotEmpty()) applyPadding(Insets.NONE)
