@@ -8,7 +8,7 @@ import demo.atomofiron.insets.R
 import demo.atomofiron.insets.databinding.FragmentPlayerBinding
 import demo.atomofiron.insets.fragment.list.ListFragment
 import lib.atomofiron.insets.insetsCombining
-import lib.atomofiron.insets.withInsetsMargin
+import lib.atomofiron.insets.insetsMargin
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
 
@@ -16,10 +16,10 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         super.onViewCreated(view, savedInstanceState)
 
         FragmentPlayerBinding.bind(view).apply {
-            searchBar.withInsetsMargin(ExtType.common, insetsCombining, top = true, horizontal = true)
+            searchBar.insetsMargin(ExtType.common, insetsCombining, top = true, horizontal = true)
             val combining = insetsCombining.run { copy(combiningTypeMask or ExtType.togglePanel) }
-            btnStart.withInsetsMargin(ExtType.common, combining, start = true, bottom = true)
-            btnEnd.withInsetsMargin(ExtType.common, combining, end = true, bottom = true)
+            btnStart.insetsMargin(ExtType.common, combining, start = true, bottom = true)
+            btnEnd.insetsMargin(ExtType.common, combining, end = true, bottom = true)
             btnStart.setOnClickListener { showAnotherFragment(true) }
             btnEnd.setOnClickListener { showAnotherFragment(false) }
         }

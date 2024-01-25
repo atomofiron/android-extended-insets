@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import demo.atomofiron.insets.R
 import demo.atomofiron.insets.databinding.ItemStringBinding
 import lib.atomofiron.insets.insetsCombining
-import lib.atomofiron.insets.withInsetsPadding
+import lib.atomofiron.insets.insetsPadding
 
 data class StringItem(val value: String)
 
@@ -49,7 +49,7 @@ class StringAdapter : ListAdapter<StringItem, StringItemHolder>(ItemCallbackImpl
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item_string, parent, false)
         val commonPadding = itemView.resources.getDimensionPixelSize(R.dimen.common_padding)
         val combining = insetsCombining.copy(minStart = commonPadding, minEnd = commonPadding)
-        itemView.withInsetsPadding(combining = combining, start = true, end = true)
+        itemView.insetsPadding(combining = combining, start = true, end = true)
         return StringItemHolder(itemView)
     }
 
