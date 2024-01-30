@@ -42,7 +42,7 @@ data class Dependency(
 
 internal class ViewInsetsDelegateImpl(
     internal val view: View,
-    private val typeMask: Int = barsWithCutout,
+    private val types: TypeSet = barsWithCutout,
     private val combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
@@ -58,7 +58,7 @@ internal class ViewInsetsDelegateImpl(
     private var stockBottom = 0
 
     private var insets = Insets.NONE
-    private var windowInsets = WindowInsetsCompat.CONSUMED
+    private var windowInsets = ExtendedWindowInsets.CONSUMED
     private var provider: InsetsProvider? = null
     private var listener: InsetsListener? = this
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
@@ -116,7 +116,7 @@ internal class ViewInsetsDelegateImpl(
 
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         this.windowInsets = windowInsets
-        val new = combining?.combine(windowInsets) ?: windowInsets.getInsets(typeMask)
+        val new = combining?.combine(windowInsets) ?: windowInsets[types]
         if (insets != new) {
             insets = new
             applyInsets()
@@ -220,7 +220,7 @@ internal class ViewInsetsDelegateImpl(
         return view.layoutParams as? MarginLayoutParams ?: throw NoMarginLayoutParams(view.nameWithId())
     }
 
-    private fun InsetsCombining.combine(windowInsets: WindowInsetsCompat): Insets {
+    private fun InsetsCombining.combine(windowInsets: ExtendedWindowInsets): Insets {
         val stock = Insets.of(
             max(stockLeft, if (isRtl) minEnd else minStart),
             max(stockTop, minTop),
@@ -228,14 +228,14 @@ internal class ViewInsetsDelegateImpl(
             max(stockBottom, minBottom),
         )
         if (stock.isEmpty()) {
-            return windowInsets.getInsets(typeMask)
+            return windowInsets[types]
         }
-        val mask = combiningTypeMask and typeMask
-        val other = windowInsets.getInsets(typeMask and mask.inv())
-        if (mask == 0) {
+        val intersection = combiningTypes * types
+        val other = windowInsets[types - intersection]
+        if (intersection.isEmpty()) {
             return other
         }
-        val space = windowInsets.getInsets(mask)
+        val space = windowInsets[intersection]
         if (space.isEmpty()) {
             return other
         }
@@ -249,7 +249,7 @@ internal class ViewInsetsDelegateImpl(
             val top = if (dstTop.isNone) "" else insets.top.toString()
             val right = if (dstRight.isNone) "" else insets.right.toString()
             val bottom = if (dstBottom.isNone) "" else insets.bottom.toString()
-            val types = typeMask.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
+            val types = types.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
             "${view.nameWithId()} insets[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types"
         }
     }

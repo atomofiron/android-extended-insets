@@ -19,23 +19,11 @@ package lib.atomofiron.insets
 import android.annotation.SuppressLint
 import android.util.Log
 import android.view.View
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsCompat.Type
+import androidx.core.graphics.Insets
+import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import kotlin.reflect.KClass
 
 var debugInsets: Boolean = false
-var insetsTypeNameMap: MutableMap<Int,String> = hashMapOf(
-    Type.systemBars() to "systemBars",
-    Type.statusBars() to "statusBars",
-    Type.navigationBars() to "navigationBars",
-    Type.captionBar() to "captionBar",
-    Type.tappableElement() to "tappableElement",
-    Type.displayCutout() to "displayCutout",
-    Type.ime() to "ime",
-    Type.systemGestures() to "systemGestures",
-    Type.mandatorySystemGestures() to "mandatorySystemGestures",
-    1.shl(8) to "windowDecor",
-)
 
 internal val Any.simpleName: String get() = javaClass.simpleName
 
@@ -53,58 +41,54 @@ internal inline fun <T : Any?> T.logd(parent: KClass<*>? = null, message: T.() -
     if (debugInsets) Log.d("ExtInsets", "[$parentClass${this?.simpleName}] ${message()}")
 }
 
-private class Data(
-    val windowInsets: WindowInsetsCompat?,
-    val left: Boolean,
-    val top: Boolean,
-    val right: Boolean,
-    val bottom: Boolean,
-) {
+internal fun Int.getTypeName(): String = Type.types.find { it.seed == this }?.name?.takeIf { it.isNotEmpty() } ?: "unknown"
+
+internal fun TypeSet.getTypes(windowInsets: ExtendedWindowInsets?, left: Boolean, top: Boolean, right: Boolean, bottom: Boolean): String {
+    val insetsMap = windowInsets?.insets ?: emptyMap()
     val dependencies = mutableListOf<String>()
     val not = mutableListOf<String>()
-}
-
-internal fun Int.getTypes(windowInsets: WindowInsetsCompat?, left: Boolean, top: Boolean, right: Boolean, bottom: Boolean): String {
-    val data = Data(windowInsets, left, top, right, bottom)
-    if (!check(Type.systemBars(), data)) {
-        check(Type.statusBars(), data)
-        check(Type.navigationBars(), data)
-        check(Type.captionBar(), data)
-    }
-    check(Type.tappableElement(), data)
-    check(Type.displayCutout(), data)
-    check(Type.ime(), data)
-    check(Type.systemGestures(), data)
-    check(Type.mandatorySystemGestures(), data)
-    var cursor = FIRST
-    while (this >= cursor && cursor > 0) {
-        if ((this and cursor) != 0) {
-            check(cursor, data)
+    insetsMap.entries.forEach { (seed, insets) ->
+        val name = seed.getTypeName()
+        when (true) {
+            !contains(seed) -> Unit
+            (left && insets.left > 0),
+            (top && insets.top > 0),
+            (right && insets.right > 0),
+            (bottom && insets.bottom > 0) -> dependencies.add(name)
+            else -> not.add(name)
         }
-        cursor = cursor.shl(1)
     }
-    return "${data.dependencies.joinToString(prefix = "dependsOn[", separator = ",", postfix = "]")} ${data.not.joinToString(prefix = "not[", separator = ",", postfix = "]")}"
+    dependencies.replaceBars()
+    not.replaceBars()
+    return "${dependencies.joinToString(prefix = "dependsOn[", separator = ",", postfix = "]")} ${not.joinToString(prefix = "not[", separator = ",", postfix = "]")}"
 }
 
-private fun Int.check(type: Int, data: Data): Boolean {
-    val matches = (this and type) == type
-    val name = insetsTypeNameMap[type] ?: "unknown"
-    when {
-        !matches -> Unit
-        data.depends(type) -> data.dependencies.add(name)
-        else -> data.not.add(name)
+private fun MutableList<String>.replaceBars() {
+    val replacement = listOf(Type.statusBars.name, Type.navigationBars.name, Type.captionBar.name)
+    if (containsAll(replacement)) {
+        removeAll(replacement)
+        add("systemBars")
     }
-    return matches
 }
 
-private fun Data.depends(typeMask: Int): Boolean {
-    val insets = windowInsets?.getInsets(typeMask)
-    return when {
-        insets == null -> false
-        left && insets.left > 0 -> true
-        top && insets.top > 0 -> true
-        right && insets.right > 0 -> true
-        bottom && insets.bottom > 0 -> true
-        else -> false
+internal fun ExtendedWindowInsets.Builder.logConsuming(values: Map<Int, InsetsValue>, consuming: Insets, types: TypeSet?) {
+    logd(ExtendedWindowInsets::class) {
+        val consumed = mutableListOf<String>()
+        for ((seed, value) in values) {
+            if (!value.isEmpty) {
+                val min = Insets.min(value.toInsets(), consuming)
+                min.takeIf { it.isNotEmpty() }?.run {
+                    val name = types
+                        ?.find { it.seed == seed }
+                        ?.name
+                        ?.takeIf { it.isNotEmpty() }
+                        ?: seed.getTypeName()
+                    consumed.add("$name[$left,$top,$right,$bottom]")
+                }
+            }
+        }
+        val max = consuming.run { "[$left,$top,$right,$bottom]" }
+        val typeNames = types?.joinToString(separator = ",") { it.name } ?: "all"
+        "consume $max, types $typeNames, consumed: ${consumed.joinToString(separator = " ")}"
     }
 }

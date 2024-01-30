@@ -21,24 +21,20 @@ import android.view.ViewParent
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsCompat.Type
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
+import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
 
 
-val insetsCombining = InsetsCombining(combiningTypeMask = Type.displayCutout())
+val insetsCombining by lazy(LazyThreadSafetyMode.NONE) {
+    InsetsCombining(combiningTypes = ExtendedWindowInsets.Type.displayCutout)
+}
 
-fun WindowInsetsCompat.displayCutout(): Insets = getInsets(Type.displayCutout())
+fun ExtendedWindowInsets.isEmpty(types: TypeSet): Boolean = get(types).isEmpty()
 
-fun WindowInsetsCompat.systemBars(): Insets = getInsets(Type.systemBars())
-
-fun WindowInsetsCompat.barsWithCutout(): Insets = getInsets(barsWithCutout)
-
-fun WindowInsetsCompat.isEmpty(typeMask: Int): Boolean = getInsets(typeMask).isEmpty()
-
-fun WindowInsetsCompat.isNotEmpty(typeMask: Int): Boolean = !isEmpty(typeMask)
+fun ExtendedWindowInsets.isNotEmpty(types: TypeSet): Boolean = !isEmpty(types)
 
 fun Insets.isEmpty() = this == Insets.NONE
 
@@ -62,7 +58,7 @@ fun View.removeInsetsListener(listener: InsetsListener) {
 }
 
 fun View.insetsMix(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
     block: (ViewInsetsConfig.() -> Unit)? = null,
 ): ViewInsetsDelegate {
@@ -74,7 +70,7 @@ fun View.insetsMix(
 }
 
 fun View.insetsPadding(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
     start: Boolean = false,
     top: Boolean = false,
@@ -91,7 +87,7 @@ fun View.insetsPadding(
 )
 
 fun View.insetsMargin(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
     start: Boolean = false,
     top: Boolean = false,
@@ -108,7 +104,7 @@ fun View.insetsMargin(
 )
 
 fun View.insetsPadding(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
     top: Boolean = false,
     horizontal: Boolean = false,
@@ -116,7 +112,7 @@ fun View.insetsPadding(
 ) = insetsPadding(typeMask, combining, horizontal, top, horizontal, bottom)
 
 fun View.insetsMargin(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
     top: Boolean = false,
     horizontal: Boolean = false,
@@ -124,29 +120,27 @@ fun View.insetsMargin(
 ) = insetsMargin(typeMask, combining, horizontal, top, horizontal, bottom)
 
 fun View.insetsPadding(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
     horizontal: Boolean = false,
     vertical: Boolean = false,
 ) = insetsPadding(typeMask, combining, horizontal, vertical, horizontal, vertical)
 
 fun View.insetsMargin(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
     horizontal: Boolean = false,
     vertical: Boolean = false,
 ) = insetsMargin(typeMask, combining, horizontal, vertical, horizontal, vertical)
 
 fun View.insetsMargin(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
-    dependency: Boolean = false,
 ) = insetsMargin(typeMask, combining, horizontal = true, vertical = true)
 
 fun View.insetsPadding(
-    typeMask: Int = barsWithCutout,
+    typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
-    dependency: Boolean = false,
 ) = insetsPadding(typeMask, combining, horizontal = true, vertical = true)
 
 inline fun InsetsProvider.composeInsets(
@@ -171,7 +165,22 @@ fun View.getWindowInsets(): WindowInsetsCompat {
         ?: WindowInsetsCompat.CONSUMED
 }
 
-fun View.getInsets(typeMask: Int = barsWithCutout): Insets = getWindowInsets().getInsets(typeMask)
+fun View.getInsets(type: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()): Insets
+    = getWindowInsets().getInsets(type)
+
+fun View.getInsets(type: TypeSet = barsWithCutout): Insets = when (val windowInsets = getWindowInsets()) {
+    is ExtendedWindowInsets -> windowInsets[type]
+    else -> {
+        var typeMask = 0
+        type.forEach {
+            if (it.seed in LEGACY_RANGE)
+                typeMask = typeMask or it.seed.toTypeMask()
+        }
+        windowInsets.getInsets(typeMask)
+    }
+}
+
+operator fun WindowInsetsCompat.get(typeMask: Int): Insets = getInsets(typeMask)
 
 fun WindowInsetsCompat.toExtended() = when (this) {
     is ExtendedWindowInsets -> this
@@ -179,16 +188,14 @@ fun WindowInsetsCompat.toExtended() = when (this) {
 }
 
 inline fun <T : ExtendedWindowInsets.Type> T.from(
-    windowInsets: WindowInsetsCompat,
-    block: T.() -> Int,
-): Insets = windowInsets.getInsets(block())
+    windowInsets: ExtendedWindowInsets,
+    block: T.() -> TypeSet,
+): Insets = windowInsets[block()]
 
-inline operator fun <T : ExtendedWindowInsets.Type> WindowInsetsCompat.invoke(
+inline operator fun <T : ExtendedWindowInsets.Type> ExtendedWindowInsets.invoke(
     companion: T,
-    block: T.() -> Int,
-): Insets = getInsets(companion.block())
-
-operator fun WindowInsetsCompat.get(type: Int): Insets = getInsets(type)
+    block: T.() -> TypeSet,
+): Insets = get(companion.block())
 
 fun InsetsProvider.requestInsetOnLayoutChange(
     horizontally: Boolean = false,
@@ -201,4 +208,29 @@ fun InsetsProvider.requestInsetOnLayoutChange(
         }
     }
     for (view in views) view.addOnLayoutChangeListener(listener)
+}
+
+internal fun Int.toTypeMask(): Int = when {
+    this > LEGACY_LIMIT -> throw IllegalArgumentException("Seed $this is too big to be converted to the legacy bit mask, $LEGACY_LIMIT is the limit")
+    else -> 1.shl(dec())
+}
+
+internal fun Int.toTypeSet(name: String? = null): TypeSet {
+    if (this == 0) {
+        return TypeSet.EMPTY
+    }
+    var cursor = 1
+    var seed = TypeSet.FIRST_SEED
+    var head: TypeSet? = null
+    while (cursor <= this || this < 0 && cursor != 0) {
+        if ((cursor and this) != 0) {
+            head = name
+                ?.let { TypeSet(it, seed, head) }
+                ?: Type.types.find { it.seed == seed }
+                ?: TypeSet("", seed, head)
+        }
+        cursor = cursor.shl(1)
+        seed++
+    }
+    return head!!
 }
