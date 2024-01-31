@@ -63,7 +63,7 @@ enum class InsetsDestination(
 }
 
 data class InsetsCombining(
-    val combiningTypeMask: Int = 0,
+    val combiningTypes: TypeSet,
     val minStart: Int = 0,
     val minTop: Int = 0,
     val minEnd: Int = 0,

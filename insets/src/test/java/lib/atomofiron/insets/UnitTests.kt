@@ -1,19 +1,21 @@
 package lib.atomofiron.insets
 
 import androidx.core.graphics.Insets
+import lib.atomofiron.insets.ExtendedWindowInsets.Type
+import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 import org.junit.Assert.*
 import org.junit.Test
 
 class UnitTests {
 
-    object CustomType : ExtendedWindowInsets.Type() {
-        val testType1 = next()
-        val testType2 = next()
-        val testType3 = next()
+    object CustomType : Type() {
+        val testType1 = next("testType1")
+        val testType2 = next("testType2")
+        val testType3 = next("testType3")
     }
 
     // associate your custom type with ExtendedWindowInsets
-    private inline operator fun ExtendedWindowInsets.invoke(block: CustomType.() -> Int): Insets = get(CustomType.block())
+    private inline operator fun ExtendedWindowInsets.invoke(block: CustomType.() -> TypeSet): Insets = get(CustomType.block())
 
     @Test
     fun ext_window_insets() {
@@ -29,7 +31,7 @@ class UnitTests {
         val actual1 = CustomType.from(windowInsets) { testType1 }
         val actual2 = windowInsets(CustomType) { testType2 }
         val actual3 = windowInsets { testType3 }
-        val actual4 = windowInsets { testType1 or testType2 or testType3 }
+        val actual4 = windowInsets { testType1 + testType2 + testType3 }
         assertEquals(actual1, zero)
         assertEquals(actual2, ascent)
         assertEquals(actual3, descent)
@@ -41,6 +43,37 @@ class UnitTests {
         val input = Insets.of(100, 200, 300, 400)
         val actual = InsetsValue(input)
         assertEquals(actual.toInsets(), input)
+    }
+
+    @Test
+    fun operations() {
+        val one = CustomType { testType2 }
+        val two = CustomType { testType1 + testType3 }
+        val three = CustomType { testType1 + testType2 + testType3 }
+        assertEquals(three - one, CustomType { testType1 + testType3 })
+        assertEquals(three - two, CustomType { testType2 })
+        assertEquals(three - three, TypeSet.EMPTY)
+        assertEquals(one + two, three)
+        assertEquals(three + three, three)
+        assertEquals(one * two, TypeSet.EMPTY)
+        assertEquals(one * three, one)
+    }
+
+    @Test
+    fun negative() {
+        val negative = TypeSet("negative", seed = -1)
+        val positive = TypeSet("positive", seed = 1)
+        val first = Insets.of(100, 0, 100, 0)
+        val second = Insets.of(0, 100, 0, 100)
+        val both = Insets.max(first, second)
+        val windowInsets = ExtendedWindowInsets.Builder()
+            .set(negative, first)
+            .set(positive, second)
+            .build()
+        assertEquals(first, windowInsets[negative])
+        assertEquals(second, windowInsets[positive])
+        assertEquals(both, windowInsets[negative + positive])
+        assertEquals(Insets.NONE, windowInsets[negative * positive])
     }
 }
 

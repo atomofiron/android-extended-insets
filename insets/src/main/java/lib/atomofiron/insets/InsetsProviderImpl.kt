@@ -40,7 +40,7 @@ class InsetsProviderImpl private constructor(
 
     private var srcState = SrcState()
         set(value) {
-            logd { "${thisView?.nameWithId()} new state? ${field != value}" }
+            logd { "${thisView?.nameWithId()} new state? ${field != value}, modifier? ${value.hasModifier}, dependencies ${value.dependencies}" }
             if (value.hasModifier && value.dependencies > 0 || field != value) {
                 field = value
                 updateCurrent(value)
@@ -169,7 +169,7 @@ private fun InsetsListener.checkTheSameView(other: InsetsListener) = when {
 }
 
 private fun Map<Int, InsetsListener>.dependencies(another: InsetsListener? = null): Int {
-    return count { it.value.isDependency } + if (another?.isDependency == true) 1 else 0
+    return count { it.value.isDependency } + (if (another?.isDependency == true) 1 else 0)
 }
 
 private fun Context.dropNativeInsets(attrs: AttributeSet?): Boolean {

@@ -23,22 +23,14 @@ import androidx.core.view.WindowInsetsCompat
 import kotlin.math.max
 
 
-// WindowInsetsCompat.Type.SIZE = 9
-private const val OFFSET = 9
-private const val LIMIT = Int.SIZE_BITS - 1 // one for the sign
-//  /-------custom-------\/system-\
-// 01010101010101010101010101010101
-//  ^-last         FIRST-^
-internal const val FIRST = 1.shl(OFFSET)
-private const val ALL = Int.MAX_VALUE
-private var next = FIRST
-
-private fun emptyValues(): Array<InsetsValue> = Array(LIMIT) { InsetsValue() }
-
-private val emptyValues: Array<InsetsValue> = emptyValues()
+//                        /system-\
+// 00000000000000000000000101010101
+//            seeds: 31...987654321
+internal const val LEGACY_LIMIT = Int.SIZE_BITS - 1
+internal val LEGACY_RANGE = 1..LEGACY_LIMIT
 
 class ExtendedWindowInsets private constructor(
-    private val insets: Array<InsetsValue>,
+    insets: Map<Int, InsetsValue>,
     windowInsets: WindowInsetsCompat?,
     // WindowInsetsCompat may be needed for getInsetsIgnoringVisibility()
 ) : WindowInsetsCompat(windowInsets) {
@@ -47,95 +39,144 @@ class ExtendedWindowInsets private constructor(
     }
 
     abstract class Type {
+        companion object {
+            val statusBars: TypeSet = WindowInsetsCompat.Type.statusBars().toTypeSet("statusBars")
+            val navigationBars: TypeSet = WindowInsetsCompat.Type.navigationBars().toTypeSet("navigationBars")
+            val captionBar: TypeSet = WindowInsetsCompat.Type.captionBar().toTypeSet("captionBar")
+            val systemBars: TypeSet = statusBars + navigationBars + captionBar
+            val displayCutout: TypeSet = WindowInsetsCompat.Type.displayCutout().toTypeSet("displayCutout")
+            val barsWithCutout: TypeSet = systemBars + displayCutout
+            val tappableElement: TypeSet = WindowInsetsCompat.Type.tappableElement().toTypeSet("tappableElement")
+            val systemGestures: TypeSet = WindowInsetsCompat.Type.systemGestures().toTypeSet("systemGestures")
+            val mandatorySystemGestures: TypeSet = WindowInsetsCompat.Type.mandatorySystemGestures().toTypeSet("mandatorySystemGestures")
+            val ime: TypeSet = WindowInsetsCompat.Type.ime().toTypeSet("ime")
 
-        val statusBars: Int get() = WindowInsetsCompat.Type.statusBars()
-        val navigationBars: Int get() = WindowInsetsCompat.Type.navigationBars()
-        val systemBars: Int get() = WindowInsetsCompat.Type.systemBars()
-        val displayCutout: Int get() = WindowInsetsCompat.Type.displayCutout()
-        val barsWithCutout: Int get() = systemBars or displayCutout
-        val tappableElement: Int get() = WindowInsetsCompat.Type.tappableElement()
-        val systemGestures: Int get() = WindowInsetsCompat.Type.systemGestures()
-        val mandatorySystemGestures: Int get() = WindowInsetsCompat.Type.mandatorySystemGestures()
-        val ime: Int get() = WindowInsetsCompat.Type.ime()
-        val captionBar: Int get() = WindowInsetsCompat.Type.captionBar()
+            internal val types = linkedSetOf(TypeSet.EMPTY, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime)
 
-        fun next(): Int = when {
-            next <= 0 -> throw ExtendedInsetsTypeMaskOverflow()
-            else -> next.apply { next = shl(1) }
+            inline operator fun invoke(block: Companion.() -> TypeSet): TypeSet = this.block()
+
+            inline operator fun <T : Type> T.invoke(block: T.() -> TypeSet): TypeSet = block()
         }
 
-        companion object : Type() {
+        val statusBars = Companion.statusBars
+        val navigationBars = Companion.navigationBars
+        val captionBar = Companion.captionBar
+        val systemBars = Companion.systemBars
+        val displayCutout = Companion.displayCutout
+        val barsWithCutout = Companion.barsWithCutout
+        val tappableElement = Companion.tappableElement
+        val systemGestures = Companion.systemGestures
+        val mandatorySystemGestures = Companion.mandatorySystemGestures
+        val ime = Companion.ime
 
-            inline operator fun invoke(block: Companion.() -> Int): Int = this.block()
-
-            inline operator fun <T : Type> T.invoke(block: T.() -> Int): Int = this.block()
-        }
+        fun next(name: String) = TypeSet(name).also { types.add(it) }
     }
+
+    internal val insets: Map<Int, InsetsValue> = insets.toMap()
 
     constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let { toWindowInsetsCompat(it, view) })
 
     constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
 
-    override fun getInsets(typeMask: Int): Insets = get(typeMask)
+    operator fun get(typeMask: Int): Insets = getInsets(typeMask)
 
-    operator fun get(type: Int): Insets {
+    override fun getInsets(type: Int): Insets {
         val values = intArrayOf(0, 0, 0, 0)
         var cursor = 1
-        var index = 0
+        var seed = TypeSet.FIRST_SEED
         while (cursor in 1..type) {
-            val value = insets[index++]
-            if (!value.isZero && (cursor and type) != 0) {
-                values[0] = max(values[0], value.left)
-                values[1] = max(values[1], value.top)
-                values[2] = max(values[2], value.right)
-                values[3] = max(values[3], value.bottom)
+            if ((cursor and type) != 0) {
+                values.max(seed)
             }
             cursor = cursor.shl(1)
+            seed++
         }
         return Insets.of(values[0], values[1], values[2], values[3])
     }
 
-    override fun equals(other: Any?): Boolean {
-        other ?: return false
-        val otherValues = (other as? ExtendedWindowInsets)?.insets ?: emptyValues
-        return otherValues.contentEquals(insets) && super.equals(other)
+    operator fun get(types: TypeSet): Insets {
+        val values = intArrayOf(0, 0, 0, 0)
+        var next: TypeSet? = types
+        while (next != null) {
+            values.max(next.seed)
+            next = next.next
+        }
+        return Insets.of(values[0], values[1], values[2], values[3])
     }
 
-    override fun hashCode(): Int = 31 * insets.contentHashCode() + super.hashCode()
+    private fun IntArray.max(seed: Int) {
+        val value = insets[seed]
+        if (value?.isEmpty == false) {
+            set(0, max(get(0), value.left))
+            set(1, max(get(1), value.top))
+            set(2, max(get(2), value.right))
+            set(3, max(get(3), value.bottom))
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        val otherValues = (other as? ExtendedWindowInsets)?.insets ?: emptyMap()
+        return otherValues == insets && super.equals(other)
+    }
+
+    override fun hashCode(): Int = 31 * insets.hashCode() + super.hashCode()
 
     class Builder private constructor(
-        values: Array<InsetsValue>?,
+        values: Map<Int, InsetsValue>?,
         // WindowInsetsCompat may be needed for getInsetsIgnoringVisibility()
         private val windowInsets: WindowInsetsCompat?,
     ) {
-        private val values: Array<InsetsValue> = values ?: emptyValues()
+        private val values: MutableMap<Int, InsetsValue> = values?.toMutableMap() ?: mutableMapOf()
 
         constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let{ toWindowInsetsCompat(windowInsets, view) })
 
         constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
 
         operator fun set(type: Int, insets: Insets): Builder {
-            for (index in values.indices) {
-                val cursor = 1.shl(index)
+            for (seed in LEGACY_RANGE) {
+                val cursor = seed.toTypeMask()
                 when {
                     cursor > type -> break
-                    (cursor and type) != 0 -> values[index] = InsetsValue(insets)
+                    (cursor and type) != 0 -> values[seed] = InsetsValue(insets)
                 }
             }
             return this
         }
 
-        fun consume(typeMask: Int): Builder {
-            consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), typeMask)
+        operator fun set(types: TypeSet, insets: Insets): Builder {
+            val insetsValue = InsetsValue(insets)
+            logd { "set ${types.joinToString(separator = " ") { "${it.name}$insetsValue" }}" }
+            types.forEach {
+                values[it.seed] = insetsValue
+            }
             return this
         }
 
-        fun consume(insets: Insets, typeMask: Int = ALL): Builder {
-            if (insets.isEmpty()) return this
-            logConsuming(values, insets, typeMask)
-            for (i in values.indices) {
-                if ((1.shl(i) and typeMask) != 0 && !values[i].isZero) {
-                    values[i] = values[i].consume(insets)
+        fun consume(typeMask: Int): Builder {
+            consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), typeMask.toTypeSet())
+            return this
+        }
+
+        fun consume(insets: Insets, types: TypeSet? = null): Builder {
+            logConsuming(values, insets, types)
+            when {
+                insets.isEmpty() -> Unit
+                types?.isEmpty() == true -> Unit
+                types == null -> for ((seed, insetsValue) in values.entries.toList()) {
+                    val value = insetsValue.consume(insets)
+                    when {
+                        value.isEmpty -> values.remove(seed)
+                        else -> values[seed] = value
+                    }
+                }
+                else -> for (type in types) {
+                    values[type.seed]?.consume(insets)?.let {
+                        when {
+                            it.isEmpty -> values.remove(type.seed)
+                            else -> values[type.seed] = it
+                        }
+                    }
                 }
             }
             return this
@@ -144,7 +185,10 @@ class ExtendedWindowInsets private constructor(
         // compatible with the WindowInsetsCompat api
         fun setInsets(type: Int, insets: Insets): Builder = set(type, insets)
 
-        fun build() = ExtendedWindowInsets(values.clone(), windowInsets)
+        fun build(): ExtendedWindowInsets {
+            logd { "build ${values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
+            return ExtendedWindowInsets(values.toMap(), windowInsets)
+        }
     }
 }
 
@@ -158,7 +202,7 @@ internal value class InsetsValue(
     // \-----left-----/\-----top------/\-----right----/\----bottom----/
     private val value: ULong = 0uL,
 ) {
-    val isZero: Boolean get() = value == 0uL
+    val isEmpty: Boolean get() = value == 0uL
     val left: Int get() = value.shr(48).toInt()
     val top: Int get() = (value.shr(32) and PART_MASK).toInt()
     val right: Int get() = (value.shr(16) and PART_MASK).toInt()
@@ -183,32 +227,16 @@ internal value class InsetsValue(
             (bottom - insets.bottom).coerceAtLeast(0),
         )
     }
+
+    override fun toString(): String = "[$left,$top,$right,$bottom]"
 }
 
-private fun WindowInsetsCompat?.toValues(): Array<InsetsValue> {
-    val insets = emptyValues()
+private fun WindowInsetsCompat?.toValues(): Map<Int, InsetsValue> {
+    val insets = mutableMapOf<Int, InsetsValue>()
     this ?: return insets
-    for (index in insets.indices) {
-        val next = getInsets(1.shl(index))
-        if (next.isNotEmpty()) insets[index] = InsetsValue(next)
+    for (seed in LEGACY_RANGE) {
+        val next = getInsets(seed.toTypeMask())
+        if (next.isNotEmpty()) insets[seed] = InsetsValue(next)
     }
     return insets
-}
-
-private fun ExtendedWindowInsets.Builder.logConsuming(values: Array<InsetsValue>, consuming: Insets, typeMask: Int) {
-    logd(ExtendedWindowInsets::class) {
-        val consumed = mutableListOf<String>()
-        for (i in values.indices) {
-            val cursor = 1.shl(i)
-            if ((cursor and typeMask) != 0 && !values[i].isZero) {
-                val min = Insets.min(values[i].toInsets(), consuming)
-                min.takeIf { it.isNotEmpty()}?.run {
-                    val name = insetsTypeNameMap[cursor] ?: "unknown"
-                    consumed.add("$name[$left,$top,$right,$bottom]")
-                }
-            }
-        }
-        val max = consuming.run { "[$left,$top,$right,$bottom]" }
-        "consume $max, consumed: ${consumed.joinToString(separator = " ")}"
-    }
 }
