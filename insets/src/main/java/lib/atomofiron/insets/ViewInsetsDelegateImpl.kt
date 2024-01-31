@@ -63,6 +63,7 @@ internal class ViewInsetsDelegateImpl(
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
     private var postRequestLayoutOnNextLayout = false
     private var dependency = Dependency()
+    private var scrollOnEdge = false
 
     private var dstLeft = if (isRtl) dstEnd else dstStart
     private var dstRight = if (isRtl) dstStart else dstEnd
@@ -124,6 +125,11 @@ internal class ViewInsetsDelegateImpl(
         return this
     }
 
+    override fun scrollOnEdge(): ViewInsetsDelegate {
+        scrollOnEdge = true
+        return this
+    }
+
     override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int, ) {
         val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
         val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
@@ -166,10 +172,10 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyPadding(insets: Insets) {
         if (!isAny(Padding)) return
-        val scrollingPaddingTop = view.paddingTop.takeIf {
+        val scrollingPaddingTop = view.paddingTop.takeIf { scrollOnEdge }.takeIf {
             view is ScrollingView && (view as? ViewGroup)?.getChildAt(0)?.top == it
         }
-        val scrollingPaddingBottom = view.paddingBottom.takeIf {
+        val scrollingPaddingBottom = view.paddingBottom.takeIf { scrollOnEdge }.takeIf {
             val bottomSpace = (view as? ViewGroup)
                 ?.run { getChildAt(childCount.dec()) }
                 ?.run { view.height - bottom - marginBottom }

@@ -48,6 +48,7 @@ interface InsetsProvider : InsetsListener {
 interface ViewInsetsDelegate : InsetsListener {
     fun changeInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
     fun dependency(horizontal: Boolean = false, vertical: Boolean = false): ViewInsetsDelegate
+    fun scrollOnEdge(): ViewInsetsDelegate
     fun detachFromProvider()
     fun detachFromView()
 }
