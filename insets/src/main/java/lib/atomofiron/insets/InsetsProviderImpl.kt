@@ -131,12 +131,12 @@ class InsetsProviderImpl private constructor(
         source = windowInsets
     }
 
-    private fun updateCurrent(srcState: ExtendedWindowInsets) {
+    private fun updateCurrent(source: ExtendedWindowInsets) {
         logd { "${thisView?.nameWithId()} update current, with modifier? ${insetsModifier != null}" }
         current = insetsModifier
-            ?.transform(listeners.isNotEmpty(), srcState)
+            ?.transform(listeners.isNotEmpty(), source)
             ?.toExtended()
-            ?: srcState
+            ?: source
     }
 
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
