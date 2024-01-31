@@ -94,7 +94,7 @@ class DemoActivity : AppCompatActivity() {
                 .build()
         }
         togglesContainer.composeInsets(
-            bottomPanel.insetsPadding(horizontal = true, bottom = true).verticalDependency(),
+            bottomPanel.insetsPadding(horizontal = true, bottom = true).dependency(vertical = true),
         ) { _, windowInsets ->
             switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
             val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
@@ -102,8 +102,8 @@ class DemoActivity : AppCompatActivity() {
                 .set(ExtType.togglePanel, insets)
                 .build()
         }
-        val topDelegate = viewTop.insetsMix { margin(horizontal).padding(top) }.verticalDependency()
-        val bottomDelegate = viewBottom.insetsMix(ExtType.common) { horizontal(margin).bottom(padding) }.verticalDependency()
+        val topDelegate = viewTop.insetsMix { margin(horizontal).padding(top) }.dependency(vertical = true)
+        val bottomDelegate = viewBottom.insetsMix(ExtType.common) { horizontal(margin).bottom(padding) }.dependency(vertical = true)
         panelsContainer.composeInsets(topDelegate, bottomDelegate) { _, windowInsets ->
             val insets = Insets.of(0, viewTop.visibleTopHeight, 0, viewBottom.visibleBottomHeight)
             ExtendedWindowInsets.Builder(windowInsets)
