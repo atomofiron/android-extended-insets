@@ -190,6 +190,7 @@ internal class ViewInsetsDelegateImpl(
             if (old < view.paddingBottom) view.scrollBy(0, view.paddingBottom - old)
         }
         oldPadding?.run {
+            // trigger insets requesting
             if (dependency.horizontal) view.right += (view.paddingLeft + view.paddingRight) - (left + right)
             if (dependency.vertical) view.bottom += (view.paddingTop + view.paddingBottom) - (top + bottom)
         }
