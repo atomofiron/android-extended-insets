@@ -35,8 +35,7 @@ internal fun InsetsValue.toInsets() = Insets.of(left, top, right, bottom)
 
 internal fun Insets.toValues() = InsetsValue(left, top, right, bottom)
 
-internal operator fun InsetsValue?.plus(other: InsetsValue?): InsetsValue {
-    this ?: return other ?: InsetsValue()
+internal operator fun InsetsValue.plus(other: InsetsValue?): InsetsValue {
     other ?: return this
     return InsetsValue(
         left + other.left,
@@ -46,8 +45,7 @@ internal operator fun InsetsValue?.plus(other: InsetsValue?): InsetsValue {
     )
 }
 
-internal infix fun InsetsValue?.max(other: InsetsValue?): InsetsValue {
-    this ?: return other ?: InsetsValue()
+internal infix fun InsetsValue.max(other: InsetsValue?): InsetsValue {
     other ?: return this
     return InsetsValue(
         max(left, other.left),
@@ -57,8 +55,7 @@ internal infix fun InsetsValue?.max(other: InsetsValue?): InsetsValue {
     )
 }
 
-internal infix fun InsetsValue?.consume(insets: Insets): InsetsValue {
-    this ?: return InsetsValue()
+internal infix fun InsetsValue.consume(insets: Insets): InsetsValue {
     return InsetsValue(
         (left - insets.left).coerceAtLeast(0),
         (top - insets.top).coerceAtLeast(0),
