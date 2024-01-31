@@ -52,6 +52,8 @@ class InsetsProviderImpl private constructor(
     private var provider: InsetsProvider? = null
     private var thisView: View? = null
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
+    private var isRequested = false
+    private var isNotifying = false
 
     constructor() : this(dropNative = false)
 
@@ -120,7 +122,10 @@ class InsetsProviderImpl private constructor(
         return if (dropNative) WindowInsets.CONSUMED else windowInsets
     }
 
-    override fun requestInsets() = updateCurrent(source)
+    override fun requestInsets() = when {
+        isNotifying -> isRequested = true
+        else -> updateCurrent(source)
+    }
 
     override fun dropNativeInsets(drop: Boolean) {
         dropNative = drop
@@ -140,9 +145,15 @@ class InsetsProviderImpl private constructor(
     }
 
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
+        isNotifying = true
         listeners.values.toTypedArray().forEach {
             it.onApplyWindowInsets(windowInsets)
         }
+        if (isRequested) {
+            isRequested = false
+            updateCurrent(source)
+        }
+        isNotifying = false
     }
 }
 
