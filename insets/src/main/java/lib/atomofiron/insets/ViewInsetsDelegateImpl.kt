@@ -109,28 +109,18 @@ internal class ViewInsetsDelegateImpl(
         dstRight = if (isRtl) config.dstStart else config.dstEnd
         dstBottom = config.dstBottom
         saveStock()
+        updateInsets(windowInsets)
         applyInsets()
         return this
     }
 
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         this.windowInsets = windowInsets
-        var new = combining?.combine(windowInsets) ?: windowInsets[types]
-        new = new.filterUseful()
-        if (insets != new) {
-            insets = new
-            applyInsets()
-            if (isAny(Margin) && !view.isShown) postRequestLayoutOnNextLayout = true
-        }
+        updateInsets(windowInsets)
     }
 
-    override fun horizontalDependency(): ViewInsetsDelegate {
-        dependency = dependency.copy(horizontal = true)
-        return this
-    }
-
-    override fun verticalDependency(): ViewInsetsDelegate {
-        dependency = dependency.copy(vertical = true)
+    override fun dependency(horizontal: Boolean, vertical: Boolean): ViewInsetsDelegate {
+        dependency = dependency.copy(horizontal = horizontal, vertical = vertical)
         return this
     }
 
@@ -156,6 +146,16 @@ internal class ViewInsetsDelegateImpl(
         stockTop = if (dstTop == Margin) params.topMargin else view.paddingTop
         stockRight = if (dstRight == Margin) params.rightMargin else view.paddingRight
         stockBottom = if (dstBottom == Margin) params.bottomMargin else view.paddingBottom
+    }
+
+    private fun updateInsets(windowInsets: ExtendedWindowInsets) {
+        var new = combining?.combine(windowInsets) ?: windowInsets[types]
+        new = new.filterUseful()
+        if (insets != new) {
+            insets = new
+            applyInsets()
+            if (isAny(Margin) && !view.isShown) postRequestLayoutOnNextLayout = true
+        }
     }
 
     private fun applyInsets() {
