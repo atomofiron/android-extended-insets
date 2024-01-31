@@ -27,20 +27,14 @@ import androidx.core.view.WindowInsetsCompat
 
 const val INVALID_INSETS_LISTENER_KEY = 0
 
-private data class SrcState(
-    val windowInsets: ExtendedWindowInsets = ExtendedWindowInsets.CONSUMED,
-    val hasModifier: Boolean = false,
-    val hasListeners: Boolean = false,
-)
-
 class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
 ) : InsetsProvider, View.OnAttachStateChangeListener {
 
-    private var srcState = SrcState()
+    private var source = ExtendedWindowInsets.CONSUMED
         set(value) {
-            logd { "${thisView?.nameWithId()} new state? ${field != value}, modifier? ${value.hasModifier}" }
-            if (value.hasModifier || field != value) {
+            logd { "${thisView?.nameWithId()} new received? ${field != value}" }
+            if (field != value) {
                 field = value
                 updateCurrent(value)
             }
@@ -84,7 +78,6 @@ class InsetsProviderImpl private constructor(
     override fun setInsetsModifier(modifier: InsetsModifier) {
         logd { "${thisView?.nameWithId()} set modifier" }
         insetsModifier = modifier
-        srcState = srcState.copy(hasModifier = true)
     }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
@@ -101,10 +94,7 @@ class InsetsProviderImpl private constructor(
         }
         logd { "${thisView?.nameWithId()} add listener -> ${listeners.size.inc()}" }
         val key = nextKey++
-        // listeners may or may not be notified with new insets
-        srcState = srcState.copy(hasListeners = true)
         listeners[key] = listener
-        // always notify the new one
         listener.onApplyWindowInsets(current)
         return key
     }
@@ -118,9 +108,6 @@ class InsetsProviderImpl private constructor(
     override fun removeInsetsListener(key: Int) {
         val removed = listeners.remove(key) != null
         logd { "${thisView?.nameWithId()} remove listener? $removed -> ${listeners.size}" }
-        if (removed) {
-            srcState = srcState.copy(hasListeners = listeners.isNotEmpty())
-        }
     }
 
     // the one of the two entry points for window insets
@@ -128,12 +115,12 @@ class InsetsProviderImpl private constructor(
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (provider == null) {
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
-            srcState = srcState.copy(windowInsets = windowInsetsCompat.toExtended())
+            source = windowInsetsCompat.toExtended()
         }
         return if (dropNative) WindowInsets.CONSUMED else windowInsets
     }
 
-    override fun requestInsets() = updateCurrent(srcState)
+    override fun requestInsets() = updateCurrent(source)
 
     override fun dropNativeInsets(drop: Boolean) {
         dropNative = drop
@@ -141,15 +128,15 @@ class InsetsProviderImpl private constructor(
 
     // the one of the two entry points for window insets
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
-        srcState = srcState.copy(windowInsets = windowInsets)
+        source = windowInsets
     }
 
-    private fun updateCurrent(srcState: SrcState) {
-        logd { "${thisView?.nameWithId()} update current with modifier? ${insetsModifier != null}" }
+    private fun updateCurrent(srcState: ExtendedWindowInsets) {
+        logd { "${thisView?.nameWithId()} update current, with modifier? ${insetsModifier != null}" }
         current = insetsModifier
-            ?.transform(listeners.isNotEmpty(), srcState.windowInsets)
+            ?.transform(listeners.isNotEmpty(), srcState)
             ?.toExtended()
-            ?: srcState.windowInsets
+            ?: srcState
     }
 
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
