@@ -21,7 +21,6 @@ import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.core.graphics.Insets
 import androidx.core.view.ScrollingView
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.marginBottom
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -116,7 +115,8 @@ internal class ViewInsetsDelegateImpl(
 
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         this.windowInsets = windowInsets
-        val new = combining?.combine(windowInsets) ?: windowInsets[types]
+        var new = combining?.combine(windowInsets) ?: windowInsets[types]
+        new = new.filterUseful()
         if (insets != new) {
             insets = new
             applyInsets()
@@ -219,6 +219,15 @@ internal class ViewInsetsDelegateImpl(
 
     private fun getMarginLayoutParamsOrThrow(): MarginLayoutParams {
         return view.layoutParams as? MarginLayoutParams ?: throw NoMarginLayoutParams(view.nameWithId())
+    }
+
+    private fun Insets.filterUseful(): Insets {
+        return Insets.of(
+            if (dstLeft.isNone) 0 else left,
+            if (dstTop.isNone) 0 else top,
+            if (dstRight.isNone) 0 else right,
+            if (dstBottom.isNone) 0 else bottom,
+        )
     }
 
     private fun InsetsCombining.combine(windowInsets: ExtendedWindowInsets): Insets {
