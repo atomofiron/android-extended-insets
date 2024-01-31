@@ -5,13 +5,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import demo.atomofiron.insets.databinding.ActivityDemoBinding
 import com.google.android.material.materialswitch.MaterialSwitch
 import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
-import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
@@ -28,10 +28,6 @@ class DemoActivity : AppCompatActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         lib.atomofiron.insets.debugInsets = true
-        lib.atomofiron.insets.insetsTypeNameMap.run {
-            put(ExtType.togglePanel, "togglePanel")
-            put(ExtType.verticalPanels, "verticalPanels")
-        }
 
         ActivityDemoBinding.inflate(layoutInflater).apply {
             setContentView(root)
@@ -52,7 +48,7 @@ class DemoActivity : AppCompatActivity() {
             switchFullscreen.setOnClickListener { switch ->
                 switch as MaterialSwitch
                 insetsController.run {
-                    if (switch.isChecked) hide(Type.systemBars) else show(Type.systemBars)
+                    Type.systemBars().let { if (switch.isChecked) hide(it) else show(it) }
                 }
                 insetsController.systemBarsBehavior = when {
                     systemBarsBehavior -> WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -100,10 +96,10 @@ class DemoActivity : AppCompatActivity() {
         togglesContainer.composeInsets(
             bottomPanel.insetsPadding(horizontal = true, bottom = true).verticalDependency(),
         ) { _, windowInsets ->
-            switchFullscreen.isChecked = windowInsets.isEmpty(Type.systemBars)
+            switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
             val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
             ExtendedWindowInsets.Builder(windowInsets)
-                .setInsets(ExtType.togglePanel, insets)
+                .set(ExtType.togglePanel, insets)
                 .build()
         }
         val topDelegate = viewTop.insetsMix { margin(horizontal).padding(top) }.verticalDependency()
@@ -111,7 +107,7 @@ class DemoActivity : AppCompatActivity() {
         panelsContainer.composeInsets(topDelegate, bottomDelegate) { _, windowInsets ->
             val insets = Insets.of(0, viewTop.visibleTopHeight, 0, viewBottom.visibleBottomHeight)
             ExtendedWindowInsets.Builder(windowInsets)
-                .setInsets(ExtType.verticalPanels, insets)
+                .set(ExtType.verticalPanels, insets)
                 .build()
         }
         val toolbarCombining = insetsCombining.copy(
@@ -119,12 +115,12 @@ class DemoActivity : AppCompatActivity() {
             minEnd= resources.getDimensionPixelSize(R.dimen.toolbar_menu_padding),
         )
         toolbar.insetsMargin(ExtType.common, toolbarCombining, top = true, horizontal = true)
-        val fabCombining = insetsCombining.copy(insetsCombining.combiningTypeMask or ExtType.togglePanel)
+        val fabCombining = insetsCombining.copy(insetsCombining.combiningTypes + ExtType.togglePanel)
         fab.insetsMargin(ExtType.common, fabCombining, end = true, bottom = true)
     }
 
     private fun syncCutout(windowInsets: WindowInsetsCompat) {
-        val insets = windowInsets.getInsets(Type.displayCutout)
+        val insets = windowInsets.getInsets(Type.displayCutout())
         when {
             insets.left > 0 -> cutoutDrawable.left()
             insets.top > 0 -> cutoutDrawable.top()
