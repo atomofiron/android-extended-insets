@@ -135,7 +135,8 @@ class ExtendedWindowInsets private constructor(
 
         constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
 
-        operator fun set(type: Int, insets: Insets): Builder {
+        // compatible with the WindowInsetsCompat api
+        fun setInsets(type: Int, insets: Insets): Builder {
             for (seed in LEGACY_RANGE) {
                 val cursor = seed.toTypeMask()
                 when {
@@ -160,6 +161,15 @@ class ExtendedWindowInsets private constructor(
             logd { "max ${types.joinToString(separator = " ") { "${it.name}$insetsValue" }}" }
             types.forEach {
                 values[it.seed] = insetsValue.max(values[it.seed])
+            }
+            return this
+        }
+
+        fun add(types: TypeSet, insets: Insets): Builder {
+            val insetsValue = InsetsValue(insets)
+            logd { "add ${types.joinToString(separator = " ") { "${it.name}$insetsValue" }}" }
+            types.forEach {
+                values[it.seed] = insetsValue.add(values[it.seed])
             }
             return this
         }
@@ -192,9 +202,6 @@ class ExtendedWindowInsets private constructor(
             }
             return this
         }
-
-        // compatible with the WindowInsetsCompat api
-        fun setInsets(type: Int, insets: Insets): Builder = set(type, insets)
 
         fun build(): ExtendedWindowInsets {
             logd { "build ${values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
@@ -246,6 +253,16 @@ internal value class InsetsValue(
             max(top, other.top),
             max(right, other.right),
             max(bottom, other.bottom),
+        )
+    }
+
+    fun add(other: InsetsValue?): InsetsValue {
+        other ?: return this
+        return InsetsValue(
+            left + other.left,
+            top + other.top,
+            right + other.right,
+            bottom + other.bottom,
         )
     }
 
