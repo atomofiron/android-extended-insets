@@ -50,8 +50,9 @@ class ExtendedWindowInsets private constructor(
             val systemGestures: TypeSet = WindowInsetsCompat.Type.systemGestures().toTypeSet("systemGestures")
             val mandatorySystemGestures: TypeSet = WindowInsetsCompat.Type.mandatorySystemGestures().toTypeSet("mandatorySystemGestures")
             val ime: TypeSet = WindowInsetsCompat.Type.ime().toTypeSet("ime")
+            val general: TypeSet = TypeSet("general")
 
-            internal val types = linkedSetOf(TypeSet.EMPTY, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime)
+            internal val types = linkedSetOf(TypeSet.EMPTY, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime, general)
 
             inline operator fun invoke(block: Companion.() -> TypeSet): TypeSet = this.block()
 
@@ -68,6 +69,7 @@ class ExtendedWindowInsets private constructor(
         val systemGestures = Companion.systemGestures
         val mandatorySystemGestures = Companion.mandatorySystemGestures
         val ime = Companion.ime
+        val general = Companion.general
 
         fun next(name: String) = TypeSet(name).also { types.add(it) }
     }
@@ -153,6 +155,15 @@ class ExtendedWindowInsets private constructor(
             return this
         }
 
+        fun max(types: TypeSet, insets: Insets): Builder {
+            val insetsValue = InsetsValue(insets)
+            logd { "max ${types.joinToString(separator = " ") { "${it.name}$insetsValue" }}" }
+            types.forEach {
+                values[it.seed] = insetsValue.max(values[it.seed])
+            }
+            return this
+        }
+
         fun consume(typeMask: Int): Builder {
             consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), typeMask.toTypeSet())
             return this
@@ -225,6 +236,16 @@ internal value class InsetsValue(
             (top - insets.top).coerceAtLeast(0),
             (right - insets.right).coerceAtLeast(0),
             (bottom - insets.bottom).coerceAtLeast(0),
+        )
+    }
+
+    fun max(other: InsetsValue?): InsetsValue {
+        other ?: return this
+        return InsetsValue(
+            max(left, other.left),
+            max(top, other.top),
+            max(right, other.right),
+            max(bottom, other.bottom),
         )
     }
 

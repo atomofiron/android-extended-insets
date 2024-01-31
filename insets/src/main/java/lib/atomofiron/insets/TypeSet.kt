@@ -27,13 +27,13 @@ data class TypeSet internal constructor(
     internal val seed: Int = nextSeed.getAndAdd(1),
     internal val next: TypeSet? = null,
 ) : Set<TypeSet> {
-
     companion object {
-        const val FIRST_SEED = 1
-        val EMPTY = TypeSet("empty", 0)
+        private const val ZERO_SEED = 0
+        internal const val FIRST_SEED = ZERO_SEED + 1
+        val EMPTY = TypeSet("empty", ZERO_SEED)
     }
 
-    override val size: Int = (if (seed == 0) 0 else 1) + (next?.size ?: 0)
+    override val size: Int = (if (seed == ZERO_SEED) 0 else 1) + (next?.size ?: 0)
 
     override fun isEmpty(): Boolean = size == 0
 
@@ -54,18 +54,18 @@ data class TypeSet internal constructor(
     }
 
     override fun iterator() = object : Iterator<TypeSet> {
-        private var next: TypeSet? = this@TypeSet
+        private var next: TypeSet? = this@TypeSet.takeIf { seed != ZERO_SEED }
         override fun hasNext(): Boolean = next != null
         override fun next(): TypeSet = next?.also { next = it.next } ?: throw NoSuchElementException()
     }
 
     // without sorting
     operator fun plus(other: TypeSet): TypeSet {
-        var head = takeIf { seed != 0 }
+        var head = takeIf { seed != ZERO_SEED }
         var next: TypeSet? = other
         while (next != null) {
             when {
-                next.seed == 0 -> Unit
+                next.seed == ZERO_SEED -> Unit
                 head?.contains(next) == true -> Unit
                 else -> head = next.copy(next = head)
             }
@@ -81,7 +81,7 @@ data class TypeSet internal constructor(
     private fun operation(other: TypeSet, contains: Boolean): TypeSet {
         var head: TypeSet? = null
         forEach {
-            if (it.seed != 0 && (it in other) == contains) {
+            if (it.seed != ZERO_SEED && (it in other) == contains) {
                 head = it.copy(next = head)
             }
         }

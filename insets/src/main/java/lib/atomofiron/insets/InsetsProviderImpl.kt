@@ -23,6 +23,8 @@ import android.view.View
 import android.view.WindowInsets
 import androidx.annotation.RequiresApi
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type as CompatType
+import lib.atomofiron.insets.ExtendedWindowInsets.Type
 
 
 const val INVALID_INSETS_LISTENER_KEY = 0
@@ -80,6 +82,7 @@ class InsetsProviderImpl private constructor(
     override fun setInsetsModifier(modifier: InsetsModifier) {
         logd { "${thisView?.nameWithId()} set modifier" }
         insetsModifier = modifier
+        updateCurrent(source)
     }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
@@ -117,7 +120,10 @@ class InsetsProviderImpl private constructor(
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (provider == null) {
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
-            source = windowInsetsCompat.toExtended()
+            val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
+            source = ExtendedWindowInsets.Builder(windowInsetsCompat)
+                .max(Type.general, barsWithCutout)
+                .build()
         }
         return if (dropNative) WindowInsets.CONSUMED else windowInsets
     }
