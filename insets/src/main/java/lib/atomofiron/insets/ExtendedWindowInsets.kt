@@ -50,8 +50,9 @@ class ExtendedWindowInsets private constructor(
             val systemGestures: TypeSet = WindowInsetsCompat.Type.systemGestures().toTypeSet("systemGestures")
             val mandatorySystemGestures: TypeSet = WindowInsetsCompat.Type.mandatorySystemGestures().toTypeSet("mandatorySystemGestures")
             val ime: TypeSet = WindowInsetsCompat.Type.ime().toTypeSet("ime")
+            val general: TypeSet = TypeSet("general")
 
-            internal val types = linkedSetOf(TypeSet.EMPTY, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime)
+            internal val types = linkedSetOf(TypeSet.EMPTY, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime, general)
 
             inline operator fun invoke(block: Companion.() -> TypeSet): TypeSet = this.block()
 
@@ -68,6 +69,7 @@ class ExtendedWindowInsets private constructor(
         val systemGestures = Companion.systemGestures
         val mandatorySystemGestures = Companion.mandatorySystemGestures
         val ime = Companion.ime
+        val general = Companion.general
 
         fun next(name: String) = TypeSet(name).also { types.add(it) }
     }
