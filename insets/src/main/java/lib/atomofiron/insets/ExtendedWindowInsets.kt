@@ -199,20 +199,11 @@ class ExtendedWindowInsets private constructor(
             when {
                 insets.isEmpty() -> return this.also { logd { "consume empty" } }
                 types?.isEmpty() == true -> return this.also { logd { "consume nothing" } }
-                types == null -> for ((seed, insetsValue) in values.entries.toList()) {
-                    val value = insetsValue.consume(insets)
-                    when {
-                        value.isEmpty -> values.remove(seed)
-                        else -> values[seed] = value
-                    }
+                types == null -> for ((seed, value) in values.entries.toList()) {
+                    values[seed] = value.consume(insets)
                 }
                 else -> for (type in types) {
-                    values[type.seed]?.consume(insets)?.let {
-                        when {
-                            it.isEmpty -> values.remove(type.seed)
-                            else -> values[type.seed] = it
-                        }
-                    }
+                    values[type.seed] = values[type.seed]?.consume(insets) ?: continue
                 }
             }
             debugValues?.let { logd("consume", from = it, to = values, insets, types) }

@@ -95,8 +95,8 @@ internal fun ExtendedWindowInsets.Builder.logd(
             "${seed.getTypeName()}[${value.left.delta0()},${value.top.delta0()},${value.right.delta0()},${value.bottom.delta0()}]"
         }
         val values = insets.run { "[$left,$top,$right,$bottom]" }
-        val typeNames = types?.joinToString(separator = ",") { it.name } ?: "all"
-        "$operation: $values, types: $typeNames, changes: ${changes.joinToString(separator = " ")}"
+        val typeNames = types?.joinToString(separator = ",") { it.name }?.let { " types: $it," } ?: ""
+        "$operation: $values,$typeNames changes: ${changes.joinToString(separator = " ")}"
     }
 }
 
