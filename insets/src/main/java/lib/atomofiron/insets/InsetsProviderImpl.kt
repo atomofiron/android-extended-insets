@@ -122,7 +122,7 @@ class InsetsProviderImpl private constructor(
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
             val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
             source = ExtendedWindowInsets.Builder(windowInsetsCompat)
-                .max(Type.general, barsWithCutout)
+                .set(Type.general, barsWithCutout)
                 .build()
         }
         return if (dropNative) WindowInsets.CONSUMED else windowInsets

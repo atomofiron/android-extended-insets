@@ -41,7 +41,7 @@ class UnitTests {
     @Test
     fun insets_value() {
         val input = Insets.of(100, 200, 300, 400)
-        val actual = InsetsValue(input)
+        val actual = input.toValues()
         assertEquals(actual.toInsets(), input)
     }
 

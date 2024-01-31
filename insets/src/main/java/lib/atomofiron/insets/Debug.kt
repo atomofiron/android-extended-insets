@@ -36,9 +36,13 @@ internal fun View.nameWithId(): String {
     return "$simpleName(id=$id)"
 }
 
+internal inline fun <T : Any?> debug(action: () -> T): T? = if (debugInsets) action() else null
+
 internal inline fun <T : Any?> T.logd(parent: KClass<*>? = null, message: T.() -> String) {
-    val parentClass = parent?.simpleName?.let { "$it." } ?: ""
-    if (debugInsets) Log.d("ExtInsets", "[$parentClass${this?.simpleName}] ${message()}")
+    if (debugInsets) {
+        val parentClass = parent?.simpleName?.let { "$it." } ?: ""
+        Log.d("ExtInsets", "[$parentClass${this?.simpleName}] ${message()}")
+    }
 }
 
 internal fun Int.getTypeName(): String = Type.types.find { it.seed == this }?.name?.takeIf { it.isNotEmpty() } ?: "unknown"
@@ -71,24 +75,39 @@ private fun MutableList<String>.replaceBars() {
     }
 }
 
-internal fun ExtendedWindowInsets.Builder.logConsuming(values: Map<Int, InsetsValue>, consuming: Insets, types: TypeSet?) {
+internal fun ExtendedWindowInsets.Builder.logd(
+    operation: String,
+    from: Map<Int, InsetsValue>,
+    to: Map<Int, InsetsValue>,
+    insets: Insets,
+    types: TypeSet?,
+) {
     logd(ExtendedWindowInsets::class) {
-        val consumed = mutableListOf<String>()
-        for ((seed, value) in values) {
-            if (!value.isEmpty) {
-                val min = Insets.min(value.toInsets(), consuming)
-                min.takeIf { it.isNotEmpty() }?.run {
-                    val name = types
-                        ?.find { it.seed == seed }
-                        ?.name
-                        ?.takeIf { it.isNotEmpty() }
-                        ?: seed.getTypeName()
-                    consumed.add("$name[$left,$top,$right,$bottom]")
-                }
+        val changes = from.mapNotNull { (seed, value) ->
+            (to[seed] ?: InsetsValue()).takeIf { it != value }?.let { new ->
+                val dl = (new.left - value.left).delta()
+                val dt = (new.top - value.top).delta()
+                val dr = (new.right - value.right).delta()
+                val db = (new.bottom - value.bottom).delta()
+                "${seed.getTypeName()}[${value.left}$dl,${value.top}$dt,${value.right}$dr,${value.bottom}$db]"
             }
+        } + to.filter { from[it.key] == null }.map { (seed, value) ->
+            "${seed.getTypeName()}[${value.left.delta0()},${value.top.delta0()},${value.right.delta0()},${value.bottom.delta0()}]"
         }
-        val max = consuming.run { "[$left,$top,$right,$bottom]" }
+        val values = insets.run { "[$left,$top,$right,$bottom]" }
         val typeNames = types?.joinToString(separator = ",") { it.name } ?: "all"
-        "consume $max, types $typeNames, consumed: ${consumed.joinToString(separator = " ")}"
+        "$operation: $values, types: $typeNames, changes: ${changes.joinToString(separator = " ")}"
     }
+}
+
+private fun Int.delta(): String = when {
+    this < 0 -> "$this"
+    this > 0 -> "+$this"
+    else -> ""
+}
+
+private fun Int.delta0(): String = when {
+    this < 0 -> "$this"
+    this > 0 -> "+$this"
+    else -> "0"
 }
