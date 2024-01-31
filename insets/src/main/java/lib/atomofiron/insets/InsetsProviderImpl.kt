@@ -31,17 +31,16 @@ private data class SrcState(
     val windowInsets: ExtendedWindowInsets = ExtendedWindowInsets.CONSUMED,
     val hasModifier: Boolean = false,
     val hasListeners: Boolean = false,
-    val dependencies: Int = 0,
 )
 
 class InsetsProviderImpl private constructor(
-    private var dropNativeInsets: Boolean,
+    private var dropNative: Boolean,
 ) : InsetsProvider, View.OnAttachStateChangeListener {
 
     private var srcState = SrcState()
         set(value) {
-            logd { "${thisView?.nameWithId()} new state? ${field != value}, modifier? ${value.hasModifier}, dependencies ${value.dependencies}" }
-            if (value.hasModifier && value.dependencies > 0 || field != value) {
+            logd { "${thisView?.nameWithId()} new state? ${field != value}, modifier? ${value.hasModifier}" }
+            if (value.hasModifier || field != value) {
                 field = value
                 updateCurrent(value)
             }
@@ -59,9 +58,8 @@ class InsetsProviderImpl private constructor(
     private var provider: InsetsProvider? = null
     private var thisView: View? = null
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
-    private var dropNative = false
 
-    constructor() : this(dropNativeInsets = false)
+    constructor() : this(dropNative = false)
 
     constructor(context: Context, attrs: AttributeSet?) : this(context.dropNativeInsets(attrs))
 
@@ -104,7 +102,7 @@ class InsetsProviderImpl private constructor(
         logd { "${thisView?.nameWithId()} add listener -> ${listeners.size.inc()}" }
         val key = nextKey++
         // listeners may or may not be notified with new insets
-        srcState = srcState.copy(hasListeners = true, dependencies = listeners.dependencies(listener))
+        srcState = srcState.copy(hasListeners = true)
         listeners[key] = listener
         // always notify the new one
         listener.onApplyWindowInsets(current)
@@ -121,7 +119,7 @@ class InsetsProviderImpl private constructor(
         val removed = listeners.remove(key) != null
         logd { "${thisView?.nameWithId()} remove listener? $removed -> ${listeners.size}" }
         if (removed) {
-            srcState = srcState.copy(hasListeners = listeners.isNotEmpty(), dependencies = listeners.dependencies())
+            srcState = srcState.copy(hasListeners = listeners.isNotEmpty())
         }
     }
 
@@ -138,7 +136,7 @@ class InsetsProviderImpl private constructor(
     override fun requestInsets() = updateCurrent(srcState)
 
     override fun dropNativeInsets(drop: Boolean) {
-        dropNativeInsets = drop
+        dropNative = drop
     }
 
     // the one of the two entry points for window insets
@@ -166,10 +164,6 @@ private fun InsetsListener.checkTheSameView(other: InsetsListener) = when {
     other !is ViewInsetsDelegateImpl -> Unit
     other.view !== view -> Unit
     else -> throw MultipleViewInsetsDelegate("The target view ${view.nameWithId()}")
-}
-
-private fun Map<Int, InsetsListener>.dependencies(another: InsetsListener? = null): Int {
-    return count { it.value.isDependency } + (if (another?.isDependency == true) 1 else 0)
 }
 
 private fun Context.dropNativeInsets(attrs: AttributeSet?): Boolean {
