@@ -80,6 +80,7 @@ class InsetsProviderImpl private constructor(
     override fun setInsetsModifier(modifier: InsetsModifier) {
         logd { "${thisView?.nameWithId()} set modifier" }
         insetsModifier = modifier
+        updateCurrent(source)
     }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
