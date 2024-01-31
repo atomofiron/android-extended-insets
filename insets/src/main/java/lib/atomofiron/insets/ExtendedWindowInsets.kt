@@ -135,31 +135,18 @@ class ExtendedWindowInsets private constructor(
 
         constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
 
-        operator fun set(type: Int, insets: Insets): Builder {
+        init {
+            logd { "init ${this.values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
+        }
+
+        // compatible with the WindowInsetsCompat api
+        fun setInsets(type: Int, insets: Insets): Builder {
             for (seed in LEGACY_RANGE) {
                 val cursor = seed.toTypeMask()
                 when {
                     cursor > type -> break
-                    (cursor and type) != 0 -> values[seed] = InsetsValue(insets)
+                    (cursor and type) != 0 -> values[seed] = insets.toValues()
                 }
-            }
-            return this
-        }
-
-        operator fun set(types: TypeSet, insets: Insets): Builder {
-            val insetsValue = InsetsValue(insets)
-            logd { "set ${types.joinToString(separator = " ") { "${it.name}$insetsValue" }}" }
-            types.forEach {
-                values[it.seed] = insetsValue
-            }
-            return this
-        }
-
-        fun max(types: TypeSet, insets: Insets): Builder {
-            val insetsValue = InsetsValue(insets)
-            logd { "max ${types.joinToString(separator = " ") { "${it.name}$insetsValue" }}" }
-            types.forEach {
-                values[it.seed] = insetsValue.max(values[it.seed])
             }
             return this
         }
@@ -169,11 +156,49 @@ class ExtendedWindowInsets private constructor(
             return this
         }
 
+        operator fun get(types: TypeSet): Insets {
+            var value = InsetsValue()
+            types.forEach {
+                value = value.max(values[it.seed])
+            }
+            return value.toInsets()
+        }
+
+        operator fun set(types: TypeSet, insets: Insets): Builder {
+            val debugValues = debug { values.toMap() }
+            val insetsValue = insets.toValues()
+            types.forEach {
+                values[it.seed] = insetsValue
+            }
+            debugValues?.let { logd("set", from = it, to = values, insets, types) }
+            return this
+        }
+
+        fun max(types: TypeSet, insets: Insets): Builder {
+            val debugValues = debug { values.toMap() }
+            val insetsValue = insets.toValues()
+            types.forEach {
+                values[it.seed] = insetsValue max values[it.seed]
+            }
+            debugValues?.let { logd("max", from = it, to = values, insets, types) }
+            return this
+        }
+
+        fun add(types: TypeSet, insets: Insets): Builder {
+            val debugValues = debug { values.toMap() }
+            val insetsValue = insets.toValues()
+            types.forEach {
+                values[it.seed] = insetsValue + values[it.seed]
+            }
+            debugValues?.let { logd("add", from = it, to = values, insets, types) }
+            return this
+        }
+
         fun consume(insets: Insets, types: TypeSet? = null): Builder {
-            logConsuming(values, insets, types)
+            val debugValues = debug { values.toMap() }
             when {
-                insets.isEmpty() -> Unit
-                types?.isEmpty() == true -> Unit
+                insets.isEmpty() -> return this.also { logd { "consume empty" } }
+                types?.isEmpty() == true -> return this.also { logd { "consume nothing" } }
                 types == null -> for ((seed, insetsValue) in values.entries.toList()) {
                     val value = insetsValue.consume(insets)
                     when {
@@ -190,11 +215,9 @@ class ExtendedWindowInsets private constructor(
                     }
                 }
             }
+            debugValues?.let { logd("consume", from = it, to = values, insets, types) }
             return this
         }
-
-        // compatible with the WindowInsetsCompat api
-        fun setInsets(type: Int, insets: Insets): Builder = set(type, insets)
 
         fun build(): ExtendedWindowInsets {
             logd { "build ${values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
@@ -203,61 +226,3 @@ class ExtendedWindowInsets private constructor(
     }
 }
 
-// mask for each of the four parts of the ULong value
-private const val PART_MASK = 0b1111111111111111uL
-
-@JvmInline
-internal value class InsetsValue(
-    //                                                 /--PART_MASK---\
-    // 1010101010101010101010101010101010101010101010101010101010101010
-    // \-----left-----/\-----top------/\-----right----/\----bottom----/
-    private val value: ULong = 0uL,
-) {
-    val isEmpty: Boolean get() = value == 0uL
-    val left: Int get() = value.shr(48).toInt()
-    val top: Int get() = (value.shr(32) and PART_MASK).toInt()
-    val right: Int get() = (value.shr(16) and PART_MASK).toInt()
-    val bottom: Int get() = (value and PART_MASK).toInt()
-
-    constructor(left: Int, top: Int, right: Int, bottom: Int) : this(
-        left.toULong().shl(48) +
-                (top.toULong() and PART_MASK).shl(32) +
-                (right.toULong() and PART_MASK).shl(16) +
-                (bottom.toULong() and PART_MASK)
-    )
-
-    constructor(insets: Insets) : this(insets.left, insets.top, insets.right, insets.bottom)
-
-    fun toInsets() = Insets.of(left, top, right, bottom)
-
-    fun consume(insets: Insets): InsetsValue {
-        return InsetsValue(
-            (left - insets.left).coerceAtLeast(0),
-            (top - insets.top).coerceAtLeast(0),
-            (right - insets.right).coerceAtLeast(0),
-            (bottom - insets.bottom).coerceAtLeast(0),
-        )
-    }
-
-    fun max(other: InsetsValue?): InsetsValue {
-        other ?: return this
-        return InsetsValue(
-            max(left, other.left),
-            max(top, other.top),
-            max(right, other.right),
-            max(bottom, other.bottom),
-        )
-    }
-
-    override fun toString(): String = "[$left,$top,$right,$bottom]"
-}
-
-private fun WindowInsetsCompat?.toValues(): Map<Int, InsetsValue> {
-    val insets = mutableMapOf<Int, InsetsValue>()
-    this ?: return insets
-    for (seed in LEGACY_RANGE) {
-        val next = getInsets(seed.toTypeMask())
-        if (next.isNotEmpty()) insets[seed] = InsetsValue(next)
-    }
-    return insets
-}
