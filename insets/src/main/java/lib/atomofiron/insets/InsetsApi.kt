@@ -47,8 +47,7 @@ interface InsetsProvider : InsetsListener {
 
 interface ViewInsetsDelegate : InsetsListener {
     fun changeInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun horizontalDependency(): ViewInsetsDelegate
-    fun verticalDependency(): ViewInsetsDelegate
+    fun dependency(horizontal: Boolean = false, vertical: Boolean = false): ViewInsetsDelegate
     fun detachFromProvider()
     fun detachFromView()
 }
