@@ -155,6 +155,15 @@ class ExtendedWindowInsets private constructor(
             return this
         }
 
+        fun max(types: TypeSet, insets: Insets): Builder {
+            val insetsValue = InsetsValue(insets)
+            logd { "max ${types.joinToString(separator = " ") { "${it.name}$insetsValue" }}" }
+            types.forEach {
+                values[it.seed] = insetsValue.max(values[it.seed])
+            }
+            return this
+        }
+
         fun consume(typeMask: Int): Builder {
             consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), typeMask.toTypeSet())
             return this
@@ -227,6 +236,16 @@ internal value class InsetsValue(
             (top - insets.top).coerceAtLeast(0),
             (right - insets.right).coerceAtLeast(0),
             (bottom - insets.bottom).coerceAtLeast(0),
+        )
+    }
+
+    fun max(other: InsetsValue?): InsetsValue {
+        other ?: return this
+        return InsetsValue(
+            max(left, other.left),
+            max(top, other.top),
+            max(right, other.right),
+            max(bottom, other.bottom),
         )
     }
 
