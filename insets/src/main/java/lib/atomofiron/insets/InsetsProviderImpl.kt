@@ -31,7 +31,7 @@ const val INVALID_INSETS_LISTENER_KEY = 0
 
 class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
-) : InsetsProvider, View.OnAttachStateChangeListener {
+) : InsetsProvider, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private var source = ExtendedWindowInsets.CONSUMED
         set(value) {
@@ -54,8 +54,10 @@ class InsetsProviderImpl private constructor(
     private var provider: InsetsProvider? = null
     private var thisView: View? = null
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
-    private var isRequested = false
+    // prevent extra notifications of listeners
+    private val isInLayout get() = thisView?.isInLayout ?: false
     private var isNotifying = false
+    private var isRequested = false
 
     constructor() : this(dropNative = false)
 
@@ -64,6 +66,7 @@ class InsetsProviderImpl private constructor(
     override fun View.onInit() {
         thisView = this
         addOnAttachStateChangeListener(this@InsetsProviderImpl)
+        addOnLayoutChangeListener(this@InsetsProviderImpl)
         if (isAttachedToWindow) onViewAttachedToWindow(this)
     }
 
@@ -77,6 +80,13 @@ class InsetsProviderImpl private constructor(
         logd { "${view.nameWithId()} onDetach parent provider? ${provider != null}" }
         provider?.removeInsetsListener(this)
         provider = null
+    }
+
+    override fun onLayoutChange(v: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
+        if (isRequested) {
+            isRequested = false
+            updateCurrent(source)
+        }
     }
 
     override fun setInsetsModifier(modifier: InsetsModifier) {
@@ -129,7 +139,7 @@ class InsetsProviderImpl private constructor(
     }
 
     override fun requestInsets() = when {
-        isNotifying -> isRequested = true
+        isInLayout || isNotifying -> isRequested = true
         else -> updateCurrent(source)
     }
 
@@ -144,10 +154,12 @@ class InsetsProviderImpl private constructor(
 
     private fun updateCurrent(source: ExtendedWindowInsets) {
         logd { "${thisView?.nameWithId()} update current, with modifier? ${insetsModifier != null}" }
+        isNotifying = true
         current = insetsModifier
             ?.transform(listeners.isNotEmpty(), source)
             ?.toExtended()
             ?: source
+        isNotifying = false
     }
 
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
