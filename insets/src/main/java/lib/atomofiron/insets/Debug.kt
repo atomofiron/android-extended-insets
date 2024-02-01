@@ -23,7 +23,11 @@ import androidx.core.graphics.Insets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import kotlin.reflect.KClass
 
-var debugInsets: Boolean = false
+private var debug = false
+
+fun setInsetsDebug(enabled: Boolean) {
+    debug = enabled
+}
 
 internal val Any.simpleName: String get() = javaClass.simpleName
 
@@ -36,10 +40,10 @@ internal fun View.nameWithId(): String {
     return "$simpleName(id=$id)"
 }
 
-internal inline fun <T : Any?> debug(action: () -> T): T? = if (debugInsets) action() else null
+internal inline fun <T : Any?> debug(action: () -> T): T? = if (debug) action() else null
 
 internal inline fun <T : Any?> T.logd(parent: KClass<*>? = null, message: T.() -> String) {
-    if (debugInsets) {
+    if (debug) {
         val parentClass = parent?.simpleName?.let { "$it." } ?: ""
         Log.d("ExtInsets", "[$parentClass${this?.simpleName}] ${message()}")
     }
