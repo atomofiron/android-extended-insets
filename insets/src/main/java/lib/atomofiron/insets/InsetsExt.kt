@@ -29,7 +29,7 @@ import lib.atomofiron.insets.InsetsDestination.Padding
 
 
 val insetsCombining by lazy(LazyThreadSafetyMode.NONE) {
-    InsetsCombining(combiningTypes = ExtendedWindowInsets.Type.displayCutout)
+    InsetsCombining(combiningTypes = Type.displayCutout)
 }
 
 fun ExtendedWindowInsets.isEmpty(types: TypeSet): Boolean = get(types).isEmpty()
@@ -39,6 +39,17 @@ fun ExtendedWindowInsets.isNotEmpty(types: TypeSet): Boolean = !isEmpty(types)
 fun Insets.isEmpty() = this == Insets.NONE
 
 fun Insets.isNotEmpty() = !isEmpty()
+
+fun Insets.consume(other: Insets): Insets = when {
+    isEmpty() -> this
+    other.isEmpty() -> this
+    else -> Insets.of(
+        (left - other.left).coerceAtLeast(0),
+        (top - other.top).coerceAtLeast(0),
+        (right - other.right).coerceAtLeast(0),
+        (bottom - other.bottom).coerceAtLeast(0),
+    )
+}
 
 fun ViewParent.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
@@ -197,10 +208,13 @@ inline operator fun <T : ExtendedWindowInsets.Type> ExtendedWindowInsets.invoke(
     block: T.() -> TypeSet,
 ): Insets = get(companion.block())
 
+fun InsetsProvider.requestInsetOnLayoutChange(vararg views: View)
+    = requestInsetOnLayoutChange(*views, horizontally = true, vertically = true)
+
 fun InsetsProvider.requestInsetOnLayoutChange(
+    vararg views: View,
     horizontally: Boolean = false,
     vertically: Boolean = false,
-    vararg views: View,
 ) {
     val listener = View.OnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
         if (horizontally && (left != oldLeft || right != oldRight) || vertically && (top != oldTop || bottom != oldBottom)) {

@@ -194,6 +194,11 @@ class ExtendedWindowInsets private constructor(
             return this
         }
 
+        fun consume(types: TypeSet): Builder {
+            consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), types)
+            return this
+        }
+
         fun consume(insets: Insets, types: TypeSet? = null): Builder {
             val debugValues = debug { values.toMap() }
             when {
