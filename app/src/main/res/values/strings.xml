@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ExtInsets</string>
+    <string name="switch_app_theme">Switch app theme</string>
 </resources>

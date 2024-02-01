@@ -2,6 +2,9 @@ package demo.atomofiron.insets
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -64,6 +67,12 @@ class DemoActivity : AppCompatActivity() {
                 }
             }
             toolbar.setNavigationOnClickListener { }
+            toolbar.setOnMenuItemClickListener {
+                val currentNight = resources.getBoolean(R.bool.night)
+                AppCompatDelegate.setDefaultNightMode(if (currentNight) MODE_NIGHT_NO else MODE_NIGHT_YES)
+                recreate()
+                true
+            }
             fab.setOnClickListener {
                 supportFragmentManager.run {
                     if (fragments.isNotEmpty()) return@run
