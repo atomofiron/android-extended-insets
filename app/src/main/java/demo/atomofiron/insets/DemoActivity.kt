@@ -32,7 +32,7 @@ class DemoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        lib.atomofiron.insets.debugInsets = true
+        //lib.atomofiron.insets.debugInsets = true
 
         ActivityDemoBinding.inflate(layoutInflater).apply {
             setContentView(root)
