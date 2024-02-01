@@ -49,7 +49,6 @@ internal class ViewInsetsDelegateImpl(
     private var dstBottom: InsetsDestination = None,
 ) : ViewInsetsDelegate, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
-    override val isDependency: Boolean get() = dependency.any
     override var consuming: TypeSet = TypeSet.EMPTY
         private set
 
