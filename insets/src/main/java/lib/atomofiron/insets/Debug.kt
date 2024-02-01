@@ -104,11 +104,13 @@ internal fun ExtendedWindowInsets.Builder.logd(
             val bottom = value.bottom.deltaOrZero()
             "${seed.getTypeName()}[$left,$top,$right,$bottom]"
         }
-        val values = insets.run { "[$left,$top,$right,$bottom]" }
+        val values = insets.run { "[${left.orMax()},${top.orMax()},${right.orMax()},${bottom.orMax()}]" }
         val typeNames = types?.joinToString(separator = ",") { it.name }?.let { " types: $it," } ?: ""
         "$operation: $values,$typeNames changes: ${changes.joinToString(separator = " ")}"
     }
 }
+
+private fun Int.orMax(): String = if (this == MAX_INSET) "max" else toString()
 
 private fun Int.deltaOrEmpty(): String = deltaOr("")
 
