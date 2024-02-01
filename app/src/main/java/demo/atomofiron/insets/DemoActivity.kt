@@ -99,10 +99,10 @@ class DemoActivity : AppCompatActivity() {
             root.insetsPadding(ExtType.ime, bottom = true),
         ) { _, windowInsets -> // insets modifier
             syncCutout(windowInsets)
+            val ime = windowInsets { ExtType.ime }
+            if (ime.isEmpty()) return@composeInsets windowInsets
             ExtendedWindowInsets.Builder(windowInsets)
                 .consume(windowInsets { ExtType.ime })
-                .set(ExtType.fabTop, Insets.of(0, 0, 0, fab.visibleBottomHeight))
-                .set(ExtType.fabHorizontal, Insets.of(fab.visibleLeftWidth, 0, fab.visibleRightWidth, 0))
                 .build()
         }
         togglesContainer.composeInsets(
@@ -125,14 +125,14 @@ class DemoActivity : AppCompatActivity() {
             ExtendedWindowInsets.Builder(windowInsets)
                 .max(ExtType.general, insets)
                 .set(ExtType.verticalPanels, insets)
+                .set(ExtType.fabTop, Insets.of(0, 0, 0, fab.visibleBottomHeight))
+                .set(ExtType.fabHorizontal, Insets.of(fab.visibleLeftWidth, 0, fab.visibleRightWidth, 0))
                 .build()
         }
         toolbar.insetsMargin(ExtType.general, top = true, horizontal = true)
         val fabCombining = insetsCombining.copy(insetsCombining.combiningTypes + ExtType.togglePanel)
         fab.insetsMargin(ExtType { barsWithCutout + togglePanel + verticalPanels }, fabCombining, end = true, bottom = true)
 
-        // this is needed because of fab is not a direct child of root insets provider
-        root.requestInsetOnLayoutChange(fab, snackbarParentContainer)
         // nested container with applied insets
         val spcDelegate = snackbarParentContainer.insetsPadding(ExtType { barsWithCutout + togglePanel + verticalPanels })
         val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))
@@ -141,9 +141,10 @@ class DemoActivity : AppCompatActivity() {
             val landscape = snackbarParentContainer.run { width > height }
             spcDelegate.combining(spcCombining.takeIf { landscape })
             ExtendedWindowInsets.Builder(windowInsets)
-                .run { if (landscape) consume(ExtType.fabTop) else consume(ExtType.fabHorizontal) }
+                .consume(if (landscape) ExtType.fabTop else ExtType.fabHorizontal)
                 .build()
         }
+        panelsContainer.requestInsetOnLayoutChange(snackbarParentContainer)
         // child of nested container with decreased fab insets by consuming()
         snackbarContainer.insetsPadding(ExtType { fabTop + fabHorizontal }, bottom = true, end = true)
             .consuming(ExtType.general)
