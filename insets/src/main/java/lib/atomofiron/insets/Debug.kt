@@ -64,13 +64,15 @@ internal fun TypeSet.getTypes(windowInsets: ExtendedWindowInsets?, left: Boolean
     }
     dependencies.replaceBars()
     not.replaceBars()
-    return "${dependencies.joinToString(prefix = "dependsOn[", separator = ",", postfix = "]")} ${not.joinToString(prefix = "not[", separator = ",", postfix = "]")}"
+    val dependsOn = dependencies.joinToString(prefix = "dependsOn[", separator = ",", postfix = "]")
+    val notDepends = not.joinToString(prefix = "not[", separator = ",", postfix = "]")
+    return "$dependsOn $notDepends"
 }
 
 private fun MutableList<String>.replaceBars() {
-    val replacement = listOf(Type.statusBars.name, Type.navigationBars.name, Type.captionBar.name)
-    if (containsAll(replacement)) {
-        removeAll(replacement)
+    val replaceable = listOf(Type.statusBars.name, Type.navigationBars.name, Type.captionBar.name)
+    if (containsAll(replaceable)) {
+        removeAll(replaceable)
         add("systemBars")
     }
 }
@@ -85,14 +87,18 @@ internal fun ExtendedWindowInsets.Builder.logd(
     logd(ExtendedWindowInsets::class) {
         val changes = from.mapNotNull { (seed, value) ->
             (to[seed] ?: InsetsValue()).takeIf { it != value }?.let { new ->
-                val dl = (new.left - value.left).delta()
-                val dt = (new.top - value.top).delta()
-                val dr = (new.right - value.right).delta()
-                val db = (new.bottom - value.bottom).delta()
+                val dl = (new.left - value.left).deltaOrEmpty()
+                val dt = (new.top - value.top).deltaOrEmpty()
+                val dr = (new.right - value.right).deltaOrEmpty()
+                val db = (new.bottom - value.bottom).deltaOrEmpty()
                 "${seed.getTypeName()}[${value.left}$dl,${value.top}$dt,${value.right}$dr,${value.bottom}$db]"
             }
         } + to.filter { from[it.key] == null }.map { (seed, value) ->
-            "${seed.getTypeName()}[${value.left.delta0()},${value.top.delta0()},${value.right.delta0()},${value.bottom.delta0()}]"
+            val left = value.left.deltaOrZero()
+            val top = value.top.deltaOrZero()
+            val right = value.right.deltaOrZero()
+            val bottom = value.bottom.deltaOrZero()
+            "${seed.getTypeName()}[$left,$top,$right,$bottom]"
         }
         val values = insets.run { "[$left,$top,$right,$bottom]" }
         val typeNames = types?.joinToString(separator = ",") { it.name }?.let { " types: $it," } ?: ""
@@ -100,14 +106,12 @@ internal fun ExtendedWindowInsets.Builder.logd(
     }
 }
 
-private fun Int.delta(): String = when {
-    this < 0 -> "$this"
-    this > 0 -> "+$this"
-    else -> ""
-}
+private fun Int.deltaOrEmpty(): String = deltaOr("")
 
-private fun Int.delta0(): String = when {
+private fun Int.deltaOrZero(): String = deltaOr("0")
+
+private fun Int.deltaOr(zero: String): String = when {
     this < 0 -> "$this"
     this > 0 -> "+$this"
-    else -> "0"
+    else -> zero
 }

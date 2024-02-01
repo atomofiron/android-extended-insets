@@ -42,7 +42,7 @@ data class Dependency(
 internal class ViewInsetsDelegateImpl(
     internal val view: View,
     private val types: TypeSet = barsWithCutout,
-    private val combining: InsetsCombining? = null,
+    private var combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
@@ -50,6 +50,8 @@ internal class ViewInsetsDelegateImpl(
 ) : ViewInsetsDelegate, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     override val isDependency: Boolean get() = dependency.any
+    override var consuming: TypeSet = TypeSet.EMPTY
+        private set
 
     private var stockLeft = 0
     private var stockTop = 0
@@ -100,7 +102,7 @@ internal class ViewInsetsDelegateImpl(
         view.removeOnAttachStateChangeListener(this)
     }
 
-    override fun changeInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
+    override fun resetInsets(consuming: TypeSet, block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
         val config = ViewInsetsConfig().apply(block)
         config.logd { "${view.nameWithId()} with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
         if (isAny(Padding) && insets.isNotEmpty()) applyPadding(Insets.NONE)
@@ -110,6 +112,7 @@ internal class ViewInsetsDelegateImpl(
         dstRight = if (isRtl) config.dstStart else config.dstEnd
         dstBottom = config.dstBottom
         saveStock()
+        consuming(consuming)
         updateInsets(windowInsets)
         applyInsets()
         return this
@@ -128,6 +131,15 @@ internal class ViewInsetsDelegateImpl(
     override fun scrollOnEdge(): ViewInsetsDelegate {
         scrollOnEdge = true
         return this
+    }
+
+    override fun consuming(types: TypeSet): ViewInsetsDelegate {
+        consuming = types
+        return this
+    }
+
+    override fun combining(combining: InsetsCombining?) {
+        this.combining = combining
     }
 
     override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int, ) {
@@ -155,8 +167,9 @@ internal class ViewInsetsDelegateImpl(
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
-        var new = combining?.combine(windowInsets) ?: windowInsets[types]
-        new = new.filterUseful()
+        val new = (combining?.combine(windowInsets) ?: windowInsets[types])
+            .filterUseful()
+            .consume(consuming, windowInsets)
         if (insets != new) {
             insets = new
             applyInsets()
@@ -234,6 +247,13 @@ internal class ViewInsetsDelegateImpl(
             if (dstRight.isNone) 0 else right,
             if (dstBottom.isNone) 0 else bottom,
         )
+    }
+
+    private fun Insets.consume(consuming: TypeSet, windowInsets: ExtendedWindowInsets): Insets {
+        if (consuming.isEmpty()) return this
+        val insets = windowInsets[consuming]
+        if (insets.isEmpty()) return this
+        return consume(insets)
     }
 
     private fun InsetsCombining.combine(windowInsets: ExtendedWindowInsets): Insets {
