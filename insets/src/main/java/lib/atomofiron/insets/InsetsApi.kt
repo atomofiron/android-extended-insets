@@ -21,7 +21,6 @@ import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 
 fun interface InsetsListener {
-    val isDependency: Boolean get() = false
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
