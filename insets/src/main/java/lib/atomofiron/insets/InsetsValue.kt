@@ -7,6 +7,7 @@ import kotlin.math.max
 
 // mask for each of the four parts of the ULong value
 private const val PART_MASK = 0b1111111111111111uL
+internal const val MAX_INSET = 0xffff
 
 @JvmInline
 internal value class InsetsValue(

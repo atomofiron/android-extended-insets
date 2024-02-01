@@ -152,7 +152,7 @@ class ExtendedWindowInsets private constructor(
         }
 
         fun consume(typeMask: Int): Builder {
-            consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), typeMask.toTypeSet())
+            consume(Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET), typeMask.toTypeSet())
             return this
         }
 
@@ -195,7 +195,7 @@ class ExtendedWindowInsets private constructor(
         }
 
         fun consume(types: TypeSet): Builder {
-            consume(Insets.of(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE), types)
+            consume(Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET), types)
             return this
         }
 
