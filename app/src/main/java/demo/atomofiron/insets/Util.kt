@@ -30,3 +30,17 @@ val View.visibleBottomHeight: Int get() {
         else -> bottom - top + marginBottom
     }.coerceAtLeast(0)
 }
+
+val View.visibleLeftWidth: Int get() = when {
+    isVisible -> right + translationX.toInt()
+    else -> 0
+}.coerceAtLeast(0)
+
+val View.visibleRightWidth: Int get() {
+    val left = left + translationX.toInt()
+    return when {
+        !isVisible -> 0
+        isInLayout && left == 0 -> 0
+        else -> (parent as View).width - left
+    }.coerceAtLeast(0)
+}

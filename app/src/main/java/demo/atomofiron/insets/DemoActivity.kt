@@ -10,18 +10,23 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import demo.atomofiron.insets.databinding.ActivityDemoBinding
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.snackbar.Snackbar
 import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
+import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
+import lib.atomofiron.insets.InsetsCombining
 import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMargin
 import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
+import lib.atomofiron.insets.requestInsetOnLayoutChange
 
 class DemoActivity : AppCompatActivity() {
 
     private val cutoutDrawable = CutoutDrawable()
+    private var snackbar: Snackbar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,10 +79,17 @@ class DemoActivity : AppCompatActivity() {
                         .commit()
                 }
             }
+            fab.setOnLongClickListener {
+                snackbar = Snackbar.make(snackbarContainer, "Orientation-dependent snackbar", Snackbar.LENGTH_INDEFINITE).apply { show() }
+                true
+            }
             supportFragmentManager.addOnBackStackChangedListener {
                 val show = supportFragmentManager.fragments.isEmpty()
                 toolbar.isVisible = show
-                if (show) fab.show() else fab.hide()
+                if (show) fab.show() else {
+                    fab.hide()
+                    snackbar?.dismiss()
+                }
             }
         }
     }
@@ -87,36 +99,54 @@ class DemoActivity : AppCompatActivity() {
             root.insetsPadding(ExtType.ime, bottom = true),
         ) { _, windowInsets -> // insets modifier
             syncCutout(windowInsets)
-            val ime = windowInsets { ime }
-            if (ime.isEmpty()) return@composeInsets windowInsets
             ExtendedWindowInsets.Builder(windowInsets)
-                .consume(ime)
+                .consume(windowInsets { ExtType.ime })
+                .set(ExtType.fabTop, Insets.of(0, 0, 0, fab.visibleBottomHeight))
+                .set(ExtType.fabHorizontal, Insets.of(fab.visibleLeftWidth, 0, fab.visibleRightWidth, 0))
                 .build()
         }
         togglesContainer.composeInsets(
-            bottomPanel.insetsPadding(horizontal = true, bottom = true).dependency(vertical = true),
+            bottomPanel.insetsPadding(horizontal = true, bottom = true)
+                .dependency(vertical = true),
         ) { _, windowInsets ->
             switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
             val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
             ExtendedWindowInsets.Builder(windowInsets)
+                .max(ExtType.general, insets)
                 .set(ExtType.togglePanel, insets)
                 .build()
         }
-        val topDelegate = viewTop.insetsMix { margin(horizontal).padding(top) }.dependency(vertical = true)
-        val bottomDelegate = viewBottom.insetsMix(ExtType.common) { horizontal(margin).bottom(padding) }.dependency(vertical = true)
+        val topDelegate = viewTop.insetsMix { margin(horizontal).padding(top) }
+            .dependency(vertical = true)
+        val bottomDelegate = viewBottom.insetsMix(ExtType.general) { horizontal(margin).bottom(padding) }
+            .dependency(vertical = true)
         panelsContainer.composeInsets(topDelegate, bottomDelegate) { _, windowInsets ->
             val insets = Insets.of(0, viewTop.visibleTopHeight, 0, viewBottom.visibleBottomHeight)
             ExtendedWindowInsets.Builder(windowInsets)
+                .max(ExtType.general, insets)
                 .set(ExtType.verticalPanels, insets)
                 .build()
         }
-        val toolbarCombining = insetsCombining.copy(
-            minStart = resources.getDimensionPixelSize(R.dimen.toolbar_navigation_padding),
-            minEnd= resources.getDimensionPixelSize(R.dimen.toolbar_menu_padding),
-        )
-        toolbar.insetsMargin(ExtType.common, toolbarCombining, top = true, horizontal = true)
+        toolbar.insetsMargin(ExtType.general, top = true, horizontal = true)
         val fabCombining = insetsCombining.copy(insetsCombining.combiningTypes + ExtType.togglePanel)
-        fab.insetsMargin(ExtType.common, fabCombining, end = true, bottom = true)
+        fab.insetsMargin(ExtType { barsWithCutout + togglePanel + verticalPanels }, fabCombining, end = true, bottom = true)
+
+        // this is needed because of fab is not a direct child of root insets provider
+        root.requestInsetOnLayoutChange(fab, snackbarParentContainer)
+        // nested container with applied insets
+        val spcDelegate = snackbarParentContainer.insetsPadding(ExtType { barsWithCutout + togglePanel + verticalPanels })
+        val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))
+        // snackbar dynamic relative position
+        snackbarParentContainer.setInsetsModifier { _, windowInsets ->
+            val landscape = snackbarParentContainer.run { width > height }
+            spcDelegate.combining(spcCombining.takeIf { landscape })
+            ExtendedWindowInsets.Builder(windowInsets)
+                .run { if (landscape) consume(ExtType.fabTop) else consume(ExtType.fabHorizontal) }
+                .build()
+        }
+        // child of nested container with decreased fab insets by consuming()
+        snackbarContainer.insetsPadding(ExtType { fabTop + fabHorizontal }, bottom = true, end = true)
+            .consuming(ExtType.general)
     }
 
     private fun syncCutout(windowInsets: WindowInsetsCompat) {

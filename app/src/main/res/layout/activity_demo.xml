@@ -21,26 +21,39 @@
                 android:id="@+id/fragments_container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                />
+            <lib.atomofiron.insets.InsetsProviderFrameLayout
+                android:id="@+id/snackbar_parent_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 >
-                <com.google.android.material.appbar.MaterialToolbar
-                    android:id="@+id/toolbar"
+                <androidx.coordinatorlayout.widget.CoordinatorLayout
+                    android:id="@+id/snackbar_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:title="MaterialToolbar"
-                    app:navigationIcon="@drawable/ic_back"
-                    app:navigationIconTint="?colorControlNormal"
-                    app:menu="@menu/main"
-                    />
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end|bottom"
-                    android:layout_margin="16dp"
-                    android:src="@drawable/ic_android"
-                    android:elevation="0dp"
+                    android:layout_gravity="bottom"
+                    android:padding="@dimen/common_padding_half"
+                    android:clipToPadding="false"
                     />
             </lib.atomofiron.insets.InsetsProviderFrameLayout>
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:title="MaterialToolbar"
+                app:navigationIcon="@drawable/ic_back"
+                app:navigationIconTint="?colorControlNormal"
+                app:menu="@menu/main"
+                />
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:layout_margin="16dp"
+                android:src="@drawable/ic_android"
+                android:elevation="0dp"
+                />
             <LinearLayout
                 android:id="@+id/view_top"
                 android:layout_width="match_parent"
