@@ -7,5 +7,5 @@
         android:bottomLeftRadius="@dimen/corner"
         android:bottomRightRadius="@dimen/corner"
         />
-    <solid android:color="?colorPrimaryContainer" />
+    <solid android:color="?colorSecondaryContainer" />
 </shape>
