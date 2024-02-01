@@ -82,8 +82,9 @@ class InsetsProviderImpl private constructor(
         provider = null
     }
 
-    override fun onLayoutChange(v: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
+    override fun onLayoutChange(view: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
         if (isRequested) {
+            logd { "${view.nameWithId()} notify listeners after layout changed" }
             isRequested = false
             updateCurrent(source)
         }
@@ -129,6 +130,7 @@ class InsetsProviderImpl private constructor(
     @RequiresApi(Build.VERSION_CODES.R)
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (provider == null) {
+            logd { "${thisView?.nameWithId()} native insets were accepted" }
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
             val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
             source = ExtendedWindowInsets.Builder(windowInsetsCompat)
@@ -139,11 +141,13 @@ class InsetsProviderImpl private constructor(
     }
 
     override fun requestInsets() = when {
-        isInLayout || isNotifying -> isRequested = true
+        isInLayout -> isRequested = true.also { logd { "${thisView?.nameWithId()} insets were requested during the layout" } }
+        isNotifying -> isRequested = true.also { logd { "${thisView?.nameWithId()} insets were requested during the notification of listeners" } }
         else -> updateCurrent(source)
     }
 
     override fun dropNativeInsets(drop: Boolean) {
+        logd { "${thisView?.nameWithId()} native insets discarding has been ${if (drop) "enabled" else "disabled"}" }
         dropNative = drop
     }
 
@@ -168,6 +172,7 @@ class InsetsProviderImpl private constructor(
             it.onApplyWindowInsets(windowInsets)
         }
         if (isRequested) {
+            logd { "${thisView?.nameWithId()} notify listeners after the notification of listeners" }
             isRequested = false
             updateCurrent(source)
         }
