@@ -22,7 +22,8 @@ import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
-import lib.atomofiron.insets.requestInsetOnLayoutChange
+import lib.atomofiron.insets.requestInsetsOnLayoutChange
+import lib.atomofiron.insets.requestInsetsOnVisibilityChange
 
 class DemoActivity : AppCompatActivity() {
 
@@ -143,6 +144,7 @@ class DemoActivity : AppCompatActivity() {
         fab.insetsMix(ExtType { barsWithCutout + togglePanel + verticalPanels }, fabCombining) {
             translation(bottom, end)
         }
+        requestInsetsOnVisibilityChange(fab)
 
         val spcTypes = ExtType { barsWithCutout + togglePanel + verticalPanels }
         val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))
@@ -157,7 +159,7 @@ class DemoActivity : AppCompatActivity() {
                 .build()
         }
         // on orientation changed
-        panelsContainer.requestInsetOnLayoutChange(snackbarParentContainer)
+        requestInsetsOnLayoutChange(snackbarParentContainer)
         // child of nested container with decreased fab insets by consuming()
         snackbarContainer.insetsPadding(ExtType { fabTop + fabHorizontal }, bottom = true, end = true)
             .consuming(spcTypes)
