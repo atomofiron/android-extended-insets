@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
 import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
@@ -161,8 +160,8 @@ class DemoActivity : AppCompatActivity() {
             .consuming(spcTypes)
     }
 
-    private fun syncCutout(windowInsets: WindowInsetsCompat) {
-        val insets = windowInsets.getInsets(Type.displayCutout())
+    private fun syncCutout(windowInsets: ExtendedWindowInsets) {
+        val insets = windowInsets[ExtType.displayCutout]
         when {
             insets.left > 0 -> cutoutDrawable.left()
             insets.top > 0 -> cutoutDrawable.top()
