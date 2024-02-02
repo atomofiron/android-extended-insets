@@ -50,6 +50,7 @@ internal class ViewInsetsDelegateImpl(
     private var dstBottom: InsetsDestination = None,
 ) : ViewInsetsDelegate, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
+    private val nameWithId = view.nameWithId()
     override var consuming: TypeSet = TypeSet.EMPTY
         private set
 
@@ -79,24 +80,24 @@ internal class ViewInsetsDelegateImpl(
 
     override fun onViewAttachedToWindow(view: View) {
         provider = view.parent.findInsetsProvider()
-        logd { "${view.nameWithId()} onAttach provider? ${provider != null}, listener? ${listener != null}" }
+        logd { "$nameWithId onAttach provider? ${provider != null}, listener? ${listener != null}" }
         provider?.addInsetsListener(listener ?: return)
     }
 
     override fun onViewDetachedFromWindow(view: View) {
-        logd { "${view.nameWithId()} onDetach provider? ${provider != null}, listener? ${listener != null}" }
+        logd { "$nameWithId onDetach provider? ${provider != null}, listener? ${listener != null}" }
         provider?.removeInsetsListener(listener ?: return)
         provider = null
     }
 
     override fun detachFromProvider() {
-        logd { "${view.nameWithId()} unsubscribe insets? ${provider != null}, listener? ${listener != null}" }
+        logd { "$nameWithId unsubscribe insets? ${provider != null}, listener? ${listener != null}" }
         provider?.removeInsetsListener(listener ?: return)
         listener = null
     }
 
     override fun detachFromView() {
-        logd { "${view.nameWithId()} detach? idk" }
+        logd { "$nameWithId detach? idk" }
         detachFromProvider()
         view.removeOnLayoutChangeListener(this)
         view.removeOnAttachStateChangeListener(this)
@@ -104,7 +105,7 @@ internal class ViewInsetsDelegateImpl(
 
     override fun resetInsets(consuming: TypeSet, block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
         val config = ViewInsetsConfig().apply(block)
-        config.logd { "${view.nameWithId()} with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
+        config.logd { "$nameWithId with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
         if (isAny(Padding) && insets.isNotEmpty()) applyPadding(Insets.NONE)
         if (isAny(Margin) && insets.isNotEmpty()) applyMargin(Insets.NONE)
         if (isAny(Translation) && insets.isNotEmpty()) applyTranslation(Insets.NONE)
@@ -147,7 +148,7 @@ internal class ViewInsetsDelegateImpl(
         val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
         val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
         if (dependency.horizontal && horizontally || dependency.vertical && vertically) {
-            logd { "${view.nameWithId()} request insets? ${provider != null}" }
+            logd { "$nameWithId request insets? ${provider != null}" }
             provider?.requestInsets()
         }
         if (postRequestLayoutOnNextLayout) {
@@ -261,7 +262,7 @@ internal class ViewInsetsDelegateImpl(
     }
 
     private fun getMarginLayoutParamsOrThrow(): MarginLayoutParams {
-        return (view.layoutParams as? MarginLayoutParams) ?: throw NoMarginLayoutParams(view.nameWithId())
+        return (view.layoutParams as? MarginLayoutParams) ?: throw NoMarginLayoutParams(nameWithId)
     }
 
     private fun Insets.filterUseful(): Insets {
@@ -338,7 +339,7 @@ internal class ViewInsetsDelegateImpl(
             val right = if (dstRight.isNone) "" else insets.right.toString()
             val bottom = if (dstBottom.isNone) "" else insets.bottom.toString()
             val types = types.getTypes(windowInsets, !dstLeft.isNone, !dstTop.isNone, !dstRight.isNone, !dstBottom.isNone)
-            "${view.nameWithId()} insets[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types"
+            "$nameWithId insets[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types"
         }
     }
 }
