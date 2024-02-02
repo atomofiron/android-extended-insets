@@ -23,6 +23,8 @@ import androidx.core.graphics.Insets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import kotlin.reflect.KClass
 
+internal const val NAME_UNDEFINED = "undefined"
+
 private var debug = false
 
 fun setInsetsDebug(enabled: Boolean) {
@@ -49,7 +51,7 @@ internal inline fun <T : Any?> T.logd(parent: KClass<*>? = null, message: T.() -
     }
 }
 
-internal fun Int.getTypeName(): String = Type.types.find { it.seed == this }?.name?.takeIf { it.isNotEmpty() } ?: "unknown"
+internal fun Int.getTypeName(): String = Type.types.find { it.seed == this }?.name?.takeIf { it.isNotEmpty() } ?: NAME_UNDEFINED
 
 internal fun TypeSet.getTypes(windowInsets: ExtendedWindowInsets?, left: Boolean, top: Boolean, right: Boolean, bottom: Boolean): String {
     val insetsMap = windowInsets?.insets ?: emptyMap()
@@ -81,7 +83,7 @@ private fun MutableList<String>.replaceBars() {
     }
 }
 
-internal fun ExtendedBuilder.logd(
+internal fun ExtendedBuilder.logChanges(
     operation: String,
     from: Map<Int, InsetsValue>,
     to: Map<Int, InsetsValue>,

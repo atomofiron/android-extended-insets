@@ -33,7 +33,7 @@ internal val LEGACY_RANGE = 1..LEGACY_LIMIT
 class ExtendedWindowInsets internal constructor(
     insets: Map<Int, InsetsValue>,
     private val hidden: TypeSet = TypeSet.EMPTY,
-    private val displayCutout: DisplayCutoutCompat?,
+    val displayCutout: DisplayCutoutCompat?,
 ) {
     @Suppress("FunctionName")
     companion object {
@@ -46,7 +46,7 @@ class ExtendedWindowInsets internal constructor(
         }
 
         fun Builder(windowInsets: WindowInsetsCompat? = null): ExtendedBuilder {
-            return ExtendedBuilder(windowInsets.getValues(), TypeSet.EMPTY, windowInsets?.displayCutout)
+            return ExtendedBuilder(windowInsets.getValues(), windowInsets.getHidden(), windowInsets?.displayCutout)
         }
 
         fun Builder(windowInsets: ExtendedWindowInsets? = null): ExtendedBuilder {
@@ -140,13 +140,9 @@ class ExtendedWindowInsets internal constructor(
 
     operator fun get(types: TypeSet): Insets = getIgnoringVisibility(types - hidden)
 
-    fun getDisplayCutout(): DisplayCutoutCompat? = displayCutout
-
     fun isVisible(type: TypeSet): Boolean = !hidden.contains(type)
 
     fun hasInsets(): Boolean = insets.count { !it.value.isEmpty } != 0
-
-    fun isConsumed(): Boolean = false
 
     private fun IntArray.max(seed: Int) {
         val value = insets[seed]
@@ -158,12 +154,20 @@ class ExtendedWindowInsets internal constructor(
         }
     }
 
-    override fun equals(other: Any?): Boolean {
-        other ?: return false
-        val otherValues = (other as? ExtendedWindowInsets)?.insets ?: emptyMap()
-        return otherValues == insets && super.equals(other)
+    @Suppress("SuspiciousEqualsCombination")
+    override fun equals(other: Any?): Boolean = when {
+        other === this -> true
+        other !is ExtendedWindowInsets -> false
+        other.hidden !== hidden && other.hidden != hidden -> false
+        other.displayCutout !== displayCutout && other.displayCutout != displayCutout -> false
+        else -> other.insets == insets
     }
 
-    override fun hashCode(): Int = 31 * insets.hashCode() + super.hashCode()
+    override fun hashCode(): Int {
+        var result = (displayCutout?.hashCode() ?: 0)
+        result = 31 * result + insets.hashCode()
+        result = 31 * result + hidden.hashCode()
+        return result
+    }
 }
 

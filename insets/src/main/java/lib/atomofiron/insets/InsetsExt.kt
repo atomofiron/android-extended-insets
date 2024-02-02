@@ -21,6 +21,7 @@ import android.view.ViewParent
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isGone
 import androidx.core.view.WindowInsetsCompat.Type as CompatType
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
@@ -193,17 +194,57 @@ inline operator fun <T : Type> ExtendedWindowInsets.invoke(
     block: T.() -> TypeSet,
 ): Insets = get(companion.block())
 
-fun InsetsProvider.requestInsetOnLayoutChange(vararg views: View)
-    = requestInsetOnLayoutChange(*views, horizontally = true, vertically = true)
+fun View.requestInsets() {
+    parent.findInsetsProvider()?.requestInsets()
+}
 
-fun InsetsProvider.requestInsetOnLayoutChange(
+fun View.onAttachCallback(
+    onAttach: ((View) -> Unit)? = null,
+    onDetach: ((View) -> Unit)? = null,
+): View.OnAttachStateChangeListener {
+    if (isAttachedToWindow) onAttach?.invoke(this)
+    return object : View.OnAttachStateChangeListener {
+        override fun onViewAttachedToWindow(view: View) { onAttach?.invoke(view) }
+        override fun onViewDetachedFromWindow(view: View) { onDetach?.invoke(view) }
+    }.also { addOnAttachStateChangeListener(it) }
+}
+
+fun requestInsetsOnVisibilityChange(vararg views: View) {
+    val placements = views.map { !it.isGone }.toMutableList()
+    val visibilityChecker = {
+        val providers = mutableListOf<InsetsProvider>()
+        views.forEachIndexed { index, view ->
+            val placed = !view.isGone
+            if (placed != placements[index]) {
+                placements[index] = placed
+                if (placed) {
+                    view.parent.findInsetsProvider()
+                        ?.takeIf { provider -> providers.find { it === provider } == null }
+                        ?.also { providers.add(it) }
+                        ?.requestInsets()
+                }
+            }
+        }
+    }
+    views.forEach { view ->
+        view.onAttachCallback(
+            onAttach = { view.viewTreeObserver.addOnGlobalLayoutListener(visibilityChecker) },
+            onDetach = { view.viewTreeObserver.removeOnGlobalLayoutListener(visibilityChecker) },
+        )
+    }
+}
+
+fun requestInsetsOnLayoutChange(vararg views: View)
+    = requestInsetsOnLayoutChange(*views, horizontally = true, vertically = true)
+
+fun requestInsetsOnLayoutChange(
     vararg views: View,
     horizontally: Boolean = false,
     vertically: Boolean = false,
 ) {
-    val listener = View.OnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+    val listener = View.OnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
         if (horizontally && (left != oldLeft || right != oldRight) || vertically && (top != oldTop || bottom != oldBottom)) {
-            requestInsets()
+            view.requestInsets()
         }
     }
     for (view in views) view.addOnLayoutChangeListener(listener)
@@ -228,7 +269,7 @@ internal fun Int.toTypeSet(name: String? = null): TypeSet {
             head = name
                 ?.let { TypeSet(it, seed, head) }
                 ?: Type.types.find { it.seed == seed }
-                ?: TypeSet("", seed, head)
+                ?: TypeSet(NAME_UNDEFINED, seed, head)
         }
         cursor = cursor.shl(1)
         seed++

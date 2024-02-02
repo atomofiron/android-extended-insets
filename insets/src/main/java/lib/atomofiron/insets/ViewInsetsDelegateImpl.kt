@@ -28,6 +28,7 @@ import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
+import lib.atomofiron.insets.InsetsDestination.Translation
 import kotlin.math.max
 
 private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
@@ -106,6 +107,7 @@ internal class ViewInsetsDelegateImpl(
         config.logd { "${view.nameWithId()} with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
         if (isAny(Padding) && insets.isNotEmpty()) applyPadding(Insets.NONE)
         if (isAny(Margin) && insets.isNotEmpty()) applyMargin(Insets.NONE)
+        if (isAny(Translation) && insets.isNotEmpty()) applyTranslation(Insets.NONE)
         dstLeft = if (isRtl) config.dstEnd else config.dstStart
         dstTop = config.dstTop
         dstRight = if (isRtl) config.dstStart else config.dstEnd
@@ -157,12 +159,14 @@ internal class ViewInsetsDelegateImpl(
     private fun saveStock() {
         val params = when {
             isAny(Margin) -> getMarginLayoutParamsOrThrow()
+            // margin useful on translation to combine with insets
+            isAny(Translation) -> getMarginLayoutParamsOrStub()
             else -> stubMarginLayoutParams
         }
-        stockLeft = if (dstLeft == Margin) params.leftMargin else view.paddingLeft
-        stockTop = if (dstTop == Margin) params.topMargin else view.paddingTop
-        stockRight = if (dstRight == Margin) params.rightMargin else view.paddingRight
-        stockBottom = if (dstBottom == Margin) params.bottomMargin else view.paddingBottom
+        stockLeft = if (dstLeft == Padding) view.paddingLeft else params.leftMargin
+        stockTop = if (dstTop == Padding) view.paddingTop else params.topMargin
+        stockRight = if (dstRight == Padding) view.paddingRight else params.rightMargin
+        stockBottom = if (dstBottom == Padding) view.paddingBottom else params.bottomMargin
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
@@ -180,6 +184,7 @@ internal class ViewInsetsDelegateImpl(
         logInsets()
         applyPadding(insets)
         applyMargin(insets)
+        applyTranslation(insets)
     }
 
     private fun applyPadding(insets: Insets) {
@@ -196,12 +201,15 @@ internal class ViewInsetsDelegateImpl(
         val oldPadding = view.takeIf { dependency.any }?.run {
             Insets.of(paddingLeft, paddingTop, paddingRight, paddingBottom)
         }
-        view.updatePadding(
+        val changed = view.updatePaddingIfChanged(
             left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
             top = if (dstTop == Padding) stockTop + insets.top else view.paddingTop,
             right = if (dstRight == Padding) stockRight + insets.right else view.paddingRight,
             bottom = if (dstBottom == Padding) stockBottom + insets.bottom else view.paddingBottom,
         )
+        if (!changed) {
+            return
+        }
         scrollingPaddingTop?.let { old ->
             if (old < view.paddingTop) view.scrollBy(0, old - view.paddingTop)
         } ?: scrollingPaddingBottom?.let { old ->
@@ -216,13 +224,26 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyMargin(insets: Insets) {
         if (!isAny(Margin)) return
-        getMarginLayoutParamsOrThrow()
-        view.updateLayoutParams<MarginLayoutParams> {
-            leftMargin = if (dstLeft == Margin) stockLeft + insets.left else leftMargin
-            topMargin = if (dstTop == Margin) stockTop + insets.top else topMargin
-            rightMargin = if (dstRight == Margin) stockRight + insets.right else rightMargin
-            bottomMargin = if (dstBottom == Margin) stockBottom + insets.bottom else bottomMargin
-        }
+        val params = getMarginLayoutParamsOrThrow()
+        view.updateMarginIfChanged(
+            params,
+            left = if (dstLeft == Margin) stockLeft + insets.left else params.leftMargin,
+            top = if (dstTop == Margin) stockTop + insets.top else params.topMargin,
+            right = if (dstRight == Margin) stockRight + insets.right else params.rightMargin,
+            bottom = if (dstBottom == Margin) stockBottom + insets.bottom else params.bottomMargin,
+        )
+    }
+
+    private fun applyTranslation(insets: Insets) {
+        if (!isAny(Translation)) return
+        var dx = 0
+        var dy = 0
+        if (dstLeft == Translation) dx += insets.left
+        if (dstRight == Translation) dx -= insets.right
+        if (dstTop == Translation) dy += insets.top
+        if (dstBottom == Translation) dy -= insets.bottom
+        view.translationX = dx.toFloat()
+        view.translationY = dy.toFloat()
     }
 
     private fun isAny(dst: InsetsDestination): Boolean {
@@ -235,8 +256,12 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
+    private fun getMarginLayoutParamsOrStub(): MarginLayoutParams {
+        return (view.layoutParams as? MarginLayoutParams) ?: stubMarginLayoutParams
+    }
+
     private fun getMarginLayoutParamsOrThrow(): MarginLayoutParams {
-        return view.layoutParams as? MarginLayoutParams ?: throw NoMarginLayoutParams(view.nameWithId())
+        return (view.layoutParams as? MarginLayoutParams) ?: throw NoMarginLayoutParams(view.nameWithId())
     }
 
     private fun Insets.filterUseful(): Insets {
@@ -276,6 +301,34 @@ internal class ViewInsetsDelegateImpl(
         }
         val subtracted = Insets.subtract(space, stock)
         return Insets.max(other, subtracted)
+    }
+
+    private fun View.updatePaddingIfChanged(left: Int, top: Int, right: Int, bottom: Int): Boolean {
+        when {
+            paddingLeft != left -> Unit
+            paddingTop != top -> Unit
+            paddingRight != right -> Unit
+            paddingBottom != bottom -> Unit
+            else -> return false
+        }
+        updatePadding(left, top, right, bottom)
+        return true
+    }
+
+    private fun View.updateMarginIfChanged(params: MarginLayoutParams, left: Int, top: Int, right: Int, bottom: Int) {
+        when {
+            params.leftMargin != left -> Unit
+            params.topMargin != top -> Unit
+            params.rightMargin != right -> Unit
+            params.bottomMargin != bottom -> Unit
+            else -> return
+        }
+        updateLayoutParams<MarginLayoutParams> {
+            leftMargin = left
+            topMargin = top
+            rightMargin = right
+            bottomMargin = bottom
+        }
     }
 
     private fun logInsets() {

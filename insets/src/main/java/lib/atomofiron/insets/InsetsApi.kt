@@ -58,7 +58,7 @@ enum class InsetsDestination(
     internal val label: String,
     internal val isNone: Boolean,
 ) {
-    None("none", true), Padding("padding", false), Margin("margin", false);
+    None("none", true), Padding("padding", false), Margin("margin", false), Translation("translation", false);
 
     internal val letter: Char = label.first()
 }
