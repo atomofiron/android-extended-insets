@@ -159,12 +159,14 @@ internal class ViewInsetsDelegateImpl(
     private fun saveStock() {
         val params = when {
             isAny(Margin) -> getMarginLayoutParamsOrThrow()
+            // margin useful on translation to combine with insets
+            isAny(Translation) -> getMarginLayoutParamsOrStub()
             else -> stubMarginLayoutParams
         }
-        stockLeft = if (dstLeft == Margin) params.leftMargin else if (dstLeft == Padding) view.paddingLeft else 0
-        stockTop = if (dstTop == Margin) params.topMargin else if (dstLeft == Padding) view.paddingTop else 0
-        stockRight = if (dstRight == Margin) params.rightMargin else if (dstLeft == Padding) view.paddingRight else 0
-        stockBottom = if (dstBottom == Margin) params.bottomMargin else if (dstLeft == Padding) view.paddingBottom else 0
+        stockLeft = if (dstLeft == Padding) view.paddingLeft else params.leftMargin
+        stockTop = if (dstTop == Padding) view.paddingTop else params.topMargin
+        stockRight = if (dstRight == Padding) view.paddingRight else params.rightMargin
+        stockBottom = if (dstBottom == Padding) view.paddingBottom else params.bottomMargin
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
@@ -254,8 +256,12 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
+    private fun getMarginLayoutParamsOrStub(): MarginLayoutParams {
+        return (view.layoutParams as? MarginLayoutParams) ?: stubMarginLayoutParams
+    }
+
     private fun getMarginLayoutParamsOrThrow(): MarginLayoutParams {
-        return view.layoutParams as? MarginLayoutParams ?: throw NoMarginLayoutParams(view.nameWithId())
+        return (view.layoutParams as? MarginLayoutParams) ?: throw NoMarginLayoutParams(view.nameWithId())
     }
 
     private fun Insets.filterUseful(): Insets {
