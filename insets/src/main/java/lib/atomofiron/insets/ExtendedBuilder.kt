@@ -11,7 +11,7 @@ class ExtendedBuilder internal constructor(
     private val values: MutableMap<Int, InsetsValue> = values?.toMutableMap() ?: mutableMapOf()
 
     init {
-        logd { "init ${this.values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
+        logEntries("init")
     }
 
     @Deprecated("Compatibility with API of WindowInsets.Builder", replaceWith = ReplaceWith("set(type, insets)"))
@@ -45,7 +45,7 @@ class ExtendedBuilder internal constructor(
         types.forEach {
             values[it.seed] = insetsValue
         }
-        debugValues?.let { logd("set", from = it, to = values, insets, types) }
+        debugValues?.let { logChanges("set", from = it, to = values, insets, types) }
         return this
     }
 
@@ -55,7 +55,7 @@ class ExtendedBuilder internal constructor(
         types.forEach {
             values[it.seed] = insetsValue max values[it.seed]
         }
-        debugValues?.let { logd("max", from = it, to = values, insets, types) }
+        debugValues?.let { logChanges("max", from = it, to = values, insets, types) }
         return this
     }
 
@@ -65,7 +65,7 @@ class ExtendedBuilder internal constructor(
         types.forEach {
             values[it.seed] = insetsValue + values[it.seed]
         }
-        debugValues?.let { logd("add", from = it, to = values, insets, types) }
+        debugValues?.let { logChanges("add", from = it, to = values, insets, types) }
         return this
     }
 
@@ -86,7 +86,7 @@ class ExtendedBuilder internal constructor(
                 values[type.seed] = values[type.seed]?.consume(insets) ?: continue
             }
         }
-        debugValues?.let { logd("consume", from = it, to = values, insets, types) }
+        debugValues?.let { logChanges("consume", from = it, to = values, insets, types) }
         return this
     }
 
@@ -106,7 +106,18 @@ class ExtendedBuilder internal constructor(
     }
 
     fun build(): ExtendedWindowInsets {
-        logd { "build ${values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
+        logEntries("build")
         return ExtendedWindowInsets(values.toMap(), hidden, displayCutout)
+    }
+
+    private fun logEntries(prefix: String) {
+        logd {
+            val entries = values.entries
+                .filter { !it.value.isEmpty }
+                .joinToString(separator = " ") {
+                    "${it.key.getTypeName()}${it.value}"
+                }
+            "$prefix $entries"
+        }
     }
 }
