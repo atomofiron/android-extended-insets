@@ -140,16 +140,16 @@ class DemoActivity : AppCompatActivity() {
         toolbar.insetsMix(ExtType.general) {
             top(translation).horizontal(margin)
         }
-        val fabCombining = insetsCombining.copy(insetsCombining.combiningTypes + ExtType.togglePanel)
-        fab.insetsMix(ExtType { barsWithCutout + togglePanel + verticalPanels }, fabCombining) {
+        val fabTypes = ExtType { barsWithCutout + togglePanel + verticalPanels }
+        val fabCombining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
+        fab.insetsMix(fabTypes, fabCombining) {
             translation(bottom, end)
         }
         requestInsetsOnVisibilityChange(fab)
 
-        val spcTypes = ExtType { barsWithCutout + togglePanel + verticalPanels }
         val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))
         // nested container with applied insets
-        val spcDelegate = snackbarParentContainer.insetsPadding(spcTypes)
+        val spcDelegate = snackbarParentContainer.insetsPadding(fabTypes)
         // snackbar dynamic relative position
         snackbarParentContainer.setInsetsModifier { _, windowInsets ->
             val landscape = snackbarParentContainer.run { width > height }
@@ -162,7 +162,7 @@ class DemoActivity : AppCompatActivity() {
         requestInsetsOnLayoutChange(snackbarParentContainer)
         // child of nested container with decreased fab insets by consuming()
         snackbarContainer.insetsPadding(ExtType { fabTop + fabHorizontal }, bottom = true, end = true)
-            .consuming(spcTypes)
+            .consuming(fabTypes)
     }
 
     private fun syncCutout(windowInsets: ExtendedWindowInsets) {
