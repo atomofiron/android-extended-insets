@@ -20,7 +20,7 @@ import java.util.Objects
 import java.util.concurrent.atomic.AtomicInteger
 
 // WindowInsetsCompat.Type.SIZE = 9
-private var nextSeed = AtomicInteger(9)
+private var nextSeed = AtomicInteger(1000-7)
 
 data class TypeSet internal constructor(
     internal val name: String,
@@ -42,12 +42,12 @@ data class TypeSet internal constructor(
     override operator fun contains(element: TypeSet): Boolean = contains(element.seed)
 
     override fun containsAll(elements: Collection<TypeSet>): Boolean {
-        when (elements) {
-            is TypeSet -> return elements.find { !contains(it) } == null
+        when {
+            elements.isEmpty() -> return true
+            isEmpty() -> return elements.find { !it.isEmpty() } == null
+            elements is TypeSet -> return elements.find { !contains(it) } == null
             else -> for (element in elements) {
-                if (element.find { !contains(it) } != null) {
-                    return false
-                }
+                if (!containsAll(element)) return false
             }
         }
         return true
@@ -74,14 +74,23 @@ data class TypeSet internal constructor(
         return head ?: EMPTY
     }
 
-    operator fun minus(other: TypeSet): TypeSet = operation(other, contains = false)
+    operator fun minus(other: TypeSet): TypeSet = when {
+        isEmpty() -> this
+        other.isEmpty() -> this
+        else -> operation(other, contains = false)
+    }
 
-    operator fun times(other: TypeSet): TypeSet = operation(other, contains = true)
+    operator fun times(other: TypeSet): TypeSet = when {
+        isEmpty() -> this
+        other.isEmpty() -> other
+        else -> operation(other, contains = true)
+    }
 
+    // this and other should not be empty
     private fun operation(other: TypeSet, contains: Boolean): TypeSet {
         var head: TypeSet? = null
         forEach {
-            if (it.seed != ZERO_SEED && (it in other) == contains) {
+            if ((it in other) == contains) {
                 head = it.copy(next = head)
             }
         }
