@@ -26,8 +26,8 @@ import kotlin.math.max
 
 //                        /system-\
 // 00000000000000000000000101010101
-//            seeds: 31...987654321
-internal const val LEGACY_LIMIT = Int.SIZE_BITS - 1
+//            seeds: 30...987654321
+internal const val LEGACY_LIMIT = Int.SIZE_BITS - 2
 internal val LEGACY_RANGE = 1..LEGACY_LIMIT
 
 class ExtendedWindowInsets internal constructor(
@@ -46,7 +46,7 @@ class ExtendedWindowInsets internal constructor(
         }
 
         fun Builder(windowInsets: WindowInsetsCompat? = null): ExtendedBuilder {
-            return ExtendedBuilder(windowInsets.toValues(), TypeSet.EMPTY, windowInsets?.displayCutout)
+            return ExtendedBuilder(windowInsets.getValues(), TypeSet.EMPTY, windowInsets?.displayCutout)
         }
 
         fun Builder(windowInsets: ExtendedWindowInsets? = null): ExtendedBuilder {
@@ -96,7 +96,7 @@ class ExtendedWindowInsets internal constructor(
             : this(windowInsets?.let { WindowInsetsCompat.toWindowInsetsCompat(it, view) })
 
     constructor(windowInsets: WindowInsetsCompat? = null)
-            : this(windowInsets.toValues(), displayCutout =windowInsets?.displayCutout)
+            : this(windowInsets.getValues(), windowInsets.getHidden(), displayCutout = windowInsets?.displayCutout)
 
     @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("get(type)"))
     fun getInsets(type: Int): Insets {

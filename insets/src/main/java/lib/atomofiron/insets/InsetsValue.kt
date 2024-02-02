@@ -2,6 +2,7 @@ package lib.atomofiron.insets
 
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type
 import kotlin.math.max
 
 
@@ -63,15 +64,4 @@ internal infix fun InsetsValue.consume(insets: Insets): InsetsValue {
         (right - insets.right).coerceAtLeast(0),
         (bottom - insets.bottom).coerceAtLeast(0),
     )
-}
-
-internal fun WindowInsetsCompat?.toValues(): Map<Int, InsetsValue> {
-    val insets = mutableMapOf<Int, InsetsValue>()
-    this ?: return insets
-    for (seed in LEGACY_RANGE) {
-        val next = getInsets(seed.toTypeMask())
-        if (next.isNotEmpty())
-            insets[seed] = next.toValues()
-    }
-    return insets
 }

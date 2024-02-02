@@ -21,6 +21,7 @@ import android.view.ViewParent
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type as CompatType
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import lib.atomofiron.insets.InsetsDestination.Margin
@@ -175,8 +176,8 @@ fun View.getWindowInsets(): ExtendedWindowInsets {
         ?: ExtendedWindowInsets(ViewCompat.getRootWindowInsets(this))
 }
 
-fun View.getInsets(type: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()): Insets
-    = getWindowInsets().getInsets(type)
+fun View.getInsets(type: Int = CompatType.systemBars() or CompatType.displayCutout()): Insets
+    = getWindowInsets()[type.toTypeSet()]
 
 fun View.getInsets(type: TypeSet = barsWithCutout): Insets = getWindowInsets()[type]
 
@@ -233,4 +234,31 @@ internal fun Int.toTypeSet(name: String? = null): TypeSet {
         seed++
     }
     return head!!
+}
+
+internal fun WindowInsetsCompat?.getValues(): Map<Int, InsetsValue> {
+    val values = mutableMapOf<Int, InsetsValue>()
+    this ?: return values
+    for (seed in LEGACY_RANGE) {
+        val typeMask = seed.toTypeMask()
+        val next = when (typeMask) {
+            CompatType.ime() -> getInsets(typeMask)
+            else -> getInsetsIgnoringVisibility(typeMask)
+        }
+        if (next.isNotEmpty() || isVisible(typeMask))
+            values[seed] = next.toValues()
+    }
+    return values
+}
+
+internal fun WindowInsetsCompat?.getHidden(): TypeSet {
+    var hidden = TypeSet.EMPTY
+    this ?: return hidden
+    for (seed in LEGACY_RANGE) {
+        val typeMask = seed.toTypeMask()
+        if (!isVisible(typeMask)) {
+            hidden += typeMask.toTypeSet()
+        }
+    }
+    return hidden
 }
