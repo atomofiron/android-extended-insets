@@ -100,7 +100,9 @@ data class TypeSet internal constructor(
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
         other !is TypeSet -> false
-        else -> containsAll(other) && other.containsAll(this)
+        !containsAll(other) -> false
+        !other.containsAll(this) -> false
+        else -> true
     }
 
     override fun hashCode(): Int {
