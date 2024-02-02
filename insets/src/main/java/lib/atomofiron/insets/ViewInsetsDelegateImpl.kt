@@ -28,6 +28,7 @@ import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
+import lib.atomofiron.insets.InsetsDestination.Translation
 import kotlin.math.max
 
 private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
@@ -106,6 +107,7 @@ internal class ViewInsetsDelegateImpl(
         config.logd { "${view.nameWithId()} with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
         if (isAny(Padding) && insets.isNotEmpty()) applyPadding(Insets.NONE)
         if (isAny(Margin) && insets.isNotEmpty()) applyMargin(Insets.NONE)
+        if (isAny(Translation) && insets.isNotEmpty()) applyTranslation(Insets.NONE)
         dstLeft = if (isRtl) config.dstEnd else config.dstStart
         dstTop = config.dstTop
         dstRight = if (isRtl) config.dstStart else config.dstEnd
@@ -159,10 +161,10 @@ internal class ViewInsetsDelegateImpl(
             isAny(Margin) -> getMarginLayoutParamsOrThrow()
             else -> stubMarginLayoutParams
         }
-        stockLeft = if (dstLeft == Margin) params.leftMargin else view.paddingLeft
-        stockTop = if (dstTop == Margin) params.topMargin else view.paddingTop
-        stockRight = if (dstRight == Margin) params.rightMargin else view.paddingRight
-        stockBottom = if (dstBottom == Margin) params.bottomMargin else view.paddingBottom
+        stockLeft = if (dstLeft == Margin) params.leftMargin else if (dstLeft == Padding) view.paddingLeft else 0
+        stockTop = if (dstTop == Margin) params.topMargin else if (dstLeft == Padding) view.paddingTop else 0
+        stockRight = if (dstRight == Margin) params.rightMargin else if (dstLeft == Padding) view.paddingRight else 0
+        stockBottom = if (dstBottom == Margin) params.bottomMargin else if (dstLeft == Padding) view.paddingBottom else 0
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
@@ -180,6 +182,7 @@ internal class ViewInsetsDelegateImpl(
         logInsets()
         applyPadding(insets)
         applyMargin(insets)
+        applyTranslation(insets)
     }
 
     private fun applyPadding(insets: Insets) {
@@ -223,6 +226,18 @@ internal class ViewInsetsDelegateImpl(
             rightMargin = if (dstRight == Margin) stockRight + insets.right else rightMargin
             bottomMargin = if (dstBottom == Margin) stockBottom + insets.bottom else bottomMargin
         }
+    }
+
+    private fun applyTranslation(insets: Insets) {
+        if (!isAny(Translation)) return
+        var dx = 0
+        var dy = 0
+        if (dstLeft == Translation) dx += insets.left
+        if (dstRight == Translation) dx -= insets.right
+        if (dstTop == Translation) dy += insets.top
+        if (dstBottom == Translation) dy -= insets.bottom
+        view.translationX = dx.toFloat()
+        view.translationY = dy.toFloat()
     }
 
     private fun isAny(dst: InsetsDestination): Boolean {

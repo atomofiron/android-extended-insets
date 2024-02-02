@@ -19,8 +19,10 @@ package lib.atomofiron.insets
 import lib.atomofiron.insets.InsetsDestination.Padding
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
+import lib.atomofiron.insets.InsetsDestination.Translation
+import lib.atomofiron.insets.ViewInsetsConfig.Side
 
-class ViewInsetsConfig {
+class ViewInsetsConfig : IViewInsetsConfig {
 
     enum class Side {
         Start, Top, End, Bottom, Horizontal, Vertical
@@ -28,6 +30,7 @@ class ViewInsetsConfig {
 
     val padding = Padding
     val margin = Margin
+    val translation = Translation
 
     val start = Side.Start
     val top = Side.Top
@@ -45,11 +48,13 @@ class ViewInsetsConfig {
     internal var dstBottom = None
         private set
 
-    fun padding(vararg sides: Side) = set(Padding, *sides)
+    override fun padding(vararg sides: Side) = set(Padding, *sides)
 
-    fun margin(vararg sides: Side) = set(Margin, *sides)
+    override fun margin(vararg sides: Side) = set(Margin, *sides)
 
-    private fun set(destination: InsetsDestination, vararg sides: Side): ViewInsetsConfig {
+    override fun translation(vararg sides: Side) = set(Translation, *sides)
+
+    private fun set(destination: InsetsDestination, vararg sides: Side): IViewInsetsConfig {
         sides.forEach {
             when (it) {
                 Side.Start -> dstStart = destination
@@ -69,48 +74,66 @@ class ViewInsetsConfig {
         return this
     }
 
+    override fun set(
+        start: InsetsDestination?,
+        top: InsetsDestination?,
+        end: InsetsDestination?,
+        bottom: InsetsDestination?,
+    ): IViewInsetsConfig {
+        dstStart = start ?: dstStart
+        dstTop = top ?: dstTop
+        dstEnd = end ?: dstEnd
+        dstBottom = bottom ?: dstBottom
+        return this
+    }
+
+    override fun start(destination: InsetsDestination): IViewInsetsConfig {
+        dstStart = destination
+        return this
+    }
+
+    override fun top(destination: InsetsDestination): IViewInsetsConfig {
+        dstTop = destination
+        return this
+    }
+
+    override fun end(destination: InsetsDestination): IViewInsetsConfig {
+        dstEnd = destination
+        return this
+    }
+
+    override fun bottom(destination: InsetsDestination): IViewInsetsConfig {
+        dstBottom = destination
+        return this
+    }
+
+    override fun horizontal(destination: InsetsDestination): IViewInsetsConfig {
+        dstStart = destination
+        dstEnd = destination
+        return this
+    }
+
+    override fun vertical(destination: InsetsDestination): IViewInsetsConfig {
+        dstTop = destination
+        dstBottom = destination
+        return this
+    }
+}
+
+interface IViewInsetsConfig {
+    fun padding(vararg sides: Side): IViewInsetsConfig
+    fun margin(vararg sides: Side): IViewInsetsConfig
+    fun translation(vararg sides: Side): IViewInsetsConfig
+    fun start(destination: InsetsDestination): IViewInsetsConfig
+    fun top(destination: InsetsDestination): IViewInsetsConfig
+    fun end(destination: InsetsDestination): IViewInsetsConfig
+    fun bottom(destination: InsetsDestination): IViewInsetsConfig
+    fun horizontal(destination: InsetsDestination): IViewInsetsConfig
+    fun vertical(destination: InsetsDestination): IViewInsetsConfig
     fun set(
-        start: InsetsDestination = dstStart,
-        top: InsetsDestination = dstTop,
-        end: InsetsDestination = dstEnd,
-        bottom: InsetsDestination = dstBottom,
-    ): ViewInsetsConfig {
-        dstStart = start
-        dstTop = top
-        dstEnd = end
-        dstBottom = bottom
-        return this
-    }
-
-    fun start(destination: InsetsDestination): ViewInsetsConfig {
-        dstStart = destination
-        return this
-    }
-
-    fun top(destination: InsetsDestination): ViewInsetsConfig {
-        dstTop = destination
-        return this
-    }
-
-    fun end(destination: InsetsDestination): ViewInsetsConfig {
-        dstEnd = destination
-        return this
-    }
-
-    fun bottom(destination: InsetsDestination): ViewInsetsConfig {
-        dstBottom = destination
-        return this
-    }
-
-    fun horizontal(destination: InsetsDestination): ViewInsetsConfig {
-        dstStart = destination
-        dstEnd = destination
-        return this
-    }
-
-    fun vertical(destination: InsetsDestination): ViewInsetsConfig {
-        dstTop = destination
-        dstBottom = destination
-        return this
-    }
+        start: InsetsDestination? = null,
+        top: InsetsDestination? = null,
+        end: InsetsDestination? = null,
+        bottom: InsetsDestination? = null,
+    ): IViewInsetsConfig
 }
