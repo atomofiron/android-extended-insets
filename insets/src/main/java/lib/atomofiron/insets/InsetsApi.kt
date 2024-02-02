@@ -25,7 +25,7 @@ fun interface InsetsListener {
 }
 
 fun interface InsetsModifier {
-    fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): WindowInsetsCompat
+    fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
 }
 
 interface InsetsProvider : InsetsListener {
