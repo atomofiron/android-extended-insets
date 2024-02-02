@@ -197,10 +197,10 @@ fun View.requestInsets() {
     parent.findInsetsProvider()?.requestInsets()
 }
 
-fun InsetsProvider.requestInsetOnLayoutChange(vararg views: View)
-    = requestInsetOnLayoutChange(*views, horizontally = true, vertically = true)
+fun InsetsProvider.requestInsetsOnLayoutChange(vararg views: View)
+    = requestInsetsOnLayoutChange(*views, horizontally = true, vertically = true)
 
-fun InsetsProvider.requestInsetOnLayoutChange(
+fun InsetsProvider.requestInsetsOnLayoutChange(
     vararg views: View,
     horizontally: Boolean = false,
     vertically: Boolean = false,
