@@ -18,7 +18,6 @@ package lib.atomofiron.insets
 
 import android.view.View
 import android.view.WindowInsets
-import androidx.core.view.WindowInsetsCompat
 
 fun interface InsetsListener {
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
