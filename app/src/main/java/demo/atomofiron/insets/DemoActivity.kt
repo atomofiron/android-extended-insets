@@ -109,7 +109,7 @@ class DemoActivity : AppCompatActivity() {
             val ime = windowInsets { ExtType.ime }
             if (ime.isEmpty()) return@composeInsets windowInsets
             ExtendedWindowInsets.Builder(windowInsets)
-                .consume(windowInsets { ExtType.ime })
+                .consume(ime)
                 .build()
         }
         togglesContainer.composeInsets(
