@@ -228,7 +228,7 @@ internal fun Int.toTypeSet(name: String? = null): TypeSet {
             head = name
                 ?.let { TypeSet(it, seed, head) }
                 ?: Type.types.find { it.seed == seed }
-                ?: TypeSet("", seed, head)
+                ?: TypeSet(NAME_UNDEFINED, seed, head)
         }
         cursor = cursor.shl(1)
         seed++
