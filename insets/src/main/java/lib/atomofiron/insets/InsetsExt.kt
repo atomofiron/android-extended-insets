@@ -193,6 +193,10 @@ inline operator fun <T : Type> ExtendedWindowInsets.invoke(
     block: T.() -> TypeSet,
 ): Insets = get(companion.block())
 
+fun View.requestInsets() {
+    parent.findInsetsProvider()?.requestInsets()
+}
+
 fun InsetsProvider.requestInsetOnLayoutChange(vararg views: View)
     = requestInsetOnLayoutChange(*views, horizontally = true, vertically = true)
 
