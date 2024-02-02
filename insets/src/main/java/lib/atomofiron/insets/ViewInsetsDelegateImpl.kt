@@ -199,12 +199,15 @@ internal class ViewInsetsDelegateImpl(
         val oldPadding = view.takeIf { dependency.any }?.run {
             Insets.of(paddingLeft, paddingTop, paddingRight, paddingBottom)
         }
-        view.updatePadding(
+        val changed = view.updatePaddingIfChanged(
             left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
             top = if (dstTop == Padding) stockTop + insets.top else view.paddingTop,
             right = if (dstRight == Padding) stockRight + insets.right else view.paddingRight,
             bottom = if (dstBottom == Padding) stockBottom + insets.bottom else view.paddingBottom,
         )
+        if (!changed) {
+            return
+        }
         scrollingPaddingTop?.let { old ->
             if (old < view.paddingTop) view.scrollBy(0, old - view.paddingTop)
         } ?: scrollingPaddingBottom?.let { old ->
@@ -219,13 +222,14 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyMargin(insets: Insets) {
         if (!isAny(Margin)) return
-        getMarginLayoutParamsOrThrow()
-        view.updateLayoutParams<MarginLayoutParams> {
-            leftMargin = if (dstLeft == Margin) stockLeft + insets.left else leftMargin
-            topMargin = if (dstTop == Margin) stockTop + insets.top else topMargin
-            rightMargin = if (dstRight == Margin) stockRight + insets.right else rightMargin
-            bottomMargin = if (dstBottom == Margin) stockBottom + insets.bottom else bottomMargin
-        }
+        val params = getMarginLayoutParamsOrThrow()
+        view.updateMarginIfChanged(
+            params,
+            left = if (dstLeft == Margin) stockLeft + insets.left else params.leftMargin,
+            top = if (dstTop == Margin) stockTop + insets.top else params.topMargin,
+            right = if (dstRight == Margin) stockRight + insets.right else params.rightMargin,
+            bottom = if (dstBottom == Margin) stockBottom + insets.bottom else params.bottomMargin,
+        )
     }
 
     private fun applyTranslation(insets: Insets) {
@@ -291,6 +295,34 @@ internal class ViewInsetsDelegateImpl(
         }
         val subtracted = Insets.subtract(space, stock)
         return Insets.max(other, subtracted)
+    }
+
+    private fun View.updatePaddingIfChanged(left: Int, top: Int, right: Int, bottom: Int): Boolean {
+        when {
+            paddingLeft != left -> Unit
+            paddingTop != top -> Unit
+            paddingRight != right -> Unit
+            paddingBottom != bottom -> Unit
+            else -> return false
+        }
+        updatePadding(left, top, right, bottom)
+        return true
+    }
+
+    private fun View.updateMarginIfChanged(params: MarginLayoutParams, left: Int, top: Int, right: Int, bottom: Int) {
+        when {
+            params.leftMargin != left -> Unit
+            params.topMargin != top -> Unit
+            params.rightMargin != right -> Unit
+            params.bottomMargin != bottom -> Unit
+            else -> return
+        }
+        updateLayoutParams<MarginLayoutParams> {
+            leftMargin = left
+            topMargin = top
+            rightMargin = right
+            bottomMargin = bottom
+        }
     }
 
     private fun logInsets() {
