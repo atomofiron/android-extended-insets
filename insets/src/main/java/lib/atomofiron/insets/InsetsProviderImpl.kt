@@ -33,7 +33,7 @@ class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
 ) : InsetsProvider, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
-    private var source = ExtendedWindowInsets.CONSUMED
+    private var source = ExtendedWindowInsets.EMPTY
         set(value) {
             logd { "${thisView?.nameWithId()} new received? ${field != value}" }
             if (field != value) {
@@ -41,7 +41,7 @@ class InsetsProviderImpl private constructor(
                 updateCurrent(value)
             }
         }
-    override var current = ExtendedWindowInsets.CONSUMED
+    override var current = ExtendedWindowInsets.EMPTY
         private set(value) {
             logd { "${thisView?.nameWithId()} new current? ${field != value}" }
             if (field != value) {
@@ -161,7 +161,6 @@ class InsetsProviderImpl private constructor(
         isNotifying = true
         current = insetsModifier
             ?.transform(listeners.isNotEmpty(), source)
-            ?.toExtended()
             ?: source
         isNotifying = false
     }

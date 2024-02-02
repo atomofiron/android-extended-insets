@@ -58,7 +58,7 @@ internal class ViewInsetsDelegateImpl(
     private var stockBottom = 0
 
     private var insets = Insets.NONE
-    private var windowInsets = ExtendedWindowInsets.CONSUMED
+    private var windowInsets = ExtendedWindowInsets.EMPTY
     private var provider: InsetsProvider? = null
     private var listener: InsetsListener? = this
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL

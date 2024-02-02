@@ -19,6 +19,7 @@ package lib.atomofiron.insets
 import android.view.View
 import android.view.WindowInsets
 import androidx.core.graphics.Insets
+import androidx.core.view.DisplayCutoutCompat
 import androidx.core.view.WindowInsetsCompat
 import kotlin.math.max
 
@@ -29,13 +30,28 @@ import kotlin.math.max
 internal const val LEGACY_LIMIT = Int.SIZE_BITS - 1
 internal val LEGACY_RANGE = 1..LEGACY_LIMIT
 
-class ExtendedWindowInsets private constructor(
+class ExtendedWindowInsets internal constructor(
     insets: Map<Int, InsetsValue>,
-    windowInsets: WindowInsetsCompat?,
-    // WindowInsetsCompat may be needed for getInsetsIgnoringVisibility()
-) : WindowInsetsCompat(windowInsets) {
+    private val hidden: TypeSet = TypeSet.EMPTY,
+    private val displayCutout: DisplayCutoutCompat?,
+) {
+    @Suppress("FunctionName")
     companion object {
-        val CONSUMED = ExtendedWindowInsets(WindowInsetsCompat.CONSUMED)
+        val EMPTY = ExtendedWindowInsets()
+
+        fun Builder() = ExtendedBuilder()
+
+        fun Builder(windowInsets: WindowInsets?, view: View? = null): ExtendedBuilder {
+            return Builder(windowInsets?.let{ WindowInsetsCompat.toWindowInsetsCompat(windowInsets, view) })
+        }
+
+        fun Builder(windowInsets: WindowInsetsCompat? = null): ExtendedBuilder {
+            return ExtendedBuilder(windowInsets.toValues(), TypeSet.EMPTY, windowInsets?.displayCutout)
+        }
+
+        fun Builder(windowInsets: ExtendedWindowInsets? = null): ExtendedBuilder {
+            return windowInsets?.run { ExtendedBuilder(insets, hidden, displayCutout) } ?: Builder()
+        }
     }
 
     abstract class Type {
@@ -76,13 +92,26 @@ class ExtendedWindowInsets private constructor(
 
     internal val insets: Map<Int, InsetsValue> = insets.toMap()
 
-    constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let { toWindowInsetsCompat(it, view) })
+    constructor(windowInsets: WindowInsets?, view: View? = null)
+            : this(windowInsets?.let { WindowInsetsCompat.toWindowInsetsCompat(it, view) })
 
-    constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
+    constructor(windowInsets: WindowInsetsCompat? = null)
+            : this(windowInsets.toValues(), displayCutout =windowInsets?.displayCutout)
 
-    operator fun get(typeMask: Int): Insets = getInsets(typeMask)
+    @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("get(type)"))
+    fun getInsets(type: Int): Insets {
+        var typeMask = 0
+        (type.toTypeSet() - hidden).forEach {
+            typeMask = typeMask or it.toLegacyType()
+        }
+        return when (typeMask) {
+            0 -> Insets.NONE
+            else -> getInsetsIgnoringVisibility(typeMask)
+        }
+    }
 
-    override fun getInsets(type: Int): Insets {
+    @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("getIgnoringVisibility(type)"))
+    fun getInsetsIgnoringVisibility(type: Int): Insets {
         val values = intArrayOf(0, 0, 0, 0)
         var cursor = 1
         var seed = TypeSet.FIRST_SEED
@@ -96,7 +125,10 @@ class ExtendedWindowInsets private constructor(
         return Insets.of(values[0], values[1], values[2], values[3])
     }
 
-    operator fun get(types: TypeSet): Insets {
+    fun getIgnoringVisibility(types: TypeSet): Insets {
+        if (types.isEmpty()) {
+            return Insets.NONE
+        }
         val values = intArrayOf(0, 0, 0, 0)
         var next: TypeSet? = types
         while (next != null) {
@@ -105,6 +137,16 @@ class ExtendedWindowInsets private constructor(
         }
         return Insets.of(values[0], values[1], values[2], values[3])
     }
+
+    operator fun get(types: TypeSet): Insets = getIgnoringVisibility(types - hidden)
+
+    fun getDisplayCutout(): DisplayCutoutCompat? = displayCutout
+
+    fun isVisible(type: TypeSet): Boolean = !hidden.contains(type)
+
+    fun hasInsets(): Boolean = insets.count { !it.value.isEmpty } != 0
+
+    fun isConsumed(): Boolean = false
 
     private fun IntArray.max(seed: Int) {
         val value = insets[seed]
@@ -123,102 +165,5 @@ class ExtendedWindowInsets private constructor(
     }
 
     override fun hashCode(): Int = 31 * insets.hashCode() + super.hashCode()
-
-    class Builder private constructor(
-        values: Map<Int, InsetsValue>?,
-        // WindowInsetsCompat may be needed for getInsetsIgnoringVisibility()
-        private val windowInsets: WindowInsetsCompat?,
-    ) {
-        private val values: MutableMap<Int, InsetsValue> = values?.toMutableMap() ?: mutableMapOf()
-
-        constructor(windowInsets: WindowInsets?, view: View? = null) : this(windowInsets?.let{ toWindowInsetsCompat(windowInsets, view) })
-
-        constructor(windowInsets: WindowInsetsCompat? = null) : this(windowInsets.toValues(), windowInsets)
-
-        init {
-            logd { "init ${this.values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
-        }
-
-        // compatible with the WindowInsetsCompat api
-        fun setInsets(type: Int, insets: Insets): Builder {
-            for (seed in LEGACY_RANGE) {
-                val cursor = seed.toTypeMask()
-                when {
-                    cursor > type -> break
-                    (cursor and type) != 0 -> values[seed] = insets.toValues()
-                }
-            }
-            return this
-        }
-
-        fun consume(typeMask: Int): Builder {
-            consume(Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET), typeMask.toTypeSet())
-            return this
-        }
-
-        operator fun get(types: TypeSet): Insets {
-            var value = InsetsValue()
-            types.forEach {
-                value = value.max(values[it.seed])
-            }
-            return value.toInsets()
-        }
-
-        operator fun set(types: TypeSet, insets: Insets): Builder {
-            val debugValues = debug { values.toMap() }
-            val insetsValue = insets.toValues()
-            types.forEach {
-                values[it.seed] = insetsValue
-            }
-            debugValues?.let { logd("set", from = it, to = values, insets, types) }
-            return this
-        }
-
-        fun max(types: TypeSet, insets: Insets): Builder {
-            val debugValues = debug { values.toMap() }
-            val insetsValue = insets.toValues()
-            types.forEach {
-                values[it.seed] = insetsValue max values[it.seed]
-            }
-            debugValues?.let { logd("max", from = it, to = values, insets, types) }
-            return this
-        }
-
-        fun add(types: TypeSet, insets: Insets): Builder {
-            val debugValues = debug { values.toMap() }
-            val insetsValue = insets.toValues()
-            types.forEach {
-                values[it.seed] = insetsValue + values[it.seed]
-            }
-            debugValues?.let { logd("add", from = it, to = values, insets, types) }
-            return this
-        }
-
-        fun consume(types: TypeSet): Builder {
-            consume(Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET), types)
-            return this
-        }
-
-        fun consume(insets: Insets, types: TypeSet? = null): Builder {
-            val debugValues = debug { values.toMap() }
-            when {
-                insets.isEmpty() -> return this.also { logd { "consume empty" } }
-                types?.isEmpty() == true -> return this.also { logd { "consume nothing" } }
-                types == null -> for ((seed, value) in values.entries.toList()) {
-                    values[seed] = value.consume(insets)
-                }
-                else -> for (type in types) {
-                    values[type.seed] = values[type.seed]?.consume(insets) ?: continue
-                }
-            }
-            debugValues?.let { logd("consume", from = it, to = values, insets, types) }
-            return this
-        }
-
-        fun build(): ExtendedWindowInsets {
-            logd { "build ${values.entries.joinToString(separator = " ") { "${it.key.getTypeName()}${it.value}" }}" }
-            return ExtendedWindowInsets(values.toMap(), windowInsets)
-        }
-    }
 }
 

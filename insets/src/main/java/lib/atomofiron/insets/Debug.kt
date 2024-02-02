@@ -81,7 +81,7 @@ private fun MutableList<String>.replaceBars() {
     }
 }
 
-internal fun ExtendedWindowInsets.Builder.logd(
+internal fun ExtendedBuilder.logd(
     operation: String,
     from: Map<Int, InsetsValue>,
     to: Map<Int, InsetsValue>,

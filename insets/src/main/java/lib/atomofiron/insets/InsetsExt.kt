@@ -158,52 +158,36 @@ inline fun InsetsProvider.composeInsets(
     // these delegates receive original insets (from parent provider or stock system window insets)
     delegate: ViewInsetsDelegate,
     vararg delegates: ViewInsetsDelegate,
-    crossinline transformation: (hasListeners: Boolean, ExtendedWindowInsets) -> WindowInsetsCompat,
+    crossinline transformation: (hasListeners: Boolean, ExtendedWindowInsets) -> ExtendedWindowInsets,
 ) {
     delegate.detachFromProvider()
     delegates.forEach { it.detachFromProvider() }
     setInsetsModifier { hasListeners, windowInsets ->
         delegate.onApplyWindowInsets(windowInsets)
         delegates.forEach { it.onApplyWindowInsets(windowInsets) }
-        transformation(hasListeners, windowInsets).toExtended()
+        transformation(hasListeners, windowInsets)
     }
 }
 
-fun View.getWindowInsets(): WindowInsetsCompat {
+fun View.getWindowInsets(): ExtendedWindowInsets {
     return (this as? InsetsProvider)?.current
         ?: parent.findInsetsProvider()?.current
-        ?: ViewCompat.getRootWindowInsets(this)
-        ?: WindowInsetsCompat.CONSUMED
+        ?: ExtendedWindowInsets(ViewCompat.getRootWindowInsets(this))
 }
 
 fun View.getInsets(type: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()): Insets
     = getWindowInsets().getInsets(type)
 
-fun View.getInsets(type: TypeSet = barsWithCutout): Insets = when (val windowInsets = getWindowInsets()) {
-    is ExtendedWindowInsets -> windowInsets[type]
-    else -> {
-        var typeMask = 0
-        type.forEach {
-            if (it.seed in LEGACY_RANGE)
-                typeMask = typeMask or it.seed.toTypeMask()
-        }
-        windowInsets.getInsets(typeMask)
-    }
-}
+fun View.getInsets(type: TypeSet = barsWithCutout): Insets = getWindowInsets()[type]
 
 operator fun WindowInsetsCompat.get(typeMask: Int): Insets = getInsets(typeMask)
 
-fun WindowInsetsCompat.toExtended() = when (this) {
-    is ExtendedWindowInsets -> this
-    else -> ExtendedWindowInsets(this)
-}
-
-inline fun <T : ExtendedWindowInsets.Type> T.from(
+inline fun <T : Type> T.from(
     windowInsets: ExtendedWindowInsets,
     block: T.() -> TypeSet,
 ): Insets = windowInsets[block()]
 
-inline operator fun <T : ExtendedWindowInsets.Type> ExtendedWindowInsets.invoke(
+inline operator fun <T : Type> ExtendedWindowInsets.invoke(
     companion: T,
     block: T.() -> TypeSet,
 ): Insets = get(companion.block())
@@ -228,6 +212,8 @@ internal fun Int.toTypeMask(): Int = when {
     this > LEGACY_LIMIT -> throw IllegalArgumentException("Seed $this is too big to be converted to the legacy bit mask, $LEGACY_LIMIT is the limit")
     else -> 1.shl(dec())
 }
+
+internal fun TypeSet.toLegacyType(): Int = seed.toTypeMask()
 
 internal fun Int.toTypeSet(name: String? = null): TypeSet {
     if (this == 0) {
