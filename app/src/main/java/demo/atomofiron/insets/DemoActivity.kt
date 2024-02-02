@@ -20,7 +20,6 @@ import lib.atomofiron.insets.InsetsCombining
 import lib.atomofiron.insets.composeInsets
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
-import lib.atomofiron.insets.insetsMargin
 import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
 import lib.atomofiron.insets.requestInsetOnLayoutChange
@@ -137,9 +136,13 @@ class DemoActivity : AppCompatActivity() {
                 .set(ExtType.fabHorizontal, Insets.of(fab.visibleLeftWidth, 0, fab.visibleRightWidth, 0))
                 .build()
         }
-        toolbar.insetsMargin(ExtType.general, top = true, horizontal = true)
+        toolbar.insetsMix(ExtType.general) {
+            top(translation).horizontal(margin)
+        }
         val fabCombining = insetsCombining.copy(insetsCombining.combiningTypes + ExtType.togglePanel)
-        fab.insetsMargin(ExtType { barsWithCutout + togglePanel + verticalPanels }, fabCombining, end = true, bottom = true)
+        fab.insetsMix(ExtType { barsWithCutout + togglePanel + verticalPanels }, fabCombining) {
+            translation(bottom, end)
+        }
 
         val spcTypes = ExtType { barsWithCutout + togglePanel + verticalPanels }
         val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))
