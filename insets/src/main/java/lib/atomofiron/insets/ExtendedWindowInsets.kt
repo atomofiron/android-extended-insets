@@ -46,7 +46,7 @@ class ExtendedWindowInsets internal constructor(
         }
 
         fun Builder(windowInsets: WindowInsetsCompat? = null): ExtendedBuilder {
-            return ExtendedBuilder(windowInsets.getValues(), TypeSet.EMPTY, windowInsets?.displayCutout)
+            return ExtendedBuilder(windowInsets.getValues(), windowInsets.getHidden(), windowInsets?.displayCutout)
         }
 
         fun Builder(windowInsets: ExtendedWindowInsets? = null): ExtendedBuilder {
