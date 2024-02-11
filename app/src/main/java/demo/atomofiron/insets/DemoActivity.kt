@@ -17,7 +17,7 @@ import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 import lib.atomofiron.insets.InsetsCombining
-import lib.atomofiron.insets.composeInsets
+import lib.atomofiron.insets.InsetsSet
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
@@ -42,8 +42,8 @@ class DemoActivity : AppCompatActivity() {
 
             configureInsets()
 
-            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top, panelsContainer::requestInsets)
-            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom, panelsContainer::requestInsets)
+            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top, root::requestInsets)
+            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom, root::requestInsets)
             switchConnection.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) topCtrl.show() else topCtrl.hide()
             }
@@ -103,48 +103,49 @@ class DemoActivity : AppCompatActivity() {
     }
 
     private fun ActivityDemoBinding.configureInsets() {
-        root.composeInsets(
-            root.insetsPadding(ExtType.ime, bottom = true),
-        ) { _, windowInsets -> // insets modifier
+        root.setInsetsModifier { _, windowInsets ->
             syncCutout(windowInsets)
-            val ime = windowInsets { ExtType.ime }
-            if (ime.isEmpty()) return@composeInsets windowInsets
-            ExtendedWindowInsets.Builder(windowInsets)
-                .consume(ime)
-                .build()
-        }
-        togglesContainer.composeInsets(
-            bottomPanel.insetsPadding(horizontal = true, bottom = true)
-                .dependency(vertical = true),
-        ) { _, windowInsets ->
             switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
-            val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
-            ExtendedWindowInsets.Builder(windowInsets)
-                .max(ExtType.general, insets)
-                .set(ExtType.togglePanel, insets)
-                .build()
+            windowInsets
         }
-        val topDelegate = viewTop.insetsMix { margin(horizontal).padding(top) }
-            .dependency(vertical = true)
-        val bottomDelegate = viewBottom.insetsMix(ExtType.general) { horizontal(margin).bottom(padding) }
-            .dependency(vertical = true)
-        panelsContainer.composeInsets(topDelegate, bottomDelegate) { _, windowInsets ->
-            val insets = Insets.of(0, viewTop.visibleTopHeight, 0, viewBottom.visibleBottomHeight)
-            ExtendedWindowInsets.Builder(windowInsets)
-                .max(ExtType.general, insets)
-                .set(ExtType.verticalPanels, insets)
-                .set(ExtType.fabTop, Insets.of(0, 0, 0, fab.visibleBottomHeight))
-                .set(ExtType.fabHorizontal, Insets.of(fab.visibleLeftWidth, 0, fab.visibleRightWidth, 0))
-                .build()
-        }
-        toolbar.insetsMix(ExtType.general) {
+        root.insetsPadding(ExtType.ime, bottom = true)
+            .dependency(vertical = true) {
+                InsetsSet.consume(ExtType.ime)
+            }
+        bottomPanel.insetsPadding(horizontal = true, bottom = true)
+            .dependency(vertical = true) {
+                val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
+                InsetsSet
+                    .max(ExtType.general, insets)
+                    .set(ExtType.togglePanel, insets)
+            }
+        viewTop.insetsMix { margin(horizontal).padding(top) }
+            .dependency(vertical = true) {
+                val insets = Insets.of(0, it.visibleTopHeight, 0, 0)
+                InsetsSet
+                    .max(ExtType.general, insets)
+                    .max(ExtType.verticalPanels, insets)
+            }
+        viewBottom.insetsMix(ExtType { barsWithCutout + togglePanel }) { horizontal(margin).bottom(padding) }
+            .dependency(vertical = true) {
+                val insets = Insets.of(0, 0, 0, viewBottom.visibleBottomHeight)
+                InsetsSet
+                    .max(ExtType.general, insets)
+                    .max(ExtType.verticalPanels, insets)
+            }
+        toolbar.insetsMix(ExtType { barsWithCutout + verticalPanels }) {
             top(translation).horizontal(margin)
         }
         val fabTypes = ExtType { barsWithCutout + togglePanel + verticalPanels }
         val fabCombining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
         fab.insetsMix(fabTypes, fabCombining) {
             translation(bottom, end)
+        }.dependency {
+            InsetsSet
+                .set(ExtType.fabTop, Insets.of(0, 0, 0, it.visibleBottomHeight))
+                .set(ExtType.fabHorizontal, Insets.of(it.visibleLeftWidth, 0, it.visibleRightWidth, 0))
         }
+        // todo fix
         requestInsetsOnVisibilityChange(fab)
 
         val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))
