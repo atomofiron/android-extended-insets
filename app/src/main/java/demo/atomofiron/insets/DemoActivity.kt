@@ -17,7 +17,8 @@ import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 import lib.atomofiron.insets.InsetsCombining
-import lib.atomofiron.insets.InsetsSet
+import lib.atomofiron.insets.InsetsModifier
+import lib.atomofiron.insets.builder
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
@@ -110,26 +111,26 @@ class DemoActivity : AppCompatActivity() {
         }
         root.insetsPadding(ExtType.ime, bottom = true)
             .dependency(vertical = true) {
-                InsetsSet.consume(ExtType.ime)
+                InsetsModifier.consume(ExtType.ime)
             }
         bottomPanel.insetsPadding(horizontal = true, bottom = true)
             .dependency(vertical = true) {
                 val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
-                InsetsSet
+                InsetsModifier
                     .max(ExtType.general, insets)
                     .set(ExtType.togglePanel, insets)
             }
         viewTop.insetsMix { margin(horizontal).padding(top) }
             .dependency(vertical = true) {
                 val insets = Insets.of(0, it.visibleTopHeight, 0, 0)
-                InsetsSet
+                InsetsModifier
                     .max(ExtType.general, insets)
                     .max(ExtType.verticalPanels, insets)
             }
         viewBottom.insetsMix(ExtType { barsWithCutout + togglePanel }) { horizontal(margin).bottom(padding) }
             .dependency(vertical = true) {
                 val insets = Insets.of(0, 0, 0, viewBottom.visibleBottomHeight)
-                InsetsSet
+                InsetsModifier
                     .max(ExtType.general, insets)
                     .max(ExtType.verticalPanels, insets)
             }
@@ -141,7 +142,7 @@ class DemoActivity : AppCompatActivity() {
         fab.insetsMix(fabTypes, fabCombining) {
             translation(bottom, end)
         }.dependency {
-            InsetsSet
+            InsetsModifier
                 .set(ExtType.fabTop, Insets.of(0, 0, 0, it.visibleBottomHeight))
                 .set(ExtType.fabHorizontal, Insets.of(it.visibleLeftWidth, 0, it.visibleRightWidth, 0))
         }
@@ -150,19 +151,19 @@ class DemoActivity : AppCompatActivity() {
 
         val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))
         // nested container with applied insets
-        val spcDelegate = snackbarParentContainer.insetsPadding(fabTypes)
+        val spcDelegate = snackbarParentContainer.insetsMix(fabTypes) { padding(horizontal).translation(bottom) }
         // snackbar dynamic relative position
         snackbarParentContainer.setInsetsModifier { _, windowInsets ->
             val landscape = snackbarParentContainer.run { width > height }
             spcDelegate.combining(spcCombining.takeIf { landscape })
-            ExtendedWindowInsets.Builder(windowInsets)
+            windowInsets.builder()
                 .consume(if (landscape) ExtType.fabTop else ExtType.fabHorizontal)
                 .build()
         }
         // on orientation changed
         requestInsetsOnLayoutChange(snackbarParentContainer)
         // child of nested container with decreased fab insets by consuming()
-        snackbarContainer.insetsPadding(ExtType { fabTop + fabHorizontal }, bottom = true, end = true)
+        snackbarContainer.insetsMix(ExtType { fabTop + fabHorizontal }) { translation(bottom).padding(end) }
             .consuming(fabTypes)
     }
 
