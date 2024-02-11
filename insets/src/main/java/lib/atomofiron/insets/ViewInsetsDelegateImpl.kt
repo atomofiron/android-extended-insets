@@ -29,7 +29,6 @@ import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
 import lib.atomofiron.insets.InsetsDestination.Translation
-import lib.atomofiron.poop
 import kotlin.math.max
 
 private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
@@ -162,7 +161,7 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
-    override fun getInsets(): InsetsSet = dependencyCallBack?.invoke(view) ?: InsetsSet
+    override fun getInsets(): InsetsModifier = dependencyCallBack?.invoke(view) ?: InsetsModifier
 
     private fun saveStock() {
         val params = when {
@@ -244,14 +243,19 @@ internal class ViewInsetsDelegateImpl(
 
     private fun applyTranslation(insets: Insets) {
         if (!isAny(Translation)) return
-        var dx = 0
-        var dy = 0
+        var dx = 0f
+        var dy = 0f
         if (dstLeft == Translation) dx += insets.left
         if (dstRight == Translation) dx -= insets.right
         if (dstTop == Translation) dy += insets.top
         if (dstBottom == Translation) dy -= insets.bottom
-        view.translationX = dx.toFloat()
-        view.translationY = dy.toFloat()
+        val request = dependency.horizontal && view.translationX != dx || dependency.vertical && view.translationY != dy
+        view.translationX = dx
+        view.translationY = dy
+        if (request) {
+            logd { "$nameWithId request insets? ${provider != null}" }
+            provider?.requestInsets()
+        }
     }
 
     private fun isAny(dst: InsetsDestination): Boolean {

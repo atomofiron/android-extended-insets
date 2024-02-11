@@ -164,20 +164,7 @@ fun View.insetsPadding(
     combining: InsetsCombining? = null,
 ) = insetsPadding(typeMask, combining, horizontal = true, vertical = true)
 
-inline fun InsetsProvider.composeInsets(
-    // these delegates receive original insets (from parent provider or stock system window insets)
-    delegate: ViewInsetsDelegate,
-    vararg delegates: ViewInsetsDelegate,
-    crossinline transformation: (hasListeners: Boolean, ExtendedWindowInsets) -> ExtendedWindowInsets,
-) {
-    delegate.detachFromProvider()
-    delegates.forEach { it.detachFromProvider() }
-    setInsetsModifier { hasListeners, windowInsets ->
-        delegate.onApplyWindowInsets(windowInsets)
-        delegates.forEach { it.onApplyWindowInsets(windowInsets) }
-        transformation(hasListeners, windowInsets)
-    }
-}
+fun ExtendedWindowInsets.builder(): ExtendedBuilder = ExtendedWindowInsets.Builder(this)
 
 fun View.getWindowInsets(): ExtendedWindowInsets {
     return findInsetsProvider()?.current ?: ExtendedWindowInsets(ViewCompat.getRootWindowInsets(this))

@@ -51,7 +51,7 @@ class InsetsProviderImpl private constructor(
             }
         }
     private val listeners = hashMapOf<Int, InsetsListener>()
-    private var insetsModifier: InsetsModifier? = null
+    private var insetsModifier: InsetsModifierCallback? = null
     private var provider: InsetsProvider? = null
     private var thisView: View? = null
     private var nameWithId: String? = null
@@ -93,7 +93,7 @@ class InsetsProviderImpl private constructor(
         }
     }
 
-    override fun setInsetsModifier(modifier: InsetsModifier) {
+    override fun setInsetsModifier(modifier: InsetsModifierCallback) {
         logd { "$nameWithId set modifier" }
         insetsModifier = modifier
         updateCurrent(source)
@@ -137,6 +137,7 @@ class InsetsProviderImpl private constructor(
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
             val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
             source = Builder(windowInsetsCompat)
+                .set(Type.barsWithCutout, barsWithCutout)
                 .set(Type.general, barsWithCutout)
                 .build()
         }
