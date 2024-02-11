@@ -23,6 +23,7 @@ import android.view.View
 import android.view.WindowInsets
 import androidx.annotation.RequiresApi
 import androidx.core.view.WindowInsetsCompat
+import lib.atomofiron.insets.ExtendedWindowInsets.Companion.Builder
 import androidx.core.view.WindowInsetsCompat.Type as CompatType
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
 
@@ -31,7 +32,7 @@ const val INVALID_INSETS_LISTENER_KEY = 0
 
 class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
-) : InsetsProvider, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private var source = ExtendedWindowInsets.EMPTY
         set(value) {
@@ -135,7 +136,7 @@ class InsetsProviderImpl private constructor(
             logd { "$nameWithId native insets were accepted" }
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
             val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
-            source = ExtendedWindowInsets.Builder(windowInsetsCompat)
+            source = Builder(windowInsetsCompat)
                 .set(Type.general, barsWithCutout)
                 .build()
         }
@@ -163,8 +164,38 @@ class InsetsProviderImpl private constructor(
         isNotifying = true
         current = insetsModifier
             ?.transform(listeners.isNotEmpty(), source)
-            ?: source
+            .let { iterateCallbacks(it ?: source) }
         isNotifying = false
+    }
+
+    private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
+        var callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
+        // first should be delegate of this view
+        val index = callbacks.indexOfFirst { (it as? ViewInsetsDelegateImpl)?.view === thisView }
+        if (index > 0) {
+            callbacks = callbacks.toMutableList().apply {
+                val tmp = get(0)
+                set(0, get(index))
+                set(index, tmp)
+            }
+        }
+        var builder: ExtendedBuilder? = null
+        for (callback in callbacks) {
+            callback.getInsets().takeIf { !it.isEmpty }?.let { insetsSet ->
+                builder = (builder ?: Builder(windowInsets)).apply {
+                    for (it in insetsSet) {
+                        when (it.action) {
+                            DepAction.Max -> max(it.types, it.insets)
+                            DepAction.Set -> set(it.types, it.insets)
+                            DepAction.Add -> add(it.types, it.insets)
+                            DepAction.Consume -> consume(it.types, it.insets)
+                            DepAction.None -> Unit // unreachable
+                        }
+                    }
+                }
+            }
+        }
+        return builder?.build() ?: windowInsets
     }
 
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {

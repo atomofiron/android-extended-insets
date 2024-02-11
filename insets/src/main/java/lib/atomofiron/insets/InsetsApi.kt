@@ -27,7 +27,15 @@ fun interface InsetsModifier {
     fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
 }
 
-interface InsetsProvider : InsetsListener {
+fun interface InsetsDependencyCallback {
+    fun getInsets(): InsetsSet
+}
+
+fun interface InsetsCallback {
+    operator fun invoke(view: View): InsetsSet
+}
+
+interface InsetsProvider {
     val current: ExtendedWindowInsets
 
     fun View.onInit()
@@ -46,7 +54,12 @@ interface InsetsProvider : InsetsListener {
 interface ViewInsetsDelegate : InsetsListener {
     val consuming: TypeSet
     fun resetInsets(consuming: TypeSet = this.consuming, block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun dependency(horizontal: Boolean = false, vertical: Boolean = false): ViewInsetsDelegate
+    fun dependency(callback: InsetsCallback? = null): ViewInsetsDelegate
+    fun dependency(
+        horizontal: Boolean = false,
+        vertical: Boolean = false,
+        callback: InsetsCallback? = null,
+    ): ViewInsetsDelegate
     fun consuming(types: TypeSet = consuming): ViewInsetsDelegate
     fun combining(combining: InsetsCombining?)
     fun scrollOnEdge(): ViewInsetsDelegate

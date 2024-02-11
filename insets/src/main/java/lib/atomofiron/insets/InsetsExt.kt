@@ -42,6 +42,8 @@ fun Insets.isEmpty() = this == Insets.NONE
 
 fun Insets.isNotEmpty() = !isEmpty()
 
+val MAX_INSETS = Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET)
+
 fun Insets.consume(other: Insets): Insets = when {
     isEmpty() -> this
     other.isEmpty() -> this
@@ -57,16 +59,22 @@ fun ViewParent.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
 }
 
+fun View.findInsetsProvider(): InsetsProvider? {
+    return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
+}
+
+fun View.requestInsets() {
+    findInsetsProvider()?.requestInsets()
+}
+
 fun View.addInsetsListener(listener: InsetsListener): Int {
-    val provider = (this as? InsetsProvider) ?: parent.findInsetsProvider()
-    val key = provider?.addInsetsListener(listener)
+    val key = findInsetsProvider()?.addInsetsListener(listener)
     key ?: logd { "${nameWithId()} unable add insets listener, provider not found" }
     return key ?: INVALID_INSETS_LISTENER_KEY
 }
 
 fun View.removeInsetsListener(listener: InsetsListener) {
-    val provider = (this as? InsetsProvider) ?: parent.findInsetsProvider()
-    provider?.removeInsetsListener(listener)
+    findInsetsProvider()?.removeInsetsListener(listener)
         ?: logd { "${nameWithId()} unable remove insets listener, provider not found" }
 }
 
@@ -172,9 +180,7 @@ inline fun InsetsProvider.composeInsets(
 }
 
 fun View.getWindowInsets(): ExtendedWindowInsets {
-    return (this as? InsetsProvider)?.current
-        ?: parent.findInsetsProvider()?.current
-        ?: ExtendedWindowInsets(ViewCompat.getRootWindowInsets(this))
+    return findInsetsProvider()?.current ?: ExtendedWindowInsets(ViewCompat.getRootWindowInsets(this))
 }
 
 fun View.getInsets(type: Int = CompatType.systemBars() or CompatType.displayCutout()): Insets
@@ -193,10 +199,6 @@ inline operator fun <T : Type> ExtendedWindowInsets.invoke(
     companion: T,
     block: T.() -> TypeSet,
 ): Insets = get(companion.block())
-
-fun View.requestInsets() {
-    parent.findInsetsProvider()?.requestInsets()
-}
 
 fun View.onAttachCallback(
     onAttach: ((View) -> Unit)? = null,
@@ -218,7 +220,7 @@ fun requestInsetsOnVisibilityChange(vararg views: View) {
             if (placed != placements[index]) {
                 placements[index] = placed
                 if (placed) {
-                    view.parent.findInsetsProvider()
+                    view.findInsetsProvider()
                         ?.takeIf { provider -> providers.find { it === provider } == null }
                         ?.also { providers.add(it) }
                         ?.requestInsets()

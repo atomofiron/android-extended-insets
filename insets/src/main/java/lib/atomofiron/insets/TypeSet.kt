@@ -29,7 +29,9 @@ data class TypeSet internal constructor(
 ) : Set<TypeSet> {
     companion object {
         private const val ZERO_SEED = 0
+        private const val EXTRA_SEED = -1
         internal const val FIRST_SEED = ZERO_SEED + 1
+        internal val ALL = TypeSet("empty", EXTRA_SEED)
         val EMPTY = TypeSet("empty", ZERO_SEED)
     }
 
@@ -56,7 +58,9 @@ data class TypeSet internal constructor(
     override fun iterator() = object : Iterator<TypeSet> {
         private var next: TypeSet? = this@TypeSet.takeIf { seed != ZERO_SEED }
         override fun hasNext(): Boolean = next != null
-        override fun next(): TypeSet = next?.also { next = it.next } ?: throw NoSuchElementException()
+        override fun next(): TypeSet = next?.also {
+            current -> next = current.next?.takeIf { it.isNotEmpty() }
+        } ?: throw NoSuchElementException()
     }
 
     // without sorting
