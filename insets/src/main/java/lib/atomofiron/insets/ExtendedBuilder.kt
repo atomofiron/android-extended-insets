@@ -26,10 +26,7 @@ class ExtendedBuilder internal constructor(
         return this
     }
 
-    fun consume(typeMask: Int): ExtendedBuilder {
-        consume(Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET), typeMask.toTypeSet())
-        return this
-    }
+    fun consume(typeMask: Int): ExtendedBuilder = consume(typeMask.toTypeSet(), MAX_INSETS)
 
     operator fun get(types: TypeSet): Insets {
         var value = InsetsValue()
@@ -69,17 +66,16 @@ class ExtendedBuilder internal constructor(
         return this
     }
 
-    fun consume(types: TypeSet): ExtendedBuilder {
-        consume(Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET), types)
-        return this
-    }
+    fun consume(types: TypeSet): ExtendedBuilder = consume(types, MAX_INSETS)
 
-    fun consume(insets: Insets, types: TypeSet? = null): ExtendedBuilder {
+    fun consume(insets: Insets): ExtendedBuilder = consume(TypeSet.ALL, insets)
+
+    fun consume(types: TypeSet, insets: Insets): ExtendedBuilder {
         val debugValues = debug { values.toMap() }
         when {
             insets.isEmpty() -> return this.also { logd { "consume empty" } }
-            types?.isEmpty() == true -> return this.also { logd { "consume nothing" } }
-            types == null -> for ((seed, value) in values.entries.toList()) {
+            types.isEmpty() -> return this.also { logd { "consume nothing" } }
+            types == TypeSet.ALL -> for ((seed, value) in values.entries.toList()) {
                 values[seed] = value.consume(insets)
             }
             else -> for (type in types) {
@@ -101,8 +97,7 @@ class ExtendedBuilder internal constructor(
     }
 
     fun setVisibility(types: TypeSet, visible: Boolean): ExtendedBuilder {
-        if (visible) setVisible(types) else setInvisible(types)
-        return this
+        return if (visible) setVisible(types) else setInvisible(types)
     }
 
     fun build(): ExtendedWindowInsets {

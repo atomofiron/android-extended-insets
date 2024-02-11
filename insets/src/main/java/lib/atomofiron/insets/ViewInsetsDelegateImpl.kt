@@ -29,6 +29,7 @@ import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
 import lib.atomofiron.insets.InsetsDestination.Translation
+import lib.atomofiron.poop
 import kotlin.math.max
 
 private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
@@ -48,7 +49,7 @@ internal class ViewInsetsDelegateImpl(
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
     private var dstBottom: InsetsDestination = None,
-) : ViewInsetsDelegate, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+) : ViewInsetsDelegate, InsetsListener, InsetsDependencyCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private val nameWithId = view.nameWithId()
     override var consuming: TypeSet = TypeSet.EMPTY
@@ -66,6 +67,7 @@ internal class ViewInsetsDelegateImpl(
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
     private var postRequestLayoutOnNextLayout = false
     private var dependency = Dependency()
+    private var dependencyCallBack: InsetsCallback? = null
     private var scrollOnEdge = false
 
     private var dstLeft = if (isRtl) dstEnd else dstStart
@@ -79,7 +81,7 @@ internal class ViewInsetsDelegateImpl(
     }
 
     override fun onViewAttachedToWindow(view: View) {
-        provider = view.parent.findInsetsProvider()
+        provider = view.findInsetsProvider()
         logd { "$nameWithId onAttach provider? ${provider != null}, listener? ${listener != null}" }
         provider?.addInsetsListener(listener ?: return)
     }
@@ -125,10 +127,13 @@ internal class ViewInsetsDelegateImpl(
         updateInsets(windowInsets)
     }
 
-    override fun dependency(horizontal: Boolean, vertical: Boolean): ViewInsetsDelegate {
+    override fun dependency(horizontal: Boolean, vertical: Boolean, callback: InsetsCallback?): ViewInsetsDelegate {
         dependency = dependency.copy(horizontal = horizontal, vertical = vertical)
+        dependencyCallBack = callback
         return this
     }
+
+    override fun dependency(callback: InsetsCallback?) = dependency(horizontal = true, vertical = true, callback)
 
     override fun scrollOnEdge(): ViewInsetsDelegate {
         scrollOnEdge = true
@@ -156,6 +161,8 @@ internal class ViewInsetsDelegateImpl(
             view.post { view.requestLayout() }
         }
     }
+
+    override fun getInsets(): InsetsSet = dependencyCallBack?.invoke(view) ?: InsetsSet
 
     private fun saveStock() {
         val params = when {
@@ -342,4 +349,6 @@ internal class ViewInsetsDelegateImpl(
             "$nameWithId insets[${dstLeft.letter}$left,${dstTop.letter}$top,${dstRight.letter}$right,${dstBottom.letter}$bottom] $types"
         }
     }
+
+    override fun toString(): String = "ViewInsetsDelegateImpl(${nameWithId})"
 }
