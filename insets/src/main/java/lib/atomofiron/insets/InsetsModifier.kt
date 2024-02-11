@@ -7,16 +7,16 @@ internal enum class DepAction {
     None, Set, Max, Add, Consume
 }
 
-open class InsetsSet private constructor(
+open class InsetsModifier private constructor(
     internal val action: DepAction,
     internal val types: TypeSet,
     internal val insets: Insets,
-    internal val next: InsetsSet?,
-) : Set<InsetsSet> {
-    companion object : InsetsSet(DepAction.None, TypeSet.EMPTY, Insets.NONE, null) {
-        private val emptyIterator = object : Iterator<InsetsSet> {
+    internal val next: InsetsModifier?,
+) : Set<InsetsModifier> {
+    companion object : InsetsModifier(DepAction.None, TypeSet.EMPTY, Insets.NONE, null) {
+        private val emptyIterator = object : Iterator<InsetsModifier> {
             override fun hasNext(): Boolean = false
-            override fun next(): InsetsSet = throw NoSuchElementException()
+            override fun next(): InsetsModifier = throw NoSuchElementException()
         }
         override val isEmpty = true
         override val size: Int = 0
@@ -29,7 +29,7 @@ open class InsetsSet private constructor(
 
     override fun isEmpty(): Boolean = size == 0
 
-    override operator fun contains(element: InsetsSet): Boolean {
+    override operator fun contains(element: InsetsModifier): Boolean {
         when {
             action != element.action -> Unit
             types != element.types -> Unit
@@ -39,11 +39,11 @@ open class InsetsSet private constructor(
         return next != null && next.contains(element)
     }
 
-    override fun containsAll(elements: Collection<InsetsSet>): Boolean {
+    override fun containsAll(elements: Collection<InsetsModifier>): Boolean {
         when {
             elements.isEmpty() -> return true
             isEmpty() -> return elements.find { !it.isEmpty() } == null
-            elements is InsetsSet -> return elements.find { !contains(it) } == null
+            elements is InsetsModifier -> return elements.find { !contains(it) } == null
             else -> for (element in elements) {
                 if (!containsAll(element)) return false
             }
@@ -51,17 +51,17 @@ open class InsetsSet private constructor(
         return true
     }
 
-    override fun iterator() = object : Iterator<InsetsSet> {
-        private var next: InsetsSet? = this@InsetsSet.takeIf { !isEmpty }
+    override fun iterator() = object : Iterator<InsetsModifier> {
+        private var next: InsetsModifier? = this@InsetsModifier.takeIf { !isEmpty }
         override fun hasNext(): Boolean = next != null
-        override fun next(): InsetsSet = next?.also { current ->
+        override fun next(): InsetsModifier = next?.also { current ->
             next = current.next?.takeIf { !it.isEmpty }
         } ?: throw NoSuchElementException()
     }
 
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
-        other !is InsetsSet -> false
+        other !is InsetsModifier -> false
         !containsAll(other) -> false
         !other.containsAll(this) -> false
         else -> true
@@ -69,13 +69,13 @@ open class InsetsSet private constructor(
 
     override fun hashCode(): Int = Objects.hash(action, types, insets, next)
 
-    fun set(types: TypeSet, insets: Insets) = InsetsSet(DepAction.Set, types, insets, this)
+    fun set(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Set, types, insets, this)
 
-    fun max(types: TypeSet, insets: Insets) = InsetsSet(DepAction.Max, types, insets, this)
+    fun max(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Max, types, insets, this)
 
-    fun add(types: TypeSet, insets: Insets) = InsetsSet(DepAction.Add, types, insets, this)
+    fun add(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Add, types, insets, this)
 
-    fun consume(types: TypeSet, insets: Insets) = InsetsSet(DepAction.Consume, types, insets, this)
+    fun consume(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Consume, types, insets, this)
 
-    fun consume(types: TypeSet) = InsetsSet(DepAction.Consume, types, MAX_INSETS, this)
+    fun consume(types: TypeSet) = InsetsModifier(DepAction.Consume, types, MAX_INSETS, this)
 }

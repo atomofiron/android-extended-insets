@@ -23,16 +23,16 @@ fun interface InsetsListener {
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
-fun interface InsetsModifier {
+fun interface InsetsModifierCallback {
     fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
 }
 
 fun interface InsetsDependencyCallback {
-    fun getInsets(): InsetsSet
+    fun getInsets(): InsetsModifier
 }
 
 fun interface InsetsCallback {
-    operator fun invoke(view: View): InsetsSet
+    operator fun invoke(view: View): InsetsModifier
 }
 
 interface InsetsProvider {
@@ -42,7 +42,7 @@ interface InsetsProvider {
     fun addInsetsListener(listener: InsetsListener): Int
     fun removeInsetsListener(listener: InsetsListener)
     fun removeInsetsListener(key: Int)
-    fun setInsetsModifier(modifier: InsetsModifier)
+    fun setInsetsModifier(modifier: InsetsModifierCallback)
     // the one of the two entry points for system window insets
     // and hidden supertype override View.dispatchApplyWindowInsets(WindowInsets),
     // that allows not to set a insets listener that can be replaced with another one
