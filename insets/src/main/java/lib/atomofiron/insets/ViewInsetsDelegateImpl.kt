@@ -161,7 +161,9 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
-    override fun getInsets(): InsetsModifier = dependencyCallBack?.invoke(view) ?: InsetsModifier
+    override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? {
+        return dependencyCallBack?.invoke(InsetsCallbackArg(view, windowInsets))
+    }
 
     private fun saveStock() {
         val params = when {

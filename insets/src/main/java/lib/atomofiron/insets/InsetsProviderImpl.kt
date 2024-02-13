@@ -170,39 +170,25 @@ class InsetsProviderImpl private constructor(
     }
 
     private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
-        var callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
-        // first should be delegate of this view
-        val index = callbacks.indexOfFirst { (it as? ViewInsetsDelegateImpl)?.view === thisView }
-        if (index > 0) {
-            callbacks = callbacks.toMutableList().apply {
-                val tmp = get(0)
-                set(0, get(index))
-                set(index, tmp)
-            }
-        }
+        val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
         var builder: ExtendedBuilder? = null
         for (callback in callbacks) {
-            callback.getInsets().takeIf { !it.isEmpty }?.let { insetsSet ->
-                builder = (builder ?: Builder(windowInsets)).apply {
-                    for (it in insetsSet) {
-                        when (it.action) {
-                            DepAction.Max -> max(it.types, it.insets)
-                            DepAction.Set -> set(it.types, it.insets)
-                            DepAction.Add -> add(it.types, it.insets)
-                            DepAction.Consume -> consume(it.types, it.insets)
-                            DepAction.None -> Unit // unreachable
-                        }
-                    }
+            callback.getModifier(windowInsets)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { modifier ->
+                    builder = (builder ?: Builder(windowInsets)).applyReversed(modifier)
                 }
-            }
         }
         return builder?.build() ?: windowInsets
     }
 
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
         isNotifying = true
-        listeners.values.toTypedArray().forEach {
-            it.onApplyWindowInsets(windowInsets)
+        val listeners = listeners.values.toTypedArray()
+        val currentViewDelegateIndex = listeners.indexOfFirst { (it as? ViewInsetsDelegateImpl)?.view === thisView }
+        listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(source)
+        listeners.forEachIndexed { index, it ->
+            if (index != currentViewDelegateIndex) it.onApplyWindowInsets(windowInsets)
         }
         if (isRequested) {
             logd { "$nameWithId notify listeners after the notification of listeners" }
@@ -211,6 +197,18 @@ class InsetsProviderImpl private constructor(
         }
         isNotifying = false
     }
+}
+
+private fun ExtendedBuilder.applyReversed(modifier: InsetsModifier): ExtendedBuilder {
+    modifier.next?.let { applyReversed(it) }
+    when (modifier.action) {
+        DepAction.Max -> max(modifier.types, modifier.insets)
+        DepAction.Set -> set(modifier.types, modifier.insets)
+        DepAction.Add -> add(modifier.types, modifier.insets)
+        DepAction.Consume -> consume(modifier.types, modifier.insets)
+        DepAction.None -> Unit // unreachable
+    }
+    return this
 }
 
 private fun InsetsListener.checkTheSameView(other: InsetsListener) = when {

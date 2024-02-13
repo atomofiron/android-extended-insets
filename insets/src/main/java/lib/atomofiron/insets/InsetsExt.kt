@@ -81,9 +81,9 @@ fun View.removeInsetsListener(listener: InsetsListener) {
 fun View.insetsMix(
     typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
-    block: (ViewInsetsConfig.() -> Unit)? = null,
+    config: (ViewInsetsConfig.() -> Unit)? = null,
 ): ViewInsetsDelegate {
-    return block?.let {
+    return config?.let {
         ViewInsetsConfig().apply(it).run {
             ViewInsetsDelegateImpl(this@insetsMix, typeMask, combining, dstStart, dstTop, dstEnd, dstBottom)
         }

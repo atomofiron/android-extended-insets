@@ -23,18 +23,6 @@ fun interface InsetsListener {
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
-fun interface InsetsModifierCallback {
-    fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
-}
-
-fun interface InsetsDependencyCallback {
-    fun getInsets(): InsetsModifier
-}
-
-fun interface InsetsCallback {
-    operator fun invoke(view: View): InsetsModifier
-}
-
 interface InsetsProvider {
     val current: ExtendedWindowInsets
 
@@ -65,6 +53,26 @@ interface ViewInsetsDelegate : InsetsListener {
     fun scrollOnEdge(): ViewInsetsDelegate
     fun detachFromProvider()
     fun detachFromView()
+}
+
+fun interface InsetsModifierCallback {
+    fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
+}
+
+fun interface InsetsDependencyCallback {
+    fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier?
+}
+
+fun interface InsetsCallback {
+    operator fun invoke(arg: InsetsCallbackArg): InsetsModifier?
+}
+
+class InsetsCallbackArg(
+    val view: View,
+    val windowInsets: ExtendedWindowInsets,
+) {
+    operator fun component1() = view
+    operator fun component2() = windowInsets
 }
 
 enum class InsetsDestination(

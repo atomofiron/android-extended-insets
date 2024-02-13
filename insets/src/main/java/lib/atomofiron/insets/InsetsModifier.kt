@@ -11,19 +11,18 @@ open class InsetsModifier private constructor(
     internal val action: DepAction,
     internal val types: TypeSet,
     internal val insets: Insets,
-    internal val next: InsetsModifier?,
+    next: InsetsModifier?,
 ) : Set<InsetsModifier> {
     companion object : InsetsModifier(DepAction.None, TypeSet.EMPTY, Insets.NONE, null) {
         private val emptyIterator = object : Iterator<InsetsModifier> {
             override fun hasNext(): Boolean = false
             override fun next(): InsetsModifier = throw NoSuchElementException()
         }
-        override val isEmpty = true
-        override val size: Int = 0
+        override val size = 0
         override fun iterator() = emptyIterator
     }
 
-    internal open val isEmpty = false
+    internal val next: InsetsModifier? = next?.takeIf { it.isNotEmpty() }
 
     override val size: Int = (next?.size ?: 0).inc()
 
@@ -52,11 +51,10 @@ open class InsetsModifier private constructor(
     }
 
     override fun iterator() = object : Iterator<InsetsModifier> {
-        private var next: InsetsModifier? = this@InsetsModifier.takeIf { !isEmpty }
+        private var next: InsetsModifier? = this@InsetsModifier
+            get() = field?.takeIf { it.isNotEmpty() }
         override fun hasNext(): Boolean = next != null
-        override fun next(): InsetsModifier = next?.also { current ->
-            next = current.next?.takeIf { !it.isEmpty }
-        } ?: throw NoSuchElementException()
+        override fun next(): InsetsModifier = next?.also { next = it.next } ?: throw NoSuchElementException()
     }
 
     override fun equals(other: Any?): Boolean = when {
@@ -78,4 +76,6 @@ open class InsetsModifier private constructor(
     fun consume(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Consume, types, insets, this)
 
     fun consume(types: TypeSet) = InsetsModifier(DepAction.Consume, types, MAX_INSETS, this)
+
+    fun consume(insets: Insets) = InsetsModifier(DepAction.Consume, TypeSet.ALL, insets, this)
 }
