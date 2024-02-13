@@ -110,8 +110,8 @@ class DemoActivity : AppCompatActivity() {
             windowInsets
         }
         root.insetsPadding(ExtType.ime, bottom = true)
-            .dependency(vertical = true) {
-                InsetsModifier.consume(ExtType.ime)
+            .dependency(vertical = true) { (_, windowInsets) ->
+                InsetsModifier.consume(windowInsets { ime })
             }
         bottomPanel.insetsPadding(horizontal = true, bottom = true)
             .dependency(vertical = true) {
@@ -121,8 +121,8 @@ class DemoActivity : AppCompatActivity() {
                     .set(ExtType.togglePanel, insets)
             }
         viewTop.insetsMix { margin(horizontal).padding(top) }
-            .dependency(vertical = true) {
-                val insets = Insets.of(0, it.visibleTopHeight, 0, 0)
+            .dependency(vertical = true) { (view, _) ->
+                val insets = Insets.of(0, view.visibleTopHeight, 0, 0)
                 InsetsModifier
                     .max(ExtType.general, insets)
                     .max(ExtType.verticalPanels, insets)
@@ -141,12 +141,11 @@ class DemoActivity : AppCompatActivity() {
         val fabCombining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
         fab.insetsMix(fabTypes, fabCombining) {
             translation(bottom, end)
-        }.dependency {
+        }.dependency { (view, _) ->
             InsetsModifier
-                .set(ExtType.fabTop, Insets.of(0, 0, 0, it.visibleBottomHeight))
-                .set(ExtType.fabHorizontal, Insets.of(it.visibleLeftWidth, 0, it.visibleRightWidth, 0))
+                .set(ExtType.fabTop, Insets.of(0, 0, 0, view.visibleBottomHeight))
+                .set(ExtType.fabHorizontal, Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, 0))
         }
-        // todo fix
         requestInsetsOnVisibilityChange(fab)
 
         val spcCombining = InsetsCombining(ExtType.togglePanel, minBottom = resources.getDimensionPixelSize(R.dimen.common_padding))

@@ -9,6 +9,7 @@ import demo.atomofiron.insets.databinding.FragmentPlayerBinding
 import demo.atomofiron.insets.fragment.list.ListFragment
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
+import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
 
@@ -20,10 +21,10 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 top(translation).horizontal(margin)
             }
             val combining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
-            btnStart.insetsMix(ExtType.general, combining) {
+            btnStart.insetsMix(ExtType { barsWithCutout + togglePanel + verticalPanels }, combining) {
                 translation(start, bottom)
             }
-            btnEnd.insetsMix(ExtType.general, combining) {
+            btnEnd.insetsMix(ExtType { barsWithCutout + togglePanel + verticalPanels }, combining) {
                 translation(end, bottom)
             }
             btnStart.setOnClickListener { showAnotherFragment(true) }
