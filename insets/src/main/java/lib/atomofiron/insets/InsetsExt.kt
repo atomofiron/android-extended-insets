@@ -42,6 +42,8 @@ fun Insets.isEmpty() = this == Insets.NONE
 
 fun Insets.isNotEmpty() = !isEmpty()
 
+fun Insets.inv() = Insets.of(-left, -top, -right, -bottom)
+
 fun Insets.ltrb() = "$left,$top,$right,$bottom"
 
 val MAX_INSETS = Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET)

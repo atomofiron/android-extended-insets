@@ -34,6 +34,7 @@ class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
 ) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
+    private var transformed = ExtendedWindowInsets.EMPTY
     private var source = ExtendedWindowInsets.EMPTY
         set(value) {
             logd { "$nameWithId new received? ${field != value}" }
@@ -137,7 +138,6 @@ class InsetsProviderImpl private constructor(
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
             val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
             source = Builder(windowInsetsCompat)
-                .set(Type.barsWithCutout, barsWithCutout)
                 .set(Type.general, barsWithCutout)
                 .build()
         }
@@ -165,7 +165,10 @@ class InsetsProviderImpl private constructor(
         isNotifying = true
         current = insetsModifier
             ?.transform(listeners.isNotEmpty(), source)
-            .let { iterateCallbacks(it ?: source) }
+            .let {
+                transformed = it ?: source
+                iterateCallbacks(transformed)
+            }
         isNotifying = false
     }
 
@@ -186,7 +189,7 @@ class InsetsProviderImpl private constructor(
         isNotifying = true
         val listeners = listeners.values.toTypedArray()
         val currentViewDelegateIndex = listeners.indexOfFirst { it.view() === thisView }
-        listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(source)
+        listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(transformed)
         listeners.forEachIndexed { index, it ->
             if (index != currentViewDelegateIndex) it.onApplyWindowInsets(windowInsets)
         }
