@@ -54,11 +54,6 @@ internal class ViewInsetsDelegateImpl(
     override var consuming: TypeSet = TypeSet.EMPTY
         private set
 
-    private var stockLeft = 0
-    private var stockTop = 0
-    private var stockRight = 0
-    private var stockBottom = 0
-
     private var insets = Insets.NONE
     private var windowInsets = ExtendedWindowInsets.EMPTY
     private var provider: InsetsProvider? = null
@@ -74,7 +69,6 @@ internal class ViewInsetsDelegateImpl(
 
     init {
         logDestination("init")
-        saveStock()
         view.addOnAttachStateChangeListener(this)
         if (view.isAttachedToWindow) onViewAttachedToWindow(view)
         view.addOnLayoutChangeListener(this)
@@ -108,18 +102,18 @@ internal class ViewInsetsDelegateImpl(
     override fun resetInsets(consuming: TypeSet, block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
         val config = ViewInsetsConfig().apply(block)
         config.logd { "$nameWithId with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
-        if (isAny(Padding) && insets.isNotEmpty()) applyPadding(Insets.NONE)
-        if (isAny(Margin) && insets.isNotEmpty()) applyMargin(Insets.NONE)
-        if (isAny(Translation) && insets.isNotEmpty()) applyTranslation(Insets.NONE)
+        val delta = insets.inv()
+        if (insets.isNotEmpty(Padding)) applyPadding(delta)
+        if (insets.isNotEmpty(Margin)) applyMargin(delta)
+        if (insets.isNotEmpty(Translation)) applyTranslation(delta)
         dstLeft = if (isRtl) config.dstEnd else config.dstStart
         dstTop = config.dstTop
         dstRight = if (isRtl) config.dstStart else config.dstEnd
         dstBottom = config.dstBottom
         logDestination("reset")
-        saveStock()
         consuming(consuming)
         updateInsets(windowInsets)
-        applyInsets()
+        applyInsets(insets)
         return this
     }
 
@@ -167,39 +161,27 @@ internal class ViewInsetsDelegateImpl(
         return dependencyCallBack?.invoke(InsetsCallbackArg(view, windowInsets))
     }
 
-    private fun saveStock() {
-        val params = when {
-            isAny(Margin) -> getMarginLayoutParamsOrThrow()
-            // margin useful on translation to combine with insets
-            isAny(Translation) -> getMarginLayoutParamsOrStub()
-            else -> stubMarginLayoutParams
-        }
-        stockLeft = if (dstLeft == Padding) view.paddingLeft else params.leftMargin
-        stockTop = if (dstTop == Padding) view.paddingTop else params.topMargin
-        stockRight = if (dstRight == Padding) view.paddingRight else params.rightMargin
-        stockBottom = if (dstBottom == Padding) view.paddingBottom else params.bottomMargin
-    }
-
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
         val new = (combining?.combine(windowInsets) ?: windowInsets[types])
             .filterUseful()
             .consume(consuming, windowInsets)
         if (insets != new) {
+            val delta = Insets.subtract(new, insets)
             insets = new
-            applyInsets()
-            if (isAny(Margin) && !view.isShown) postRequestLayoutOnNextLayout = true
+            applyInsets(delta)
+            if (isAnyMargin() && !view.isShown) postRequestLayoutOnNextLayout = true
         }
     }
 
-    private fun applyInsets() {
+    private fun applyInsets(delta: Insets) {
         logInsets()
-        applyPadding(insets)
-        applyMargin(insets)
-        applyTranslation(insets)
+        applyPadding(delta)
+        applyMargin(delta)
+        applyTranslation(delta)
     }
 
-    private fun applyPadding(insets: Insets) {
-        if (!isAny(Padding)) return
+    private fun applyPadding(delta: Insets) {
+        if (delta.isEmpty(Padding)) return
         val scrollingPaddingTop = view.paddingTop.takeIf { scrollOnEdge }.takeIf {
             view is ScrollingView && (view as? ViewGroup)?.getChildAt(0)?.top == it
         }
@@ -213,10 +195,10 @@ internal class ViewInsetsDelegateImpl(
             Insets.of(paddingLeft, paddingTop, paddingRight, paddingBottom)
         }
         val changed = view.updatePaddingIfChanged(
-            left = if (dstLeft == Padding) stockLeft + insets.left else view.paddingLeft,
-            top = if (dstTop == Padding) stockTop + insets.top else view.paddingTop,
-            right = if (dstRight == Padding) stockRight + insets.right else view.paddingRight,
-            bottom = if (dstBottom == Padding) stockBottom + insets.bottom else view.paddingBottom,
+            left = view.paddingLeft + if (dstLeft == Padding) delta.left else 0,
+            top = view.paddingTop + if (dstTop == Padding) delta.top else 0,
+            right = view.paddingRight + if (dstRight == Padding) delta.right else 0,
+            bottom = view.paddingBottom + if (dstBottom == Padding) delta.bottom else 0,
         )
         if (!changed) {
             return
@@ -233,37 +215,47 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
-    private fun applyMargin(insets: Insets) {
-        if (!isAny(Margin)) return
+    private fun applyMargin(delta: Insets) {
+        if (delta.isEmpty(Margin)) return
         val params = getMarginLayoutParamsOrThrow()
         view.updateMarginIfChanged(
             params,
-            left = if (dstLeft == Margin) stockLeft + insets.left else params.leftMargin,
-            top = if (dstTop == Margin) stockTop + insets.top else params.topMargin,
-            right = if (dstRight == Margin) stockRight + insets.right else params.rightMargin,
-            bottom = if (dstBottom == Margin) stockBottom + insets.bottom else params.bottomMargin,
+            left = params.leftMargin + if (dstLeft == Margin) delta.left else 0,
+            top = params.topMargin + if (dstTop == Margin) delta.top else 0,
+            right = params.rightMargin + if (dstRight == Margin) delta.right else 0,
+            bottom = params.bottomMargin + if (dstBottom == Margin) delta.bottom else 0,
         )
     }
 
-    private fun applyTranslation(insets: Insets) {
-        if (!isAny(Translation)) return
+    private fun applyTranslation(delta: Insets) {
+        if (delta.isEmpty(Translation)) return
         var dx = 0f
         var dy = 0f
-        if (dstLeft == Translation) dx += insets.left
-        if (dstRight == Translation) dx -= insets.right
-        if (dstTop == Translation) dy += insets.top
-        if (dstBottom == Translation) dy -= insets.bottom
-        val request = dependency.horizontal && view.translationX != dx || dependency.vertical && view.translationY != dy
-        view.translationX = dx
-        view.translationY = dy
+        if (dstLeft == Translation) dx += delta.left
+        if (dstRight == Translation) dx -= delta.right
+        if (dstTop == Translation) dy += delta.top
+        if (dstBottom == Translation) dy -= delta.bottom
+        val request = dependency.horizontal && dx != 0f || dependency.vertical && dy != 0f
+        view.translationX += dx
+        view.translationY += dy
         if (request) {
             logd { "$nameWithId request insets? ${provider != null}" }
             provider?.requestInsets()
         }
     }
 
-    private fun isAny(dst: InsetsDestination): Boolean {
-        return when (dst) {
+    private fun Insets.isNotEmpty(dst: InsetsDestination) = !isEmpty(dst)
+
+    private fun Insets.isEmpty(dst: InsetsDestination): Boolean = when {
+        dst == dstLeft && left != 0 -> false
+        dst == dstTop && top != 0 -> false
+        dst == dstRight && right != 0 -> false
+        dst == dstBottom && bottom != 0 -> false
+        else -> true
+    }
+
+    private fun isAnyMargin(): Boolean {
+        return when (Margin) {
             dstLeft -> true
             dstTop -> true
             dstRight -> true
@@ -296,29 +288,6 @@ internal class ViewInsetsDelegateImpl(
         return consume(insets)
     }
 
-    private fun InsetsCombining.combine(windowInsets: ExtendedWindowInsets): Insets {
-        val stock = Insets.of(
-            max(stockLeft, if (isRtl) minEnd else minStart),
-            max(stockTop, minTop),
-            max(stockRight, if (isRtl) minStart else minEnd),
-            max(stockBottom, minBottom),
-        )
-        if (stock.isEmpty()) {
-            return windowInsets[types]
-        }
-        val intersection = combiningTypes * types
-        val other = windowInsets[types - intersection]
-        if (intersection.isEmpty()) {
-            return other
-        }
-        val space = windowInsets[intersection]
-        if (space.isEmpty()) {
-            return other
-        }
-        val subtracted = Insets.subtract(space, stock)
-        return Insets.max(other, subtracted)
-    }
-
     private fun View.updatePaddingIfChanged(left: Int, top: Int, right: Int, bottom: Int): Boolean {
         when {
             paddingLeft != left -> Unit
@@ -345,6 +314,54 @@ internal class ViewInsetsDelegateImpl(
             rightMargin = right
             bottomMargin = bottom
         }
+    }
+
+    private fun InsetsCombining.combine(windowInsets: ExtendedWindowInsets): Insets {
+        val params = getMarginLayoutParamsOrStub()
+        val stockLeft = when (dstLeft) {
+            Margin -> params.leftMargin - insets.left
+            Padding -> view.paddingLeft - insets.left
+            Translation -> params.leftMargin
+            else -> 0
+        }
+        val stockTop = when (dstTop) {
+            Margin -> params.topMargin - insets.top
+            Padding -> view.paddingTop - insets.top
+            Translation -> params.topMargin
+            else -> 0
+        }
+        val stockRight = when (dstRight) {
+            Margin -> params.rightMargin - insets.right
+            Padding -> view.paddingRight - insets.right
+            Translation -> params.rightMargin
+            else -> 0
+        }
+        val stockBottom = when (dstBottom) {
+            Margin -> params.bottomMargin - insets.bottom
+            Padding -> view.paddingBottom - insets.bottom
+            Translation -> params.bottomMargin
+            else -> 0
+        }
+        val stock = Insets.of(
+            max(stockLeft, if (isRtl) minEnd else minStart),
+            max(stockTop, minTop),
+            max(stockRight, if (isRtl) minStart else minEnd),
+            max(stockBottom, minBottom),
+        )
+        if (stock.isEmpty()) {
+            return windowInsets[types]
+        }
+        val intersection = combiningTypes * types
+        val other = windowInsets[types - intersection]
+        if (intersection.isEmpty()) {
+            return other
+        }
+        val space = windowInsets[intersection]
+        if (space.isEmpty()) {
+            return other
+        }
+        val subtracted = Insets.subtract(space, stock)
+        return Insets.max(other, subtracted)
     }
 
     private fun logDestination(action: String) {
