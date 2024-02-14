@@ -3,17 +3,17 @@ package lib.atomofiron.insets
 import androidx.core.graphics.Insets
 import java.util.Objects
 
-internal enum class DepAction {
+internal enum class ModifierAction {
     None, Set, Max, Add, Consume
 }
 
 open class InsetsModifier private constructor(
-    internal val action: DepAction,
+    internal val action: ModifierAction,
     internal val types: TypeSet,
     internal val insets: Insets,
     next: InsetsModifier?,
 ) : Set<InsetsModifier> {
-    companion object : InsetsModifier(DepAction.None, TypeSet.EMPTY, Insets.NONE, null) {
+    companion object : InsetsModifier(ModifierAction.None, TypeSet.EMPTY, Insets.NONE, null) {
         private val emptyIterator = object : Iterator<InsetsModifier> {
             override fun hasNext(): Boolean = false
             override fun next(): InsetsModifier = throw NoSuchElementException()
@@ -67,15 +67,19 @@ open class InsetsModifier private constructor(
 
     override fun hashCode(): Int = Objects.hash(action, types, insets, next)
 
-    fun set(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Set, types, insets, this)
+    override fun toString(): String = next?.let { ("${string()}, $it") } ?: string()
 
-    fun max(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Max, types, insets, this)
+    private fun string() = "[$types]${action.name.lowercase()}[${insets.ltrb()}]"
 
-    fun add(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Add, types, insets, this)
+    fun set(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Set, types, insets, this)
 
-    fun consume(types: TypeSet, insets: Insets) = InsetsModifier(DepAction.Consume, types, insets, this)
+    fun max(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Max, types, insets, this)
 
-    fun consume(types: TypeSet) = InsetsModifier(DepAction.Consume, types, MAX_INSETS, this)
+    fun add(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Add, types, insets, this)
 
-    fun consume(insets: Insets) = InsetsModifier(DepAction.Consume, TypeSet.ALL, insets, this)
+    fun consume(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Consume, types, insets, this)
+
+    fun consume(types: TypeSet) = InsetsModifier(ModifierAction.Consume, types, MAX_INSETS, this)
+
+    fun consume(insets: Insets) = InsetsModifier(ModifierAction.Consume, TypeSet.ALL, insets, this)
 }

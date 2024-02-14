@@ -176,7 +176,7 @@ class InsetsProviderImpl private constructor(
             callback.getModifier(windowInsets)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { modifier ->
-                    builder = (builder ?: Builder(windowInsets)).applyReversed(modifier)
+                    builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
                 }
         }
         return builder?.build() ?: windowInsets
@@ -185,7 +185,7 @@ class InsetsProviderImpl private constructor(
     private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
         isNotifying = true
         val listeners = listeners.values.toTypedArray()
-        val currentViewDelegateIndex = listeners.indexOfFirst { (it as? ViewInsetsDelegateImpl)?.view === thisView }
+        val currentViewDelegateIndex = listeners.indexOfFirst { it.view() === thisView }
         listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(source)
         listeners.forEachIndexed { index, it ->
             if (index != currentViewDelegateIndex) it.onApplyWindowInsets(windowInsets)
@@ -199,14 +199,17 @@ class InsetsProviderImpl private constructor(
     }
 }
 
-private fun ExtendedBuilder.applyReversed(modifier: InsetsModifier): ExtendedBuilder {
-    modifier.next?.let { applyReversed(it) }
+private fun Any?.view(): View? = (this as? ViewInsetsDelegateImpl)?.view
+
+private fun ExtendedBuilder.applyReversed(callback: InsetsDependencyCallback, modifier: InsetsModifier): ExtendedBuilder {
+    modifier.next?.let { applyReversed(callback, it) }
+    logd { "${callback.view()?.nameWithId() ?: callback.simpleName} modifications: $modifier" }
     when (modifier.action) {
-        DepAction.Max -> max(modifier.types, modifier.insets)
-        DepAction.Set -> set(modifier.types, modifier.insets)
-        DepAction.Add -> add(modifier.types, modifier.insets)
-        DepAction.Consume -> consume(modifier.types, modifier.insets)
-        DepAction.None -> Unit // unreachable
+        ModifierAction.Max -> max(modifier.types, modifier.insets)
+        ModifierAction.Set -> set(modifier.types, modifier.insets)
+        ModifierAction.Add -> add(modifier.types, modifier.insets)
+        ModifierAction.Consume -> consume(modifier.types, modifier.insets)
+        ModifierAction.None -> Unit // unreachable
     }
     return this
 }

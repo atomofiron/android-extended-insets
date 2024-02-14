@@ -92,13 +92,15 @@ data class TypeSet internal constructor(
     // this and other should not be empty
     private fun operation(other: TypeSet, contains: Boolean): TypeSet {
         var head: TypeSet? = null
-        forEach {
+        for (it in this) {
             if ((it in other) == contains) {
                 head = it.copy(next = head)
             }
         }
         return head ?: EMPTY
     }
+
+    override fun toString(): String = next?.let { ("$name,$it") } ?: name
 
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
@@ -108,10 +110,5 @@ data class TypeSet internal constructor(
         else -> true
     }
 
-    override fun hashCode(): Int {
-        return when (next) {
-            null -> Objects.hashCode(seed)
-            else -> Objects.hash(seed, next.hashCode())
-        }
-    }
+    override fun hashCode(): Int = Objects.hash(seed, next)
 }

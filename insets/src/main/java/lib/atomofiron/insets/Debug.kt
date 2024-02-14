@@ -91,7 +91,7 @@ internal fun ExtendedBuilder.logChanges(
     types: TypeSet?,
 ) {
     logd(ExtendedWindowInsets::class) {
-        val changes = from.mapNotNull { (seed, value) ->
+        val changesList = from.mapNotNull { (seed, value) ->
             (to[seed] ?: InsetsValue()).takeIf { it != value }?.let { new ->
                 val dl = (new.left - value.left).deltaOrEmpty()
                 val dt = (new.top - value.top).deltaOrEmpty()
@@ -106,9 +106,10 @@ internal fun ExtendedBuilder.logChanges(
             val bottom = value.bottom.deltaOrZero()
             "${seed.getTypeName()}[$left,$top,$right,$bottom]"
         }
+        val changes = changesList.joinToString(separator = " ").ifEmpty { "none" }
         val values = insets.run { "[${left.orMax()},${top.orMax()},${right.orMax()},${bottom.orMax()}]" }
         val typeNames = types?.joinToString(separator = ",") { it.name }?.let { " types: $it," } ?: ""
-        "$operation: $values,$typeNames changes: ${changes.joinToString(separator = " ")}"
+        "$operation: $values,$typeNames changes: $changes"
     }
 }
 
