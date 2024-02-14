@@ -82,6 +82,8 @@ enum class InsetsDestination(
     None("none", true), Padding("padding", false), Margin("margin", false), Translation("translation", false);
 
     internal val letter: Char = label.first()
+
+    override fun toString(): String = label
 }
 
 data class InsetsCombining(

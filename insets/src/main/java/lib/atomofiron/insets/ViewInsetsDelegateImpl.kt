@@ -42,7 +42,7 @@ data class Dependency(
 
 internal class ViewInsetsDelegateImpl(
     internal val view: View,
-    private val types: TypeSet = barsWithCutout,
+    internal val types: TypeSet = barsWithCutout,
     private var combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
@@ -73,6 +73,7 @@ internal class ViewInsetsDelegateImpl(
     private var dstRight = if (isRtl) dstStart else dstEnd
 
     init {
+        logDestination("init")
         saveStock()
         view.addOnAttachStateChangeListener(this)
         if (view.isAttachedToWindow) onViewAttachedToWindow(view)
@@ -114,6 +115,7 @@ internal class ViewInsetsDelegateImpl(
         dstTop = config.dstTop
         dstRight = if (isRtl) config.dstStart else config.dstEnd
         dstBottom = config.dstBottom
+        logDestination("reset")
         saveStock()
         consuming(consuming)
         updateInsets(windowInsets)
@@ -342,6 +344,18 @@ internal class ViewInsetsDelegateImpl(
             topMargin = top
             rightMargin = right
             bottomMargin = bottom
+        }
+    }
+
+    private fun logDestination(action: String) {
+        logd {
+            val list = listOfNotNull(
+                (if (isRtl) dstRight else dstLeft).takeIf { !it.isNone }?.let { "start=$it" },
+                dstTop.takeIf { !it.isNone }?.let { "top=$it" },
+                (if (isRtl) dstLeft else dstRight).takeIf { !it.isNone }?.let { "end=$it" },
+                dstBottom.takeIf { !it.isNone }?.let { "bottom=$it" },
+            ).joinToString(", ")
+            "$nameWithId $action insets $types, ${list.ifEmpty { None.toString() }}"
         }
     }
 
