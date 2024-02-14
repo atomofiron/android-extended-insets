@@ -20,11 +20,11 @@ import java.util.Objects
 import java.util.concurrent.atomic.AtomicInteger
 
 // WindowInsetsCompat.Type.SIZE = 9
-private var nextSeed = AtomicInteger(1000-7)
+private var nextSeed = 1000-7
 
 data class TypeSet internal constructor(
     internal val name: String,
-    internal val seed: Int = nextSeed.getAndAdd(1),
+    internal val seed: Int = nextSeed++,
     internal val next: TypeSet? = null,
 ) : Set<TypeSet> {
     companion object {

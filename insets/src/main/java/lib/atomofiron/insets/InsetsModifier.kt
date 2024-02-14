@@ -71,15 +71,27 @@ open class InsetsModifier private constructor(
 
     private fun string() = "[$types]${action.name.lowercase()}[${insets.ltrb()}]"
 
-    fun set(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Set, types, insets, this)
+    fun max(types: TypeSet, insets: Insets) = when {
+        insets.isEmpty() -> this
+        else -> InsetsModifier(ModifierAction.Max, types, insets, this)
+    }
 
-    fun max(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Max, types, insets, this)
+    fun add(types: TypeSet, insets: Insets) = when {
+        insets.isEmpty() -> this
+        else -> InsetsModifier(ModifierAction.Add, types, insets, this)
+    }
 
-    fun add(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Add, types, insets, this)
+    fun consume(types: TypeSet, insets: Insets) = when {
+        insets.isEmpty() -> this
+        else -> InsetsModifier(ModifierAction.Consume, types, insets, this)
+    }
 
-    fun consume(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Consume, types, insets, this)
+    fun consume(insets: Insets) = when {
+        insets.isEmpty() -> this
+        else -> InsetsModifier(ModifierAction.Consume, TypeSet.ALL, insets, this)
+    }
 
     fun consume(types: TypeSet) = InsetsModifier(ModifierAction.Consume, types, MAX_INSETS, this)
 
-    fun consume(insets: Insets) = InsetsModifier(ModifierAction.Consume, TypeSet.ALL, insets, this)
+    fun set(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Set, types, insets, this)
 }
