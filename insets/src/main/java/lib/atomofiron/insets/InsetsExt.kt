@@ -48,17 +48,6 @@ fun Insets.ltrb() = "$left,$top,$right,$bottom"
 
 val MAX_INSETS = Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET)
 
-fun Insets.consume(other: Insets): Insets = when {
-    isEmpty() -> this
-    other.isEmpty() -> this
-    else -> Insets.of(
-        (left - other.left).coerceAtLeast(0),
-        (top - other.top).coerceAtLeast(0),
-        (right - other.right).coerceAtLeast(0),
-        (bottom - other.bottom).coerceAtLeast(0),
-    )
-}
-
 fun ViewParent.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
 }
