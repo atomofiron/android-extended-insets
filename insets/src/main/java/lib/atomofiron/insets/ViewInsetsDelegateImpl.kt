@@ -51,8 +51,6 @@ internal class ViewInsetsDelegateImpl(
 ) : ViewInsetsDelegate, InsetsListener, InsetsDependencyCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private val nameWithId = view.nameWithId()
-    override var consuming: TypeSet = TypeSet.EMPTY
-        private set
 
     private var insets = Insets.NONE
     private var windowInsets = ExtendedWindowInsets.EMPTY
@@ -99,7 +97,7 @@ internal class ViewInsetsDelegateImpl(
         view.removeOnAttachStateChangeListener(this)
     }
 
-    override fun resetInsets(consuming: TypeSet, block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
+    override fun resetInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
         val config = ViewInsetsConfig().apply(block)
         config.logd { "$nameWithId with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
         val delta = insets.inv()
@@ -111,7 +109,6 @@ internal class ViewInsetsDelegateImpl(
         dstRight = if (isRtl) config.dstStart else config.dstEnd
         dstBottom = config.dstBottom
         logDestination("reset")
-        consuming(consuming)
         updateInsets(windowInsets)
         applyInsets(insets)
         return this
@@ -135,16 +132,11 @@ internal class ViewInsetsDelegateImpl(
         return this
     }
 
-    override fun consuming(types: TypeSet): ViewInsetsDelegate {
-        consuming = types
-        return this
-    }
-
     override fun combining(combining: InsetsCombining?) {
         this.combining = combining
     }
 
-    override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int, ) {
+    override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
         val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
         val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
         if (dependency.horizontal && horizontally || dependency.vertical && vertically) {
@@ -162,9 +154,10 @@ internal class ViewInsetsDelegateImpl(
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
-        val new = (combining?.combine(windowInsets) ?: windowInsets[types])
+        val new = combining
+            ?.combine(windowInsets)
+            .let { it ?: windowInsets[types] }
             .filterUseful()
-            .consume(consuming, windowInsets)
         if (insets != new) {
             val delta = Insets.subtract(new, insets)
             insets = new
@@ -279,13 +272,6 @@ internal class ViewInsetsDelegateImpl(
             if (dstRight.isNone) 0 else right,
             if (dstBottom.isNone) 0 else bottom,
         )
-    }
-
-    private fun Insets.consume(consuming: TypeSet, windowInsets: ExtendedWindowInsets): Insets {
-        if (consuming.isEmpty()) return this
-        val insets = windowInsets[consuming]
-        if (insets.isEmpty()) return this
-        return consume(insets)
     }
 
     private fun View.updatePaddingIfChanged(left: Int, top: Int, right: Int, bottom: Int): Boolean {

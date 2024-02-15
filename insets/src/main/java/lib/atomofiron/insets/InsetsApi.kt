@@ -40,15 +40,13 @@ interface InsetsProvider {
 }
 
 interface ViewInsetsDelegate : InsetsListener {
-    val consuming: TypeSet
-    fun resetInsets(consuming: TypeSet = this.consuming, block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
+    fun resetInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
     fun dependency(callback: InsetsCallback? = null): ViewInsetsDelegate
     fun dependency(
         horizontal: Boolean = false,
         vertical: Boolean = false,
         callback: InsetsCallback? = null,
     ): ViewInsetsDelegate
-    fun consuming(types: TypeSet = consuming): ViewInsetsDelegate
     fun combining(combining: InsetsCombining?)
     fun scrollOnEdge(): ViewInsetsDelegate
     fun detachFromProvider()
