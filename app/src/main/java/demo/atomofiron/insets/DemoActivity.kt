@@ -16,14 +16,11 @@ import com.google.android.material.snackbar.Snackbar
 import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
-import lib.atomofiron.insets.InsetsCombining
 import lib.atomofiron.insets.InsetsModifier
-import lib.atomofiron.insets.builder
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
-import lib.atomofiron.insets.requestInsetsOnLayoutChange
 import lib.atomofiron.insets.requestInsetsOnVisibilityChange
 
 class DemoActivity : AppCompatActivity() {
