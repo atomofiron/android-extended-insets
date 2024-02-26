@@ -100,7 +100,7 @@ data class TypeSet internal constructor(
         return head ?: EMPTY
     }
 
-    override fun toString(): String = next?.let { ("$name,$it") } ?: name
+    override fun toString(): String = next?.takeIf { it.isNotEmpty() }?.let { ("$it,$name") } ?: name
 
     override fun equals(other: Any?): Boolean = when {
         other === this -> true

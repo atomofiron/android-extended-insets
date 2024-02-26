@@ -44,7 +44,12 @@ fun Insets.isNotEmpty() = !isEmpty()
 
 fun Insets.inv() = Insets.of(-left, -top, -right, -bottom)
 
-fun Insets.ltrb() = "$left,$top,$right,$bottom"
+fun Insets.ltrb() = when (this) {
+    MAX_INSETS -> "full"
+    else -> "${left.orMax()},${top.orMax()},${right.orMax()},${bottom.orMax()}"
+}
+
+private fun Int.orMax(): String = if (this == MAX_INSET) "max" else toString()
 
 val MAX_INSETS = Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET)
 
@@ -268,7 +273,7 @@ internal fun WindowInsetsCompat?.getValues(): Map<Int, InsetsValue> {
             CompatType.ime() -> getInsets(typeMask)
             else -> getInsetsIgnoringVisibility(typeMask)
         }
-        if (next.isNotEmpty() || isVisible(typeMask))
+        if (next.isNotEmpty() || !isVisible(typeMask))
             values[seed] = next.toValues()
     }
     return values

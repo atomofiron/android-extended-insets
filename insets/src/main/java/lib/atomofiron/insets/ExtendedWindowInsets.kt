@@ -165,5 +165,17 @@ class ExtendedWindowInsets internal constructor(
         result = 31 * result + hidden.hashCode()
         return result
     }
+
+    override fun toString(): String {
+        val insets = "insets=" + insets
+            .map { (type, value) -> "${type.getTypeName()}$value" }
+            .joinToString(separator = ",")
+            .takeIf { it.isNotEmpty() }
+        val hidden = if (hidden.isEmpty()) null else "hidden=$hidden"
+        val list = listOfNotNull(insets, hidden).joinToString(separator = ", ")
+            .takeIf { it.isNotEmpty() }
+            ?: "empty"
+        return "$simpleName($list)"
+    }
 }
 

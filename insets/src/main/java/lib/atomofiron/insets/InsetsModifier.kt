@@ -11,9 +11,10 @@ open class InsetsModifier private constructor(
     internal val action: ModifierAction,
     internal val types: TypeSet,
     internal val insets: Insets,
+    internal val global: Boolean,
     next: InsetsModifier?,
 ) : Set<InsetsModifier> {
-    companion object : InsetsModifier(ModifierAction.None, TypeSet.EMPTY, Insets.NONE, null) {
+    companion object : InsetsModifier(ModifierAction.None, TypeSet.EMPTY, Insets.NONE, false, null) {
         private val emptyIterator = object : Iterator<InsetsModifier> {
             override fun hasNext(): Boolean = false
             override fun next(): InsetsModifier = throw NoSuchElementException()
@@ -24,7 +25,7 @@ open class InsetsModifier private constructor(
 
     internal val next: InsetsModifier? = next?.takeIf { it.isNotEmpty() }
 
-    override val size: Int = (next?.size ?: 0).inc()
+    override val size: Int = (this.next?.size ?: 0).inc()
 
     override fun isEmpty(): Boolean = size == 0
 
@@ -67,31 +68,45 @@ open class InsetsModifier private constructor(
 
     override fun hashCode(): Int = Objects.hash(action, types, insets, next)
 
-    override fun toString(): String = next?.let { ("${string()}, $it") } ?: string()
+    override fun toString(): String = next
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { if (isEmpty()) it.toString() else "$it,${string()}" }
+        ?: string()
 
     private fun string() = "[$types]${action.name.lowercase()}[${insets.ltrb()}]"
 
-    fun max(types: TypeSet, insets: Insets) = when {
-        insets.isEmpty() -> this
-        else -> InsetsModifier(ModifierAction.Max, types, insets, this)
+    operator fun plus(other: InsetsModifier): InsetsModifier {
+        var head = takeIf { isNotEmpty() }
+        var next: InsetsModifier? = other
+        while (next != null) {
+            if (next.isNotEmpty())
+                head = InsetsModifier(next.action, next.types, next.insets, next.global, head)
+            next = next.next
+        }
+        return head ?: InsetsModifier
     }
 
-    fun add(types: TypeSet, insets: Insets) = when {
+    fun max(types: TypeSet, insets: Insets, global: Boolean = false) = when {
         insets.isEmpty() -> this
-        else -> InsetsModifier(ModifierAction.Add, types, insets, this)
+        else -> InsetsModifier(ModifierAction.Max, types, insets, global, this)
     }
 
-    fun consume(types: TypeSet, insets: Insets) = when {
+    fun add(types: TypeSet, insets: Insets, global: Boolean = false) = when {
         insets.isEmpty() -> this
-        else -> InsetsModifier(ModifierAction.Consume, types, insets, this)
+        else -> InsetsModifier(ModifierAction.Add, types, insets, global, this)
     }
 
-    fun consume(insets: Insets) = when {
+    fun consume(types: TypeSet, insets: Insets, global: Boolean = false) = when {
         insets.isEmpty() -> this
-        else -> InsetsModifier(ModifierAction.Consume, TypeSet.ALL, insets, this)
+        else -> InsetsModifier(ModifierAction.Consume, types, insets, global, this)
     }
 
-    fun consume(types: TypeSet) = InsetsModifier(ModifierAction.Consume, types, MAX_INSETS, this)
+    fun consume(insets: Insets, global: Boolean = false) = when {
+        insets.isEmpty() -> this
+        else -> InsetsModifier(ModifierAction.Consume, TypeSet.ALL, insets, global, this)
+    }
 
-    fun set(types: TypeSet, insets: Insets) = InsetsModifier(ModifierAction.Set, types, insets, this)
+    fun consume(types: TypeSet, global: Boolean = false) = InsetsModifier(ModifierAction.Consume, types, MAX_INSETS, global, this)
+
+    fun set(types: TypeSet, insets: Insets, global: Boolean = false) = InsetsModifier(ModifierAction.Set, types, insets, global, this)
 }
