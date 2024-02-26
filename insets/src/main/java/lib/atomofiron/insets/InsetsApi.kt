@@ -62,7 +62,7 @@ fun interface InsetsDependencyCallback {
 }
 
 fun interface InsetsCallback {
-    operator fun invoke(arg: InsetsCallbackArg): InsetsModifier?
+    fun getModifier(arg: InsetsCallbackArg): InsetsModifier?
 }
 
 class InsetsCallbackArg(

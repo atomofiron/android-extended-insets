@@ -32,7 +32,7 @@ const val INVALID_INSETS_LISTENER_KEY = 0
 
 class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
-) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+) : InsetsProvider, InsetsListener, InsetsDependencyCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private var transformed = ExtendedWindowInsets.EMPTY
     private var source = ExtendedWindowInsets.EMPTY
@@ -53,7 +53,7 @@ class InsetsProviderImpl private constructor(
         }
     private val listeners = hashMapOf<Int, InsetsListener>()
     private var insetsModifier: InsetsModifierCallback? = null
-    private var provider: InsetsProvider? = null
+    private var parentProvider: InsetsProvider? = null
     private var thisView: View? = null
     private var nameWithId: String? = null
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
@@ -75,15 +75,15 @@ class InsetsProviderImpl private constructor(
     }
 
     override fun onViewAttachedToWindow(view: View) {
-        provider = view.parent.findInsetsProvider()
-        this.logd { "$nameWithId onAttach parent provider? ${provider != null}" }
-        provider?.addInsetsListener(this)
+        parentProvider = view.parent.findInsetsProvider()
+        this.logd { "$nameWithId onAttach parent provider? ${parentProvider != null}" }
+        parentProvider?.addInsetsListener(this)
     }
 
     override fun onViewDetachedFromWindow(view: View) {
-        logd { "$nameWithId onDetach parent provider? ${provider != null}" }
-        provider?.removeInsetsListener(this)
-        provider = null
+        logd { "$nameWithId onDetach parent provider? ${parentProvider != null}" }
+        parentProvider?.removeInsetsListener(this)
+        parentProvider = null
     }
 
     override fun onLayoutChange(view: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
@@ -99,6 +99,8 @@ class InsetsProviderImpl private constructor(
         insetsModifier = modifier
         updateCurrent(source)
     }
+
+    override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? = globalModifiers.takeIf { !it.isEmpty() }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
         if (listener === thisView || listener === this) {
@@ -133,7 +135,7 @@ class InsetsProviderImpl private constructor(
     // the one of the two entry points for window insets
     @RequiresApi(Build.VERSION_CODES.R)
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
-        if (provider == null) {
+        if (parentProvider == null) {
             logd { "$nameWithId native insets were accepted" }
             val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
             val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
@@ -172,14 +174,20 @@ class InsetsProviderImpl private constructor(
         isNotifying = false
     }
 
+    private var globalModifiers: InsetsModifier = InsetsModifier
+
     private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
         val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
         var builder: ExtendedBuilder? = null
+        globalModifiers = InsetsModifier
         for (callback in callbacks) {
             callback.getModifier(windowInsets)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { modifier ->
                     builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
+                    if (parentProvider != null && modifier.global) {
+                        globalModifiers += modifier
+                    }
                 }
         }
         return builder?.build() ?: windowInsets

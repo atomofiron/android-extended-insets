@@ -150,7 +150,7 @@ internal class ViewInsetsDelegateImpl(
     }
 
     override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? {
-        return dependencyCallBack?.invoke(InsetsCallbackArg(view, windowInsets))
+        return dependencyCallBack?.getModifier(InsetsCallbackArg(view, windowInsets))
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
