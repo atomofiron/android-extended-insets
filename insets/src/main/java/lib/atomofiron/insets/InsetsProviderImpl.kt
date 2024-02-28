@@ -32,7 +32,7 @@ const val INVALID_INSETS_LISTENER_KEY = 0
 
 class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
-) : InsetsProvider, InsetsListener, InsetsDependencyCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private var transformed = ExtendedWindowInsets.EMPTY
     private var source = ExtendedWindowInsets.EMPTY
@@ -51,7 +51,6 @@ class InsetsProviderImpl private constructor(
                 notifyListeners(value)
             }
         }
-    private var globalModifiers: InsetsModifier = InsetsModifier
 
     private val listeners = hashMapOf<Int, InsetsListener>()
     private var insetsModifier: InsetsModifierCallback? = null
@@ -100,16 +99,6 @@ class InsetsProviderImpl private constructor(
         logd { "$nameWithId set modifier" }
         insetsModifier = modifier
         updateCurrent(source)
-    }
-
-    override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? {
-        var modifiers = globalModifiers
-        for (listener in listeners.values) {
-            if (listener is InsetsProviderImpl) {
-                modifiers += listener.getModifier(windowInsets)
-            }
-        }
-        return modifiers.takeIf { !it.isEmpty() }
     }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
@@ -187,18 +176,11 @@ class InsetsProviderImpl private constructor(
     private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
         val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
         var builder: ExtendedBuilder? = null
-        globalModifiers = InsetsModifier
         for (callback in callbacks) {
             callback.getModifier(windowInsets)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { modifier ->
                     builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
-                    when {
-                        parentProvider == null -> Unit
-                        !modifier.global -> Unit
-                        callback is InsetsProviderImpl -> Unit
-                        else -> globalModifiers += modifier
-                    }
                 }
         }
         return builder?.build() ?: windowInsets
