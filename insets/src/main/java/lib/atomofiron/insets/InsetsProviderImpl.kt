@@ -51,6 +51,8 @@ class InsetsProviderImpl private constructor(
                 notifyListeners(value)
             }
         }
+    private var globalModifiers: InsetsModifier = InsetsModifier
+
     private val listeners = hashMapOf<Int, InsetsListener>()
     private var insetsModifier: InsetsModifierCallback? = null
     private var parentProvider: InsetsProvider? = null
@@ -100,7 +102,15 @@ class InsetsProviderImpl private constructor(
         updateCurrent(source)
     }
 
-    override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? = globalModifiers.takeIf { !it.isEmpty() }
+    override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? {
+        var modifiers = globalModifiers
+        for (listener in listeners.values) {
+            if (listener is InsetsProviderImpl) {
+                modifiers += listener.getModifier(windowInsets)
+            }
+        }
+        return modifiers.takeIf { !it.isEmpty() }
+    }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
         if (listener === thisView || listener === this) {
@@ -174,8 +184,6 @@ class InsetsProviderImpl private constructor(
         isNotifying = false
     }
 
-    private var globalModifiers: InsetsModifier = InsetsModifier
-
     private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
         val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
         var builder: ExtendedBuilder? = null
@@ -185,8 +193,11 @@ class InsetsProviderImpl private constructor(
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { modifier ->
                     builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
-                    if (parentProvider != null && modifier.global) {
-                        globalModifiers += modifier
+                    when {
+                        parentProvider == null -> Unit
+                        !modifier.global -> Unit
+                        callback is InsetsProviderImpl -> Unit
+                        else -> globalModifiers += modifier
                     }
                 }
         }

@@ -75,7 +75,8 @@ open class InsetsModifier private constructor(
 
     private fun string() = "[$types]${action.name.lowercase()}[${insets.ltrb()}]"
 
-    operator fun plus(other: InsetsModifier): InsetsModifier {
+    operator fun plus(other: InsetsModifier?): InsetsModifier {
+        other ?: return this
         var head = takeIf { isNotEmpty() }
         var next: InsetsModifier? = other
         while (next != null) {
