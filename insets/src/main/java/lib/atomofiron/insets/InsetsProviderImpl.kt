@@ -32,7 +32,7 @@ const val INVALID_INSETS_LISTENER_KEY = 0
 
 class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
-) : InsetsProvider, InsetsListener, InsetsDependencyCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private var transformed = ExtendedWindowInsets.EMPTY
     private var source = ExtendedWindowInsets.EMPTY
@@ -51,6 +51,7 @@ class InsetsProviderImpl private constructor(
                 notifyListeners(value)
             }
         }
+
     private val listeners = hashMapOf<Int, InsetsListener>()
     private var insetsModifier: InsetsModifierCallback? = null
     private var parentProvider: InsetsProvider? = null
@@ -99,8 +100,6 @@ class InsetsProviderImpl private constructor(
         insetsModifier = modifier
         updateCurrent(source)
     }
-
-    override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? = globalModifiers.takeIf { !it.isEmpty() }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
         if (listener === thisView || listener === this) {
@@ -174,20 +173,14 @@ class InsetsProviderImpl private constructor(
         isNotifying = false
     }
 
-    private var globalModifiers: InsetsModifier = InsetsModifier
-
     private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
         val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
         var builder: ExtendedBuilder? = null
-        globalModifiers = InsetsModifier
         for (callback in callbacks) {
             callback.getModifier(windowInsets)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { modifier ->
                     builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
-                    if (parentProvider != null && modifier.global) {
-                        globalModifiers += modifier
-                    }
                 }
         }
         return builder?.build() ?: windowInsets
