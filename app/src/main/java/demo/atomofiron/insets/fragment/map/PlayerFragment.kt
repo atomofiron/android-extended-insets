@@ -17,7 +17,10 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         super.onViewCreated(view, savedInstanceState)
 
         FragmentPlayerBinding.bind(view).apply {
-            searchBar.insetsMix(ExtType.general, insetsCombining) {
+            searchBar.insetsMix(
+                ExtType { barsWithCutout + verticalPanels },
+                insetsCombining.copy(combiningTypes = ExtType.barsWithCutout),
+            ) {
                 top(translation).horizontal(margin)
             }
             val combining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
