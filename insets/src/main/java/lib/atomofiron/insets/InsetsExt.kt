@@ -16,8 +16,11 @@
 
 package lib.atomofiron.insets
 
+import android.app.Activity
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewParent
+import androidx.annotation.LayoutRes
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -52,6 +55,20 @@ fun Insets.ltrb() = when (this) {
 private fun Int.orMax(): String = if (this == MAX_INSET) "max" else toString()
 
 val MAX_INSETS = Insets.of(MAX_INSET, MAX_INSET, MAX_INSET, MAX_INSET)
+
+fun Activity.setContentView(@LayoutRes layoutId: Int, insetsProvider: InsetsProvider): InsetsProviderFrameLayout {
+    val layout = InsetsProviderFrameLayout(this, insetsProvider)
+    setContentView(layout)
+    LayoutInflater.from(this).inflate(layoutId, layout)
+    return layout
+}
+
+fun Activity.setContentView(view: View, insetsProvider: InsetsProvider): InsetsProviderFrameLayout {
+    val layout = InsetsProviderFrameLayout(this, insetsProvider)
+    setContentView(layout)
+    layout.addView(view)
+    return layout
+}
 
 fun ViewParent.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
