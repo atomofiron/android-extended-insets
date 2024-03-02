@@ -17,13 +17,17 @@ import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 import lib.atomofiron.insets.InsetsModifier
+import lib.atomofiron.insets.InsetsProvider
+import lib.atomofiron.insets.InsetsProviderImpl
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
 import lib.atomofiron.insets.requestInsetsOnVisibilityChange
+import lib.atomofiron.insets.setContentView
+import lib.atomofiron.insets.setInsetsDebug
 
-class DemoActivity : AppCompatActivity() {
+class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl() {
 
     private val cutoutDrawable = CutoutDrawable()
     private var snackbar: Snackbar? = null
@@ -32,16 +36,17 @@ class DemoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        lib.atomofiron.insets.setInsetsDebug(false)
+        setInsetsDebug(false)
 
-        ActivityDemoBinding.inflate(layoutInflater).apply {
-            setContentView(root)
+        val root = setContentView(R.layout.activity_demo, insetsProvider = this@DemoActivity)
+        val binding = ActivityDemoBinding.bind(root)
+        binding.run {
             //root.foreground = cutoutDrawable
 
             configureInsets()
 
-            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top, root::requestInsets)
-            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom, root::requestInsets)
+            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top, ::requestInsets)
+            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom, ::requestInsets)
             switchConnection.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) topCtrl.show() else topCtrl.hide()
             }
@@ -71,8 +76,7 @@ class DemoActivity : AppCompatActivity() {
                 true
             }
             fab.setOnClickListener {
-                supportFragmentManager.run {
-                    if (fragments.isNotEmpty()) return@run
+                supportFragmentManager.takeIf { it.fragments.isEmpty() }?.run {
                     beginTransaction()
                         .addToBackStack(null)
                         .setCustomAnimations(
@@ -101,7 +105,7 @@ class DemoActivity : AppCompatActivity() {
     }
 
     private fun ActivityDemoBinding.configureInsets() {
-        root.setInsetsModifier { _, windowInsets ->
+        setInsetsModifier { _, windowInsets ->
             syncCutout(windowInsets)
             switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
             windowInsets

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<lib.atomofiron.insets.InsetsProviderFrameLayout
+<merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_root"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    tools:parentTag="lib.atomofiron.insets.InsetsProviderFrameLayout"
     >
     <FrameLayout
         android:id="@+id/toggles_container"
@@ -176,4 +178,4 @@
                 />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </FrameLayout>
-</lib.atomofiron.insets.InsetsProviderFrameLayout>
+</merge>
