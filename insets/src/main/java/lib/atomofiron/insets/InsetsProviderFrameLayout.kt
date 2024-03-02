@@ -21,12 +21,37 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 
 @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
-class InsetsProviderFrameLayout @JvmOverloads constructor(
+class InsetsProviderFrameLayout private constructor(
     context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0,
-    defStyleRes: Int = 0,
-) : FrameLayout(context, attrs, defStyleAttr, defStyleRes), InsetsProvider by InsetsProviderImpl(context, attrs) {
+    attrs: AttributeSet?,
+    defStyleAttr: Int,
+    defStyleRes: Int,
+    insetsProvider: InsetsProvider,
+) : FrameLayout(context, attrs, defStyleAttr, defStyleRes), InsetsProvider by insetsProvider {
+
+    constructor(
+        context: Context,
+        insetsProvider: InsetsProvider,
+    ) : this(context, null, 0, 0, insetsProvider)
+
+    constructor(
+        context: Context,
+        attrs: AttributeSet,
+    ) : this(context, attrs, 0)
+
+    constructor(
+        context: Context,
+        attrs: AttributeSet,
+        defStyleAttr: Int,
+    ) : this(context, attrs, defStyleAttr, 0)
+
+    constructor(
+        context: Context,
+        attrs: AttributeSet,
+        defStyleAttr: Int,
+        defStyleRes: Int,
+    ) : this(context, attrs, defStyleAttr, defStyleRes, InsetsProviderImpl(context, attrs))
+
     init {
         onInit()
     }
