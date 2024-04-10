@@ -251,7 +251,7 @@ internal fun TypeSet.toLegacyType(): Int = seed.toTypeMask()
 
 internal fun Int.toTypeSet(name: String? = null): TypeSet {
     if (this == 0) {
-        return TypeSet.EMPTY
+        return TypeSet.Empty
     }
     var cursor = 1
     var seed = TypeSet.FIRST_SEED
@@ -285,7 +285,7 @@ internal fun WindowInsetsCompat?.getValues(): Map<Int, InsetsValue> {
 }
 
 internal fun WindowInsetsCompat?.getHidden(): TypeSet {
-    var hidden = TypeSet.EMPTY
+    var hidden = TypeSet.Empty
     this ?: return hidden
     for (seed in LEGACY_RANGE) {
         val typeMask = seed.toTypeMask()

@@ -38,10 +38,12 @@ internal class ViewInsetsDelegateImpl(
     private var dstBottom: InsetsDestination = None,
 ) : ViewInsetsDelegate, InsetsListener, InsetsDependencyCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
-    private val nameWithId = view.nameWithId()
+    override val triggers: TypeSet = types
+
+    private val nameWithId: String = view.nameWithId()
 
     private var insets = Insets.NONE
-    private var windowInsets = ExtendedWindowInsets.EMPTY
+    private var windowInsets = ExtendedWindowInsets.Empty
     private var provider: InsetsProvider? = null
     private var listener: InsetsListener? = this
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL

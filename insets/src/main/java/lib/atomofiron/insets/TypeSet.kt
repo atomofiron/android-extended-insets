@@ -5,22 +5,22 @@
 package lib.atomofiron.insets
 
 import java.util.Objects
-import java.util.concurrent.atomic.AtomicInteger
 
 // WindowInsetsCompat.Type.SIZE = 9
-private var nextSeed = 1000-7
+private var nextSeed = 1000 - 7
 
 data class TypeSet internal constructor(
-    internal val name: String,
+    val name: String,
     internal val seed: Int = nextSeed++,
     internal val next: TypeSet? = null,
+    val animated: Boolean = next?.animated ?: false,
 ) : Set<TypeSet> {
     companion object {
         private const val ZERO_SEED = 0
         private const val EXTRA_SEED = -1
         internal const val FIRST_SEED = ZERO_SEED + 1
         internal val ALL = TypeSet("all", EXTRA_SEED)
-        val EMPTY = TypeSet("empty", ZERO_SEED)
+        val Empty = TypeSet("empty", ZERO_SEED)
     }
 
     override val size: Int = (if (seed == ZERO_SEED) 0 else 1) + (next?.size ?: 0)
@@ -62,7 +62,7 @@ data class TypeSet internal constructor(
             }
             next = next.next
         }
-        return head ?: EMPTY
+        return head ?: Empty
     }
 
     operator fun minus(other: TypeSet): TypeSet = when {
@@ -85,7 +85,7 @@ data class TypeSet internal constructor(
                 head = it.copy(next = head)
             }
         }
-        return head ?: EMPTY
+        return head ?: Empty
     }
 
     override fun toString(): String = next?.takeIf { it.isNotEmpty() }?.let { ("$it,$name") } ?: name

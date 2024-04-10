@@ -20,12 +20,13 @@ internal val LEGACY_RANGE = 1..LEGACY_LIMIT
 
 class ExtendedWindowInsets internal constructor(
     insets: Map<Int, InsetsValue>,
-    private val hidden: TypeSet = TypeSet.EMPTY,
+    private val hidden: TypeSet = TypeSet.Empty,
     val displayCutout: DisplayCutoutCompat?,
 ) {
     @Suppress("FunctionName")
     companion object {
-        val EMPTY = ExtendedWindowInsets()
+
+        val Empty = ExtendedWindowInsets()
 
         fun Builder() = ExtendedBuilder()
 
@@ -52,7 +53,7 @@ class ExtendedWindowInsets internal constructor(
             val ime: TypeSet = WindowInsetsCompat.Type.ime().toTypeSet("ime")
             val general: TypeSet = TypeSet("general")
 
-            internal val types = linkedSetOf(TypeSet.EMPTY, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime, general)
+            internal val types = linkedSetOf(TypeSet.Empty, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime, general)
 
             inline operator fun invoke(block: Companion.() -> TypeSet): TypeSet = this.block()
 
@@ -71,7 +72,7 @@ class ExtendedWindowInsets internal constructor(
         val ime = Companion.ime
         val general = Companion.general
 
-        fun next(name: String) = TypeSet(name).also { types.add(it) }
+        fun define(name: String, animated: Boolean = false) = TypeSet(name, animated = animated).also { types.add(it) }
     }
 
     internal val insets: Map<Int, InsetsValue> = insets.toMap()
@@ -96,7 +97,7 @@ class ExtendedWindowInsets internal constructor(
 
     @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("getIgnoringVisibility(type)"))
     fun getInsetsIgnoringVisibility(type: Int): Insets {
-        val values = intArrayOf(0, 0, 0, 0)
+        val values = fourZeros()
         var cursor = 1
         var seed = TypeSet.FIRST_SEED
         while (cursor in 1..type) {
@@ -113,7 +114,7 @@ class ExtendedWindowInsets internal constructor(
         if (types.isEmpty()) {
             return Insets.NONE
         }
-        val values = intArrayOf(0, 0, 0, 0)
+        val values = fourZeros()
         var next: TypeSet? = types
         while (next != null) {
             values.max(next.seed)
@@ -167,3 +168,8 @@ class ExtendedWindowInsets internal constructor(
     }
 }
 
+private val array = IntArray(4)
+
+private fun fourZeros() = array.apply {
+    for (i in 0..3) set(i, 0)
+}

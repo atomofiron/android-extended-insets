@@ -8,6 +8,8 @@ import android.view.View
 import android.view.WindowInsets
 
 fun interface InsetsListener {
+    // provide the new insets only if at least one change's type matches with triggers (empty = any)
+    val triggers: TypeSet get() = TypeSet.Empty
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
