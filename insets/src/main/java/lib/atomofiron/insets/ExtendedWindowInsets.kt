@@ -20,12 +20,13 @@ internal val LEGACY_RANGE = 1..LEGACY_LIMIT
 
 class ExtendedWindowInsets internal constructor(
     insets: Map<Int, InsetsValue>,
-    private val hidden: TypeSet = TypeSet.EMPTY,
+    private val hidden: TypeSet = TypeSet.Empty,
     val displayCutout: DisplayCutoutCompat?,
 ) {
     @Suppress("FunctionName")
     companion object {
-        val EMPTY = ExtendedWindowInsets()
+
+        val Empty = ExtendedWindowInsets()
 
         fun Builder() = ExtendedBuilder()
 
@@ -52,7 +53,7 @@ class ExtendedWindowInsets internal constructor(
             val ime: TypeSet = WindowInsetsCompat.Type.ime().toTypeSet("ime")
             val general: TypeSet = TypeSet("general")
 
-            internal val types = linkedSetOf(TypeSet.EMPTY, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime, general)
+            internal val types = linkedSetOf(TypeSet.Empty, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime, general)
 
             inline operator fun invoke(block: Companion.() -> TypeSet): TypeSet = this.block()
 

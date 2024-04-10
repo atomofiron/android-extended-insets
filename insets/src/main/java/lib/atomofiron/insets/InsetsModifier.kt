@@ -17,7 +17,7 @@ open class InsetsModifier private constructor(
     internal val insets: Insets,
     next: InsetsModifier?,
 ) : Set<InsetsModifier> {
-    companion object : InsetsModifier(ModifierAction.None, TypeSet.EMPTY, Insets.NONE, null) {
+    companion object : InsetsModifier(ModifierAction.None, TypeSet.Empty, Insets.NONE, null) {
         private val emptyIterator = object : Iterator<InsetsModifier> {
             override fun hasNext(): Boolean = false
             override fun next(): InsetsModifier = throw NoSuchElementException()

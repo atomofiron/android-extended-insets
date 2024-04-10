@@ -9,7 +9,7 @@ import androidx.core.view.DisplayCutoutCompat
 
 class ExtendedBuilder internal constructor(
     values: Map<Int, InsetsValue>? = null,
-    private var hidden: TypeSet = TypeSet.EMPTY,
+    private var hidden: TypeSet = TypeSet.Empty,
     private val displayCutout: DisplayCutoutCompat? = null,
 ) {
     private val values: MutableMap<Int, InsetsValue> = values?.toMutableMap() ?: mutableMapOf()

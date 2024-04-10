@@ -22,8 +22,8 @@ class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
 ) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
-    private var transformed = ExtendedWindowInsets.EMPTY
-    private var source = ExtendedWindowInsets.EMPTY
+    private var transformed = ExtendedWindowInsets.Empty
+    private var source = ExtendedWindowInsets.Empty
         set(value) {
             logd { "$nameWithId new received? ${field != value}" }
             if (field != value) {
@@ -31,7 +31,7 @@ class InsetsProviderImpl private constructor(
                 updateCurrent(value)
             }
         }
-    override var current = ExtendedWindowInsets.EMPTY
+    override var current = ExtendedWindowInsets.Empty
         private set(value) {
             logd { "$nameWithId new current? ${field != value}" }
             if (field != value) {

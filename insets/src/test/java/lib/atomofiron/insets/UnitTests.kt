@@ -54,10 +54,10 @@ class UnitTests {
         val three = CustomType { testType1 + testType2 + testType3 }
         assertEquals(three - one, CustomType { testType1 + testType3 })
         assertEquals(three - two, CustomType { testType2 })
-        assertEquals(three - three, TypeSet.EMPTY)
+        assertEquals(three - three, TypeSet.Empty)
         assertEquals(one + two, three)
         assertEquals(three + three, three)
-        assertEquals(one * two, TypeSet.EMPTY)
+        assertEquals(one * two, TypeSet.Empty)
         assertEquals(one * three, one)
     }
 
