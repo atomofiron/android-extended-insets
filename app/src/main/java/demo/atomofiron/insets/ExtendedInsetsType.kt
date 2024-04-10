@@ -5,10 +5,10 @@ import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.TypeSet
 
 object ExtType : ExtendedWindowInsets.Type() {
-    val togglePanel = next("togglePanel")
-    val verticalPanels = next("verticalPanels")
-    val fabTop = next("fabTop")
-    val fabHorizontal = next("fabHorizontal")
+    val togglePanel = define("togglePanel")
+    val verticalPanels = define("verticalPanels")
+    val fabTop = define("fabTop")
+    val fabHorizontal = define("fabHorizontal")
 }
 
 // associate your custom type with ExtendedWindowInsets
