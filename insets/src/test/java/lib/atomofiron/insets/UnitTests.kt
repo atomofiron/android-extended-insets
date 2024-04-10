@@ -9,9 +9,11 @@ import org.junit.Test
 class UnitTests {
 
     object CustomType : Type() {
-        val testType1 = next("testType1")
-        val testType2 = next("testType2")
-        val testType3 = next("testType3")
+        val testType1 = define("testType1")
+        val testType2 = define("testType2")
+        val testType3 = define("testType3")
+        val negative = TypeSet("negative", seed = -1)
+        val positive = TypeSet("positive", seed = 1)
     }
 
     // associate your custom type with ExtendedWindowInsets
@@ -61,19 +63,17 @@ class UnitTests {
 
     @Test
     fun negative() {
-        val negative = TypeSet("negative", seed = -1)
-        val positive = TypeSet("positive", seed = 1)
         val first = Insets.of(100, 0, 100, 0)
         val second = Insets.of(0, 100, 0, 100)
         val both = Insets.max(first, second)
         val windowInsets = ExtendedWindowInsets.Builder()
-            .set(negative, first)
-            .set(positive, second)
+            .set(CustomType.negative, first)
+            .set(CustomType.positive, second)
             .build()
-        assertEquals(first, windowInsets[negative])
-        assertEquals(second, windowInsets[positive])
-        assertEquals(both, windowInsets[negative + positive])
-        assertEquals(Insets.NONE, windowInsets[negative * positive])
+        assertEquals(first, windowInsets[CustomType.negative])
+        assertEquals(second, windowInsets[CustomType.positive])
+        assertEquals(both, windowInsets[CustomType { negative + positive }])
+        assertEquals(Insets.NONE, windowInsets[CustomType { negative * positive }])
     }
 }
 

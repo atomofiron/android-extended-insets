@@ -71,7 +71,7 @@ class ExtendedWindowInsets internal constructor(
         val ime = Companion.ime
         val general = Companion.general
 
-        fun next(name: String) = TypeSet(name).also { types.add(it) }
+        fun define(name: String, animated: Boolean = false) = TypeSet(name, animated = animated).also { types.add(it) }
     }
 
     internal val insets: Map<Int, InsetsValue> = insets.toMap()
