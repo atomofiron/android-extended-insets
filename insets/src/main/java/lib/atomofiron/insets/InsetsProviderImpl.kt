@@ -35,8 +35,9 @@ class InsetsProviderImpl private constructor(
         private set(value) {
             logd { "$nameWithId new current? ${field != value}" }
             if (field != value) {
+                val prev = field
                 field = value
-                notifyListeners(value)
+                notifyListeners(prev, value)
             }
         }
 
@@ -174,13 +175,17 @@ class InsetsProviderImpl private constructor(
         return builder?.build() ?: windowInsets
     }
 
-    private fun notifyListeners(windowInsets: ExtendedWindowInsets) {
+    private fun notifyListeners(prev: ExtendedWindowInsets, new: ExtendedWindowInsets) {
         isNotifying = true
         val listeners = listeners.values.toTypedArray()
         val currentViewDelegateIndex = listeners.indexOfFirst { it.view() === thisView }
         listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(transformed)
         listeners.forEachIndexed { index, it ->
-            if (index != currentViewDelegateIndex) it.onApplyWindowInsets(windowInsets)
+            when {
+                index == currentViewDelegateIndex -> Unit
+                it.triggers.isEmpty() -> it.onApplyWindowInsets(new)
+                it.triggers.find { prev[it] != new[it] } != null -> it.onApplyWindowInsets(new)
+            }
         }
         if (isRequested) {
             logd { "$nameWithId notify listeners after the notification of listeners" }
