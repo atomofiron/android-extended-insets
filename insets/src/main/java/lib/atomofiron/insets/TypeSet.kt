@@ -13,6 +13,7 @@ data class TypeSet internal constructor(
     val name: String,
     internal val seed: Int = nextSeed++,
     internal val next: TypeSet? = null,
+    val animated: Boolean = next?.animated ?: false,
 ) : Set<TypeSet> {
     companion object {
         private const val ZERO_SEED = 0
