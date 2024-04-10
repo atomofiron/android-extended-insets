@@ -97,7 +97,7 @@ class ExtendedWindowInsets internal constructor(
 
     @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("getIgnoringVisibility(type)"))
     fun getInsetsIgnoringVisibility(type: Int): Insets {
-        val values = intArrayOf(0, 0, 0, 0)
+        val values = fourZeros()
         var cursor = 1
         var seed = TypeSet.FIRST_SEED
         while (cursor in 1..type) {
@@ -114,7 +114,7 @@ class ExtendedWindowInsets internal constructor(
         if (types.isEmpty()) {
             return Insets.NONE
         }
-        val values = intArrayOf(0, 0, 0, 0)
+        val values = fourZeros()
         var next: TypeSet? = types
         while (next != null) {
             values.max(next.seed)
@@ -168,3 +168,8 @@ class ExtendedWindowInsets internal constructor(
     }
 }
 
+private val array = IntArray(4)
+
+private fun fourZeros() = array.apply {
+    for (i in 0..3) set(i, 0)
+}
