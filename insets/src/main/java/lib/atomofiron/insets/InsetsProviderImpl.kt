@@ -51,6 +51,8 @@ class InsetsProviderImpl private constructor(
     private val isInLayout get() = thisView?.isInLayout ?: false
     private var isNotifying = false
     private var isRequested = false
+    // some cached modifiers were changed, insets rebuilding required
+    private var isModified = false
 
     constructor() : this(dropNative = false)
 
@@ -79,7 +81,6 @@ class InsetsProviderImpl private constructor(
     override fun onLayoutChange(view: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
         if (isRequested) {
             logd { "$nameWithId notify listeners after layout changed" }
-            isRequested = false
             updateCurrent(source)
         }
     }
@@ -140,6 +141,18 @@ class InsetsProviderImpl private constructor(
         else -> updateCurrent(source)
     }
 
+    override fun modifyInsetsBy(callback: InsetsDependencyCallback) {
+        listeners.values.find { it === callback }
+            ?: return logd { "InsetsDependencyCallback was not found!" }
+        modifyInsets(callback)
+    }
+
+    override fun modifyInsetsBy(view: View) {
+        val callback = listeners.values.find { it is InsetsDependencyCallback && it.view() === view } as? InsetsDependencyCallback
+            ?: return logd { "InsetsDependencyCallback with ${view.nameWithId()} was not found!" }
+        modifyInsets(callback)
+    }
+
     override fun dropNativeInsets(drop: Boolean) {
         logd { "$nameWithId native insets discarding has been ${if (drop) "enabled" else "disabled"}" }
         dropNative = drop
@@ -152,27 +165,34 @@ class InsetsProviderImpl private constructor(
 
     private fun updateCurrent(source: ExtendedWindowInsets) {
         logd { "$nameWithId update current, with modifier? ${insetsModifier != null}" }
-        isNotifying = true
-        current = insetsModifier
-            ?.transform(listeners.isNotEmpty(), source)
-            .let {
-                transformed = it ?: source
-                iterateCallbacks(transformed)
-            }
-        isNotifying = false
+        isRequested = false
+        transformed = insetsModifier?.transform(listeners.isNotEmpty(), source) ?: source
+        current = iterateCallbacks(transformed, fromCache = false)
     }
 
-    private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
+    private fun iterateCallbacks(windowInsets: ExtendedWindowInsets, fromCache: Boolean): ExtendedWindowInsets {
+        isModified = false
         val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
         var builder: ExtendedBuilder? = null
         for (callback in callbacks) {
-            callback.getModifier(windowInsets)
+            (if (fromCache) callback.cachedModifier else callback.updateModifier(windowInsets))
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { modifier ->
                     builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
                 }
         }
         return builder?.build() ?: windowInsets
+    }
+
+    private fun modifyInsets(callback: InsetsDependencyCallback) {
+        if (isRequested) return
+        val cached = callback.cachedModifier
+        val new = callback.updateModifier(transformed)
+        when {
+            new == cached -> return
+            isNotifying -> isModified = true
+            else -> current = iterateCallbacks(transformed, fromCache = true)
+        }
     }
 
     private fun notifyListeners(prev: ExtendedWindowInsets, new: ExtendedWindowInsets) {
@@ -184,13 +204,15 @@ class InsetsProviderImpl private constructor(
             when {
                 index == currentViewDelegateIndex -> Unit
                 it.triggers.isEmpty() -> it.onApplyWindowInsets(new)
-                it.triggers.find { prev[it] != new[it] } != null -> it.onApplyWindowInsets(new)
+                it.triggers.any { prev[it] != new[it] } -> it.onApplyWindowInsets(new)
             }
         }
         if (isRequested) {
-            logd { "$nameWithId notify listeners after the notification of listeners" }
-            isRequested = false
+            logd { "$nameWithId restart full insets update" }
             updateCurrent(source)
+        } else if (isModified) {
+            logd { "$nameWithId restart insets update from cache" }
+            current = iterateCallbacks(transformed, fromCache = true)
         }
         isNotifying = false
     }

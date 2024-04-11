@@ -45,8 +45,8 @@ data class TypeSet internal constructor(
     override fun containsAll(elements: Collection<TypeSet>): Boolean {
         when {
             elements.isEmpty() -> return true
-            isEmpty() -> return elements.find { !it.isEmpty() } == null
-            elements is TypeSet -> return elements.find { !contains(it) } == null
+            isEmpty() -> return !elements.any { !it.isEmpty() }
+            elements is TypeSet -> return !elements.any { !contains(it) }
             else -> for (element in elements) {
                 if (!containsAll(element)) return false
             }

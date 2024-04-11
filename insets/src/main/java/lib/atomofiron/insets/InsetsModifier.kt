@@ -45,8 +45,8 @@ open class InsetsModifier private constructor(
     override fun containsAll(elements: Collection<InsetsModifier>): Boolean {
         when {
             elements.isEmpty() -> return true
-            isEmpty() -> return elements.find { !it.isEmpty() } == null
-            elements is InsetsModifier -> return elements.find { !contains(it) } == null
+            isEmpty() -> return !elements.any { !it.isEmpty() }
+            elements is InsetsModifier -> return !elements.any { !contains(it) }
             else -> for (element in elements) {
                 if (!containsAll(element)) return false
             }
