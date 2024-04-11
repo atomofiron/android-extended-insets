@@ -16,20 +16,31 @@ data class TypeSet internal constructor(
     val animated: Boolean = next?.animated ?: false,
 ) : Set<TypeSet> {
     companion object {
-        private const val ZERO_SEED = 0
-        private const val EXTRA_SEED = -1
-        internal const val FIRST_SEED = ZERO_SEED + 1
-        internal val All = TypeSet("all", EXTRA_SEED)
-        val Empty = TypeSet("empty", ZERO_SEED)
+        internal const val FIRST_SEED = 1
+        internal val All = TypeSet("all", -1)
+        val Empty = TypeSet("empty", 0)
     }
 
-    override val size: Int = (if (seed == ZERO_SEED) 0 else 1) + (next?.size ?: 0)
+    override val size: Int = when {
+        this === Empty -> 0
+        this === All -> -1
+        next == null -> 1
+        else -> next.size.inc()
+    }
 
-    override fun isEmpty(): Boolean = size == 0
+    override fun isEmpty(): Boolean = this === Empty
 
-    operator fun contains(seed: Int): Boolean = seed == this.seed || next != null && next.contains(seed)
+    override operator fun contains(element: TypeSet): Boolean  = when {
+        this === All -> true
+        element === All -> false
+        else -> contains(element.seed)
+    }
 
-    override operator fun contains(element: TypeSet): Boolean = contains(element.seed)
+    operator fun contains(seed: Int): Boolean = when {
+        seed == this.seed -> true
+        next == null -> false
+        else -> next.contains(seed)
+    }
 
     override fun containsAll(elements: Collection<TypeSet>): Boolean {
         when {
@@ -45,35 +56,44 @@ data class TypeSet internal constructor(
 
     override fun iterator() = object : Iterator<TypeSet> {
         private var next: TypeSet? = this@TypeSet
-            get() = field?.takeIf { it.seed != ZERO_SEED }
+            get() = field?.takeIf { it !== Empty }
         override fun hasNext(): Boolean = next != null
         override fun next(): TypeSet = next?.also { next = it.next } ?: throw NoSuchElementException()
     }
 
     // without sorting
     operator fun plus(other: TypeSet): TypeSet {
-        var head = takeIf { seed != ZERO_SEED }
+        when {
+            isEmpty() -> return other
+            other.isEmpty() -> return this
+            this === All -> return All
+            other === All -> return All
+        }
+        var head = this
         var next: TypeSet? = other
         while (next != null) {
-            when {
-                next.seed == ZERO_SEED -> Unit
-                head?.contains(next) == true -> Unit
-                else -> head = next.copy(next = head)
+            if (next !in head) {
+                head = next.copy(next = head)
             }
             next = next.next
         }
-        return head ?: Empty
+        return head
     }
 
     operator fun minus(other: TypeSet): TypeSet = when {
-        isEmpty() -> this
+        isEmpty() -> Empty
         other.isEmpty() -> this
+        other === All -> Empty
+        // todo? TypeSet(inverted = true, next = other)
+        this === All -> throw UnsupportedOperationException("All minus ${other.joinToString { it.name }}")
         else -> operation(other, contains = false)
     }
 
     operator fun times(other: TypeSet): TypeSet = when {
-        isEmpty() -> this
-        other.isEmpty() -> other
+        isEmpty() -> Empty
+        other.isEmpty() -> Empty
+        this === All -> other
+        other === All -> this
         else -> operation(other, contains = true)
     }
 

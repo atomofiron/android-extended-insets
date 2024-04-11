@@ -123,15 +123,29 @@ class ExtendedWindowInsets internal constructor(
         return Insets.of(values[0], values[1], values[2], values[3])
     }
 
-    operator fun get(types: TypeSet): Insets = getIgnoringVisibility(types - hidden)
+    operator fun get(types: TypeSet): Insets = when {
+        types === TypeSet.All -> insets.values.max()
+        else -> getIgnoringVisibility(types - hidden)
+    }
+
+    private fun Collection<InsetsValue>.max(): Insets {
+        val sum = fourZeros()
+        for (value in this) {
+            sum.max(value)
+        }
+        return Insets.of(sum[0], sum[1], sum[2], sum[3])
+    }
 
     fun isVisible(type: TypeSet): Boolean = !hidden.contains(type)
 
     fun hasInsets(): Boolean = insets.count { !it.value.isEmpty } != 0
 
     private fun IntArray.max(seed: Int) {
-        val value = insets[seed]
-        if (value?.isEmpty == false) {
+        max(insets[seed] ?: return)
+    }
+
+    private fun IntArray.max(value: InsetsValue) {
+        if (value.isNotEmpty) {
             set(0, max(get(0), value.left))
             set(1, max(get(1), value.top))
             set(2, max(get(2), value.right))
