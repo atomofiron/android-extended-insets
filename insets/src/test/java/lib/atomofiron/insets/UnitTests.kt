@@ -12,6 +12,7 @@ class UnitTests {
         val testType1 = define("testType1")
         val testType2 = define("testType2")
         val testType3 = define("testType3")
+
         val negative = TypeSet("negative", seed = -1)
         val positive = TypeSet("positive", seed = 1)
     }
@@ -74,6 +75,33 @@ class UnitTests {
         assertEquals(second, windowInsets[CustomType.positive])
         assertEquals(both, windowInsets[CustomType { negative + positive }])
         assertEquals(Insets.NONE, windowInsets[CustomType { negative * positive }])
+    }
+
+    @Test
+    fun all() {
+        val first = Insets.of(100, 0, 100, 0)
+        val second = Insets.of(0, 100, 0, 100)
+        val both = Insets.max(first, second)
+        val windowInsets = ExtendedWindowInsets.Builder()
+            .set(CustomType.testType1, first)
+            .set(CustomType.testType2, second)
+            .build()
+        assertEquals(both, windowInsets[TypeSet.All])
+        assertEquals(both, windowInsets[TypeSet.All + CustomType.testType1])
+    }
+
+    @Test
+    fun empty() {
+        val first = Insets.of(100, 0, 100, 0)
+        val second = Insets.of(0, 100, 0, 100)
+        val windowInsets = ExtendedWindowInsets.Builder()
+            .set(CustomType.testType1, first)
+            .set(CustomType.testType2, second)
+            .build()
+        assertEquals(Insets.NONE, windowInsets[TypeSet.Empty])
+        assertEquals(Insets.NONE, windowInsets[TypeSet.Empty * CustomType.testType1])
+        assertEquals(Insets.NONE, windowInsets[TypeSet.Empty - CustomType.testType1])
+        assertEquals(first, windowInsets[TypeSet.Empty + CustomType.testType1])
     }
 }
 

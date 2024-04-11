@@ -5,8 +5,6 @@
 package lib.atomofiron.insets
 
 import androidx.core.graphics.Insets
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsCompat.Type
 import kotlin.math.max
 
 
@@ -22,6 +20,7 @@ internal value class InsetsValue(
     private val value: ULong = 0uL,
 ) {
     val isEmpty: Boolean get() = value == 0uL
+    val isNotEmpty: Boolean get() = value != 0uL
     val left: Int get() = value.shr(48).toInt()
     val top: Int get() = (value.shr(32) and PART_MASK).toInt()
     val right: Int get() = (value.shr(16) and PART_MASK).toInt()
