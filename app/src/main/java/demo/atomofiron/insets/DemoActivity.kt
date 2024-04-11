@@ -23,7 +23,6 @@ import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
-import lib.atomofiron.insets.requestInsetsOnVisibilityChange
 import lib.atomofiron.insets.setContentView
 import lib.atomofiron.insets.setInsetsDebug
 
@@ -45,8 +44,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
 
             configureInsets()
 
-            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top, ::requestInsets)
-            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom, ::requestInsets)
+            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top) { modifyInsetsBy(viewTop) }
+            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom) { modifyInsetsBy(viewBottom) }
             switchConnection.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) topCtrl.show() else topCtrl.hide()
             }
@@ -147,7 +146,6 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
                 .set(ExtType.fabTop, Insets.of(0, 0, 0, view.visibleBottomHeight))
                 .set(ExtType.fabHorizontal, Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, 0))
         }
-        requestInsetsOnVisibilityChange(fab)
 
         // nested container with applied insets
         snackbarParentContainer.insetsMix(fabTypes) { padding(horizontal).translation(bottom) }
