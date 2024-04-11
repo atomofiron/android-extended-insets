@@ -95,7 +95,7 @@ class ExtendedWindowInsets internal constructor(
         }
     }
 
-    @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("getIgnoringVisibility(type)"))
+    @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("getIgnoringVisibility(types)"))
     fun getInsetsIgnoringVisibility(type: Int): Insets {
         val values = fourZeros()
         var cursor = 1
