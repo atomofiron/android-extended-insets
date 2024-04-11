@@ -107,7 +107,7 @@ open class InsetsModifier private constructor(
 
     fun consume(insets: Insets) = when {
         insets.isEmpty() -> this
-        else -> InsetsModifier(ModifierAction.Consume, TypeSet.ALL, insets, this)
+        else -> InsetsModifier(ModifierAction.Consume, TypeSet.All, insets, this)
     }
 
     fun consume(types: TypeSet) = InsetsModifier(ModifierAction.Consume, types, MAX_INSETS, this)

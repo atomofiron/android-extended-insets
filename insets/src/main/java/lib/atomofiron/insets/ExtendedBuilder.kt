@@ -72,14 +72,14 @@ class ExtendedBuilder internal constructor(
 
     fun consume(types: TypeSet): ExtendedBuilder = consume(types, MAX_INSETS)
 
-    fun consume(insets: Insets): ExtendedBuilder = consume(TypeSet.ALL, insets)
+    fun consume(insets: Insets): ExtendedBuilder = consume(TypeSet.All, insets)
 
     fun consume(types: TypeSet, insets: Insets): ExtendedBuilder {
         val debugValues = debug { values.toMap() }
         when {
             insets.isEmpty() -> return this.also { logd { "consume empty" } }
             types.isEmpty() -> return this.also { logd { "consume nothing" } }
-            types == TypeSet.ALL -> for ((seed, value) in values.entries.toList()) {
+            types == TypeSet.All -> for ((seed, value) in values.entries.toList()) {
                 values[seed] = value.consume(insets)
             }
             else -> for (type in types) {
