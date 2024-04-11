@@ -19,7 +19,7 @@ data class TypeSet internal constructor(
         private const val ZERO_SEED = 0
         private const val EXTRA_SEED = -1
         internal const val FIRST_SEED = ZERO_SEED + 1
-        internal val ALL = TypeSet("all", EXTRA_SEED)
+        internal val All = TypeSet("all", EXTRA_SEED)
         val Empty = TypeSet("empty", ZERO_SEED)
     }
 
