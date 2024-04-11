@@ -136,7 +136,7 @@ class ExtendedWindowInsets internal constructor(
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
         other !is ExtendedWindowInsets -> false
-        other.hidden !== hidden && other.hidden != hidden -> false
+        other.hidden != hidden -> false
         other.displayCutout !== displayCutout && other.displayCutout != displayCutout -> false
         else -> other.insets == insets
     }
