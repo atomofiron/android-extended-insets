@@ -10,10 +10,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.WindowInsets
 import androidx.annotation.RequiresApi
-import androidx.core.view.WindowInsetsCompat
-import lib.atomofiron.insets.ExtendedWindowInsets.Companion.Builder
-import androidx.core.view.WindowInsetsCompat.Type as CompatType
-import lib.atomofiron.insets.ExtendedWindowInsets.Type
 
 
 const val INVALID_INSETS_LISTENER_KEY = 0
@@ -22,7 +18,6 @@ class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
 ) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
-    private var modified = ExtendedWindowInsets.Empty
     private var source = ExtendedWindowInsets.Empty
         set(value) {
             logd { "$nameWithId new received? ${field != value}" }
@@ -31,6 +26,7 @@ class InsetsProviderImpl private constructor(
                 updateCurrent(value)
             }
         }
+    private var modified = ExtendedWindowInsets.Empty
     override var current = ExtendedWindowInsets.Empty
         private set(value) {
             isActual = true
@@ -131,12 +127,8 @@ class InsetsProviderImpl private constructor(
     @RequiresApi(Build.VERSION_CODES.R)
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (parentProvider == null) {
-            logd { "$nameWithId native insets were accepted" }
-            val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
-            val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
-            source = Builder(windowInsetsCompat)
-                .set(Type.general, barsWithCutout)
-                .build()
+            logd { "$nameWithId native insets were received" }
+            source = ExtendedWindowInsets(windowInsets, thisView)
         }
         return if (dropNative) WindowInsets.CONSUMED else windowInsets
     }
@@ -177,17 +169,13 @@ class InsetsProviderImpl private constructor(
     }
 
     private fun updateWithSources() {
-        current = iterateSources(modified)
-    }
-
-    private fun iterateSources(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
         var builder: ExtendedBuilder? = null
         for (entry in sources) {
             if (entry.value.isNotEmpty()) {
-                builder = (builder ?: windowInsets.builder()).applySources(listeners[entry.key], entry.value)
+                builder = (builder ?: modified.builder()).applySources(listeners[entry.key], entry.value)
             }
         }
-        return builder?.build() ?: windowInsets
+        current = builder?.build() ?: modified
     }
 
     private fun publishInsets(key: Int, callback: InsetsSourceCallback) {
