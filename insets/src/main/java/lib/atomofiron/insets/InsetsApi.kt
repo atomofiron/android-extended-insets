@@ -33,26 +33,21 @@ interface InsetsProvider {
 
 interface ViewInsetsDelegate {
     fun resetInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun source(callback: InsetsCallback? = null): ViewInsetsDelegate
-    fun source(
-        horizontal: Boolean = false,
-        vertical: Boolean = false,
-        callback: InsetsCallback? = null,
-    ): ViewInsetsDelegate
+    fun source(callback: InsetsViewSourceCallback? = null): ViewInsetsDelegate
+    fun source(horizontal: Boolean = false, vertical: Boolean = false, callback: InsetsViewSourceCallback? = null): ViewInsetsDelegate
     fun combining(combining: InsetsCombining?)
     fun scrollOnEdge(): ViewInsetsDelegate
 }
 
 fun interface InsetsModifierCallback {
-    fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
+    fun modify(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
 }
 
-interface InsetsSourceCallback {
-    val cachedSource: InsetsSource? get() = null
-    fun updateSource(windowInsets: ExtendedWindowInsets): InsetsSource?
+fun interface InsetsSourceCallback {
+    fun getSource(windowInsets: ExtendedWindowInsets): InsetsSource?
 }
 
-fun interface InsetsCallback {
+fun interface InsetsViewSourceCallback {
     fun getSource(arg: InsetsCallbackArg): InsetsSource?
 }
 

@@ -25,7 +25,7 @@ private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
 data class Source(
     val horizontal: Boolean,
     val vertical: Boolean,
-    val callback: InsetsCallback?,
+    val callback: InsetsViewSourceCallback?,
 ) {
     companion object {
         val None = Source(horizontal = false, vertical = false, callback = null)
@@ -44,9 +44,6 @@ internal class ViewInsetsDelegateImpl(
 ) : ViewInsetsDelegate, InsetsListener, InsetsSourceCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener, ViewTreeObserver.OnGlobalLayoutListener {
 
     override val triggers: TypeSet = types
-    // todo move from here
-    override var cachedSource: InsetsSource? = null
-        private set
 
     private val nameWithId: String = view.nameWithId()
 
@@ -115,12 +112,12 @@ internal class ViewInsetsDelegateImpl(
         updateInsets(windowInsets)
     }
 
-    override fun source(horizontal: Boolean, vertical: Boolean, callback: InsetsCallback?): ViewInsetsDelegate {
+    override fun source(horizontal: Boolean, vertical: Boolean, callback: InsetsViewSourceCallback?): ViewInsetsDelegate {
         source = Source(horizontal, vertical, callback)
         return this
     }
 
-    override fun source(callback: InsetsCallback?) = source(horizontal = true, vertical = true, callback)
+    override fun source(callback: InsetsViewSourceCallback?) = source(horizontal = true, vertical = true, callback)
 
     override fun scrollOnEdge(): ViewInsetsDelegate {
         scrollOnEdge = true
@@ -144,9 +141,8 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
-    override fun updateSource(windowInsets: ExtendedWindowInsets): InsetsSource? {
-        cachedSource = source.callback?.getSource(InsetsCallbackArg(view, windowInsets))
-        return cachedSource
+    override fun getSource(windowInsets: ExtendedWindowInsets): InsetsSource? {
+        return source.callback?.getSource(InsetsCallbackArg(view, windowInsets))
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
