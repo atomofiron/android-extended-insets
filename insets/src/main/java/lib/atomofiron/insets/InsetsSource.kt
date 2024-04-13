@@ -53,7 +53,10 @@ open class InsetsSource private constructor(
         private var next: InsetsSource? = this@InsetsSource
             get() = field?.takeIf { it.isNotEmpty() }
         override fun hasNext(): Boolean = next != null
-        override fun next(): InsetsSource = next?.also { next = it.next } ?: throw NoSuchElementException()
+        override fun next(): InsetsSource = next
+            ?.also { next = it.next }
+            ?.single()
+            ?: throw NoSuchElementException()
     }
 
     override fun equals(other: Any?): Boolean = when {
@@ -72,6 +75,8 @@ open class InsetsSource private constructor(
         ?: string()
 
     fun publish(types: TypeSet, insets: Insets) = InsetsSource(types, insets, next = takeIf { it.isNotEmpty() })
+
+    private fun single(): InsetsSource = if (size == 1) this else InsetsSource(types, insets, next = null)
 
     private fun string() = "[$types][${insets.ltrb()}]"
 }
