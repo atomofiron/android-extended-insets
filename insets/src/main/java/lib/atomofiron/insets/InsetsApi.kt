@@ -26,15 +26,15 @@ interface InsetsProvider {
     // that allows not to set a insets listener that can be replaced with another one
     fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets
     fun requestInsets()
-    fun modifyInsetsBy(callback: InsetsDependencyCallback)
-    fun modifyInsetsBy(view: View)
+    fun publishInsetsFrom(callback: InsetsSourceCallback)
+    fun publishInsetsFrom(view: View)
     fun dropNativeInsets(drop: Boolean = true)
 }
 
 interface ViewInsetsDelegate {
     fun resetInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun dependency(callback: InsetsCallback? = null): ViewInsetsDelegate
-    fun dependency(
+    fun source(callback: InsetsCallback? = null): ViewInsetsDelegate
+    fun source(
         horizontal: Boolean = false,
         vertical: Boolean = false,
         callback: InsetsCallback? = null,
@@ -47,13 +47,13 @@ fun interface InsetsModifierCallback {
     fun transform(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
 }
 
-interface InsetsDependencyCallback {
-    val cachedModifier: InsetsModifier? get() = null
-    fun updateModifier(windowInsets: ExtendedWindowInsets): InsetsModifier?
+interface InsetsSourceCallback {
+    val cachedSource: InsetsSource? get() = null
+    fun updateSource(windowInsets: ExtendedWindowInsets): InsetsSource?
 }
 
 fun interface InsetsCallback {
-    fun getModifier(arg: InsetsCallbackArg): InsetsModifier?
+    fun getSource(arg: InsetsCallbackArg): InsetsSource?
 }
 
 class InsetsCallbackArg(

@@ -13,7 +13,7 @@ private const val PART_MASK = 0b1111111111111111uL
 internal const val MAX_INSET = 0xffff
 
 @JvmInline
-internal value class InsetsValue(
+value class InsetsValue(
     //                                                 /--PART_MASK---\
     // 1010101010101010101010101010101010101010101010101010101010101010
     // \-----left-----/\-----top------/\-----right----/\----bottom----/

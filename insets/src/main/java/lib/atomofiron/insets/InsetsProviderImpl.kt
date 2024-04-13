@@ -141,16 +141,16 @@ class InsetsProviderImpl private constructor(
         else -> updateCurrent(source)
     }
 
-    override fun modifyInsetsBy(callback: InsetsDependencyCallback) {
+    override fun publishInsetsFrom(callback: InsetsSourceCallback) {
         listeners.values.find { it === callback }
             ?: return logd { "InsetsDependencyCallback was not found!" }
-        modifyInsets(callback)
+        publishInsets(callback)
     }
 
-    override fun modifyInsetsBy(view: View) {
-        val callback = listeners.values.find { it is InsetsDependencyCallback && it.view() === view } as? InsetsDependencyCallback
+    override fun publishInsetsFrom(view: View) {
+        val callback = listeners.values.find { it is InsetsSourceCallback && it.view() === view } as? InsetsSourceCallback
             ?: return logd { "InsetsDependencyCallback with ${view.nameWithId()} was not found!" }
-        modifyInsets(callback)
+        publishInsets(callback)
     }
 
     override fun dropNativeInsets(drop: Boolean) {
@@ -167,31 +167,31 @@ class InsetsProviderImpl private constructor(
         logd { "$nameWithId update current, with modifier? ${insetsModifier != null}" }
         isRequested = false
         transformed = insetsModifier?.transform(listeners.isNotEmpty(), source) ?: source
-        current = iterateCallbacks(transformed, fromCache = false)
+        current = iterateSources(transformed, fromCache = false)
     }
 
-    private fun iterateCallbacks(windowInsets: ExtendedWindowInsets, fromCache: Boolean): ExtendedWindowInsets {
+    private fun iterateSources(windowInsets: ExtendedWindowInsets, fromCache: Boolean): ExtendedWindowInsets {
         isModified = false
-        val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
+        val sources = listeners.values.mapNotNull { it as? InsetsSourceCallback }
         var builder: ExtendedBuilder? = null
-        for (callback in callbacks) {
-            (if (fromCache) callback.cachedModifier else callback.updateModifier(windowInsets))
+        for (callback in sources) {
+            (if (fromCache) callback.cachedSource else callback.updateSource(windowInsets))
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { modifier ->
-                    builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
+                    builder = (builder ?: windowInsets.builder()).applySources(callback, modifier)
                 }
         }
         return builder?.build() ?: windowInsets
     }
 
-    private fun modifyInsets(callback: InsetsDependencyCallback) {
+    private fun publishInsets(callback: InsetsSourceCallback) {
         if (isRequested) return
-        val cached = callback.cachedModifier
-        val new = callback.updateModifier(transformed)
+        val cached = callback.cachedSource
+        val new = callback.updateSource(transformed)
         when {
             new == cached -> return
             isNotifying -> isModified = true
-            else -> current = iterateCallbacks(transformed, fromCache = true)
+            else -> current = iterateSources(transformed, fromCache = true)
         }
     }
 
@@ -212,7 +212,7 @@ class InsetsProviderImpl private constructor(
             updateCurrent(source)
         } else if (isModified) {
             logd { "$nameWithId restart insets update from cache" }
-            current = iterateCallbacks(transformed, fromCache = true)
+            current = iterateSources(transformed, fromCache = true)
         }
         isNotifying = false
     }
@@ -220,15 +220,10 @@ class InsetsProviderImpl private constructor(
 
 private fun Any?.view(): View? = (this as? ViewInsetsDelegateImpl)?.view
 
-private fun ExtendedBuilder.applyReversed(callback: InsetsDependencyCallback, modifier: InsetsModifier): ExtendedBuilder {
-    modifier.next?.let { applyReversed(callback, it) }
-    logd { "${callback.view()?.nameWithId() ?: callback.simpleName} modifications: $modifier" }
-    when (modifier.action) {
-        ModifierAction.Max -> max(modifier.types, modifier.insets)
-        ModifierAction.Set -> set(modifier.types, modifier.insets)
-        ModifierAction.Add -> add(modifier.types, modifier.insets)
-        ModifierAction.Consume -> consume(modifier.types, modifier.insets)
-        ModifierAction.None -> Unit // unreachable
+private fun ExtendedBuilder.applySources(callback: InsetsSourceCallback, sources: InsetsSource): ExtendedBuilder {
+    for (source in sources) {
+        logd { "${callback.view()?.nameWithId() ?: callback.simpleName} source: $source" }
+        max(source.types, source.insets)
     }
     return this
 }
