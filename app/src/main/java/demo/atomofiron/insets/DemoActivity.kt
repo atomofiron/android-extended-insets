@@ -26,6 +26,7 @@ import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
 import lib.atomofiron.insets.setContentView
 import lib.atomofiron.insets.setInsetsDebug
+import kotlin.math.max
 
 class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl() {
 
@@ -107,10 +108,15 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
     private fun ActivityDemoBinding.configureInsets() {
         setInsetsModifier { _, windowInsets ->
             cutoutDrawable.sync(windowInsets)
-            switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
+            val fullscreen = windowInsets.isEmpty(ExtType.systemBars)
+            switchFullscreen.isChecked = fullscreen
+            val cutout = if (fullscreen) Insets.NONE else {
+                windowInsets { displayCutout }.run { Insets.of(max(left, right), top, max(left, right), bottom) }
+            }
             windowInsets.builder()
                 .set(ExtType.general, windowInsets { barsWithCutout })
                 .consume(windowInsets { ime })
+                .set(ExtType.displayCutout, cutout)
                 .build()
         }
         root.insetsPadding(ExtType.ime, bottom = true)
