@@ -194,7 +194,7 @@ class InsetsProviderImpl private constructor(
         isNotifying = true
         val listeners = listeners.values.toTypedArray()
         val currentViewDelegateIndex = listeners.indexOfFirst { it.view() === thisView }
-        listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(modified)
+        listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(source)
         listeners.forEachIndexed { index, it ->
             when {
                 index == currentViewDelegateIndex -> Unit
