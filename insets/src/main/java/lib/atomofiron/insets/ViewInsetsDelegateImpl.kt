@@ -4,6 +4,7 @@
 
 package lib.atomofiron.insets
 
+import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
@@ -34,14 +35,14 @@ data class Source(
 }
 
 internal class ViewInsetsDelegateImpl(
-    val view: View,
+    override val view: View,
     override val types: TypeSet,
     private var combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
     private var dstBottom: InsetsDestination = None,
-) : ViewInsetsDelegate, InsetsListener, InsetsSourceCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener, ViewTreeObserver.OnGlobalLayoutListener {
+) : ViewInsetsDelegate, InsetsListener, InsetsSourceCallback, ViewDelegate, View.OnAttachStateChangeListener, View.OnLayoutChangeListener, ViewTreeObserver.OnGlobalLayoutListener {
 
     private val nameWithId: String = view.nameWithId()
 
@@ -126,9 +127,12 @@ internal class ViewInsetsDelegateImpl(
         this.combining = combining
     }
 
-    override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
-        val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
-        val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
+    // oldTop and oldBottom are sometimes wrong
+    private val old = Rect()
+    override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, ol: Int, ot: Int, or: Int, ob: Int) {
+        val horizontally = left != old.left || right != old.right
+        val vertically = top != old.top || bottom != old.bottom
+        old.set(left, top, right, bottom)
         if (source.horizontal && horizontally || source.vertical && vertically) {
             logd { "$nameWithId modify insets? ${provider != null}" }
             provider?.publishInsetsFrom(this)

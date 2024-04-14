@@ -16,7 +16,7 @@ const val INVALID_INSETS_LISTENER_KEY = 0
 
 class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
-) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+) : InsetsProvider, InsetsListener, ViewDelegate, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
     private var source = ExtendedWindowInsets.Empty
         set(value) {
@@ -37,17 +37,18 @@ class InsetsProviderImpl private constructor(
                 notifyListeners(prev, value)
             }
         }
+    override var view: View? = null
+        private set
 
     private val listeners = hashMapOf<Int, InsetsListener>()
     private val sources = hashMapOf<Int, InsetsSource>()
     private var insetsModifier: InsetsModifierCallback? = null
     private var parentProvider: InsetsProvider? = null
-    private var thisView: View? = null
     private var nameWithId: String? = null
     private val typesProvider = ::collectTypes
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
     // prevent extra notifications of listeners
-    private val isInLayout get() = thisView?.isInLayout ?: false
+    private val isInLayout get() = view?.isInLayout ?: false
     private var isNotifying = false
     private var isRequested = false
     // some cached modifiers were changed, insets rebuilding required
@@ -58,7 +59,7 @@ class InsetsProviderImpl private constructor(
     constructor(context: Context, attrs: AttributeSet?) : this(context.dropNativeInsets(attrs))
 
     override fun View.onInit() {
-        thisView = this
+        view = this
         nameWithId = nameWithId()
         addOnAttachStateChangeListener(this@InsetsProviderImpl)
         addOnLayoutChangeListener(this@InsetsProviderImpl)
@@ -91,7 +92,7 @@ class InsetsProviderImpl private constructor(
     }
 
     override fun addInsetsListener(listener: InsetsListener): Int {
-        if (listener === thisView || listener === this) {
+        if (listener === view || listener === this) {
             throw IllegalArgumentException()
         }
         listeners.entries.forEach { entry ->
@@ -129,7 +130,7 @@ class InsetsProviderImpl private constructor(
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (parentProvider == null) {
             logd { "$nameWithId native insets were received" }
-            source = ExtendedWindowInsets(windowInsets, thisView)
+            source = ExtendedWindowInsets(windowInsets, view)
         }
         return if (dropNative) WindowInsets.CONSUMED else windowInsets
     }
@@ -206,7 +207,7 @@ class InsetsProviderImpl private constructor(
     private fun notifyListeners(prev: ExtendedWindowInsets, new: ExtendedWindowInsets) {
         isNotifying = true
         val listeners = listeners.values.toTypedArray()
-        val currentViewDelegateIndex = listeners.indexOfFirst { it.view() === thisView }
+        val currentViewDelegateIndex = listeners.indexOfFirst { it.view() === view }
         listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(source)
         listeners.forEachIndexed { index, it ->
             when {
@@ -226,7 +227,7 @@ class InsetsProviderImpl private constructor(
     }
 }
 
-private fun Any?.view(): View? = (this as? ViewInsetsDelegateImpl)?.view
+private fun Any?.view(): View? = (this as? ViewDelegate)?.view
 
 private fun ExtendedBuilder.applySources(listener: InsetsListener?, sources: InsetsSource): ExtendedBuilder {
     for (source in sources) {

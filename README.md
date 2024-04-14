@@ -1,7 +1,7 @@
 [![](https://jitpack.io/v/atomofiron/android-window-insets-compat.svg)](https://jitpack.io/#atomofiron/android-window-insets-compat)
 
 # Demo
-https://github.com/atomofiron/android-window-insets-compat/assets/14147217/5845d7d6-4f62-497f-97c9-2e931fc99dc1
+https://github.com/atomofiron/android-window-insets-compat/assets/14147217/2369db1d-566e-4b4d-9b90-9fae9e97c2d9
 
 # Step 1
 ```xml

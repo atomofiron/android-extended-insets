@@ -32,6 +32,10 @@ interface InsetsProvider {
     fun collectTypes(): TypeSet
 }
 
+interface ViewDelegate {
+    val view: View?
+}
+
 interface ViewInsetsDelegate {
     fun resetInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
     fun source(callback: InsetsViewSourceCallback? = null): ViewInsetsDelegate
