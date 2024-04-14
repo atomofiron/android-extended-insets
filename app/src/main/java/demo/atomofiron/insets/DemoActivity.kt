@@ -16,9 +16,10 @@ import com.google.android.material.snackbar.Snackbar
 import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
-import lib.atomofiron.insets.InsetsModifier
 import lib.atomofiron.insets.InsetsProvider
 import lib.atomofiron.insets.InsetsProviderImpl
+import lib.atomofiron.insets.InsetsSource
+import lib.atomofiron.insets.builder
 import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
@@ -44,8 +45,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
 
             configureInsets()
 
-            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top) { modifyInsetsBy(viewTop) }
-            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom) { modifyInsetsBy(viewBottom) }
+            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top) { publishInsetsFrom(viewTop) }
+            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom) { publishInsetsFrom(viewBottom) }
             switchConnection.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) topCtrl.show() else topCtrl.hide()
             }
@@ -107,32 +108,31 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         setInsetsModifier { _, windowInsets ->
             syncCutout(windowInsets)
             switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
-            windowInsets
+            windowInsets.builder()
+                .consume(windowInsets { ime })
+                .build()
         }
         root.insetsPadding(ExtType.ime, bottom = true)
-            .dependency(vertical = true) { (_, windowInsets) ->
-                InsetsModifier.consume(windowInsets { ime })
-            }
         bottomPanel.insetsPadding(horizontal = true, bottom = true)
-            .dependency(vertical = true) {
+            .source(vertical = true) {
                 val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
-                InsetsModifier
-                    .max(ExtType.general, insets)
-                    .set(ExtType.togglePanel, insets)
+                InsetsSource
+                    .publish(ExtType.general, insets)
+                    .publish(ExtType.togglePanel, insets)
             }
         viewTop.insetsMix { margin(horizontal).padding(top) }
-            .dependency(vertical = true) { (view, _) ->
+            .source(vertical = true) { (view, _) ->
                 val insets = Insets.of(0, view.visibleTopHeight, 0, 0)
-                InsetsModifier
-                    .max(ExtType.general, insets)
-                    .max(ExtType.verticalPanels, insets)
+                InsetsSource
+                    .publish(ExtType.general, insets)
+                    .publish(ExtType.verticalPanels, insets)
             }
         viewBottom.insetsMix(ExtType { barsWithCutout + togglePanel }) { horizontal(margin).bottom(padding) }
-            .dependency(vertical = true) {
+            .source(vertical = true) {
                 val insets = Insets.of(0, 0, 0, viewBottom.visibleBottomHeight)
-                InsetsModifier
-                    .max(ExtType.general, insets)
-                    .max(ExtType.verticalPanels, insets)
+                InsetsSource
+                    .publish(ExtType.general, insets)
+                    .publish(ExtType.verticalPanels, insets)
             }
         toolbar.insetsMix(ExtType { barsWithCutout + verticalPanels }) {
             top(translation).horizontal(margin)
@@ -141,21 +141,21 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         val fabCombining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
         fab.insetsMix(fabTypes, fabCombining) {
             translation(bottom, end)
-        }.dependency { (view, _) ->
-            InsetsModifier
-                .set(ExtType.fabTop, Insets.of(0, 0, 0, view.visibleBottomHeight))
-                .set(ExtType.fabHorizontal, Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, 0))
+        }.source { (view, _) ->
+            InsetsSource
+                .publish(ExtType.fabTop, Insets.of(0, 0, 0, view.visibleBottomHeight))
+                .publish(ExtType.fabHorizontal, Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, 0))
         }
-
         // nested container with applied insets
         snackbarParentContainer.insetsMix(fabTypes) { padding(horizontal).translation(bottom) }
-            .dependency { (_, wi) ->
-                val landscape = snackbarParentContainer.run { width > height }
-                InsetsModifier
-                    // snackbar dynamic relative position
-                    .consume(if (landscape) ExtType.fabTop else ExtType.fabHorizontal)
-                    .consume(ExtType { fabTop + fabHorizontal }, wi[fabTypes])
-            }
+        snackbarParentContainer.setInsetsModifier { _, windowInsets ->
+            val landscape = snackbarParentContainer.run { width > height }
+            windowInsets.builder()
+                // snackbar dynamic relative position
+                .consume(if (landscape) ExtType.fabTop else ExtType.fabHorizontal)
+                .consume(ExtType { fabTop + fabHorizontal }, windowInsets[fabTypes])
+                .build()
+        }
         snackbarContainer.insetsMix(ExtType { fabTop + fabHorizontal }) { translation(bottom).padding(end) }
     }
 
