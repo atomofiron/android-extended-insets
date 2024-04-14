@@ -106,9 +106,10 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
 
     private fun ActivityDemoBinding.configureInsets() {
         setInsetsModifier { _, windowInsets ->
-            syncCutout(windowInsets)
+            cutoutDrawable.sync(windowInsets)
             switchFullscreen.isChecked = windowInsets.isEmpty(ExtType.systemBars)
             windowInsets.builder()
+                .set(ExtType.general, windowInsets { barsWithCutout })
                 .consume(windowInsets { ime })
                 .build()
         }
@@ -159,12 +160,12 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         snackbarContainer.insetsMix(ExtType { fabTop + fabHorizontal }) { translation(bottom).padding(end) }
     }
 
-    private fun syncCutout(windowInsets: ExtendedWindowInsets) {
+    private fun CutoutDrawable.sync(windowInsets: ExtendedWindowInsets) {
         val insets = windowInsets[ExtType.displayCutout]
         when {
-            insets.left > 0 -> cutoutDrawable.left()
-            insets.top > 0 -> cutoutDrawable.top()
-            insets.right > 0 -> cutoutDrawable.right()
+            insets.left > 0 -> left()
+            insets.top > 0 -> top()
+            insets.right > 0 -> right()
         }
     }
 }

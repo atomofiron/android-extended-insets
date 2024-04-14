@@ -9,6 +9,7 @@ object ExtType : ExtendedWindowInsets.Type() {
     val verticalPanels = define("verticalPanels")
     val fabTop = define("fabTop")
     val fabHorizontal = define("fabHorizontal")
+    val general = define("general")
 }
 
 // associate your custom type with ExtendedWindowInsets
