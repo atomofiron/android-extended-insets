@@ -9,7 +9,7 @@ import android.view.WindowInsets
 
 fun interface InsetsListener {
     // provide the new insets only if at least one change's type matches with triggers (empty = any)
-    val triggers: TypeSet get() = TypeSet.Empty
+    val types: TypeSet get() = TypeSet.Empty
     fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets)
 }
 
@@ -29,6 +29,7 @@ interface InsetsProvider {
     fun publishInsetsFrom(callback: InsetsSourceCallback)
     fun publishInsetsFrom(view: View)
     fun dropNativeInsets(drop: Boolean = true)
+    fun collectTypes(): TypeSet
 }
 
 interface ViewInsetsDelegate {
@@ -40,7 +41,7 @@ interface ViewInsetsDelegate {
 }
 
 fun interface InsetsModifierCallback {
-    fun modify(hasListeners: Boolean, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
+    fun modify(types: () -> TypeSet, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
 }
 
 fun interface InsetsSourceCallback {

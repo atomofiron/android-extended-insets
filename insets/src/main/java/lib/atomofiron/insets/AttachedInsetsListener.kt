@@ -37,6 +37,6 @@ fun View.attachInsetsListener(
     triggers: TypeSet,
     listener: (windowInsets: ExtendedWindowInsets) -> Unit,
 ): AttachedInsetsListener = object : InsetsListener {
-    override val triggers = triggers
+    override val types = triggers
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) = listener(windowInsets)
 }.let { attachInsetsListener(it) }
