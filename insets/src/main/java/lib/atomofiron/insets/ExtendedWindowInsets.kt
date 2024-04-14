@@ -53,7 +53,7 @@ class ExtendedWindowInsets internal constructor(
             val ime: TypeSet = WindowInsetsCompat.Type.ime().toTypeSet("ime")
             val general: TypeSet = TypeSet("general")
 
-            internal val types = linkedSetOf(TypeSet.Empty, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime, general)
+            internal val types = linkedSetOf(TypeSet.Empty, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime)
 
             inline operator fun invoke(block: Companion.() -> TypeSet): TypeSet = this.block()
 
@@ -95,7 +95,7 @@ class ExtendedWindowInsets internal constructor(
         }
     }
 
-    @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("getIgnoringVisibility(type)"))
+    @Deprecated("Compatibility with API of WindowInsets", replaceWith = ReplaceWith("getIgnoringVisibility(types)"))
     fun getInsetsIgnoringVisibility(type: Int): Insets {
         val values = fourZeros()
         var cursor = 1
@@ -128,36 +128,15 @@ class ExtendedWindowInsets internal constructor(
         else -> getIgnoringVisibility(types - hidden)
     }
 
-    private fun Collection<InsetsValue>.max(): Insets {
-        val sum = fourZeros()
-        for (value in this) {
-            sum.max(value)
-        }
-        return Insets.of(sum[0], sum[1], sum[2], sum[3])
-    }
-
     fun isVisible(type: TypeSet): Boolean = !hidden.contains(type)
 
     fun hasInsets(): Boolean = insets.count { !it.value.isEmpty } != 0
-
-    private fun IntArray.max(seed: Int) {
-        max(insets[seed] ?: return)
-    }
-
-    private fun IntArray.max(value: InsetsValue) {
-        if (value.isNotEmpty) {
-            set(0, max(get(0), value.left))
-            set(1, max(get(1), value.top))
-            set(2, max(get(2), value.right))
-            set(3, max(get(3), value.bottom))
-        }
-    }
 
     @Suppress("SuspiciousEqualsCombination")
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
         other !is ExtendedWindowInsets -> false
-        other.hidden !== hidden && other.hidden != hidden -> false
+        other.hidden != hidden -> false
         other.displayCutout !== displayCutout && other.displayCutout != displayCutout -> false
         else -> other.insets == insets
     }
@@ -180,10 +159,31 @@ class ExtendedWindowInsets internal constructor(
             ?: "empty"
         return "$simpleName($list)"
     }
+
+    private fun IntArray.max(seed: Int) {
+        max(insets[seed] ?: return)
+    }
 }
 
 private val array = IntArray(4)
 
 private fun fourZeros() = array.apply {
     for (i in 0..3) set(i, 0)
+}
+
+private fun Collection<InsetsValue>.max(): Insets {
+    val sum = fourZeros()
+    for (value in this) {
+        sum.max(value)
+    }
+    return Insets.of(sum[0], sum[1], sum[2], sum[3])
+}
+
+private fun IntArray.max(value: InsetsValue) {
+    if (value.isNotEmpty) {
+        set(0, max(get(0), value.left))
+        set(1, max(get(1), value.top))
+        set(2, max(get(2), value.right))
+        set(3, max(get(3), value.bottom))
+    }
 }

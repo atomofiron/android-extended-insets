@@ -7,12 +7,13 @@ package lib.atomofiron.insets
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
+import android.view.ViewTreeObserver
 import androidx.core.graphics.Insets
 import androidx.core.view.ScrollingView
+import androidx.core.view.isGone
 import androidx.core.view.marginBottom
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
-import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
@@ -21,35 +22,38 @@ import kotlin.math.max
 
 private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
 
-data class Dependency(
-    val horizontal: Boolean = false,
-    val vertical: Boolean = false,
+data class Source(
+    val horizontal: Boolean,
+    val vertical: Boolean,
+    val callback: InsetsViewSourceCallback?,
 ) {
+    companion object {
+        val None = Source(horizontal = false, vertical = false, callback = null)
+    }
     val any = horizontal || vertical
 }
 
 internal class ViewInsetsDelegateImpl(
-    internal val view: View,
-    internal val types: TypeSet = barsWithCutout,
+    val view: View,
+    private val types: TypeSet,
     private var combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
     private var dstBottom: InsetsDestination = None,
-) : ViewInsetsDelegate, InsetsListener, InsetsDependencyCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
+) : ViewInsetsDelegate, InsetsListener, InsetsSourceCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener, ViewTreeObserver.OnGlobalLayoutListener {
 
     override val triggers: TypeSet = types
 
     private val nameWithId: String = view.nameWithId()
 
+    private var viewPlaced = !view.isGone
     private var insets = Insets.NONE
     private var windowInsets = ExtendedWindowInsets.Empty
     private var provider: InsetsProvider? = null
-    private var listener: InsetsListener? = this
     private val isRtl: Boolean = view.layoutDirection == View.LAYOUT_DIRECTION_RTL
     private var postRequestLayoutOnNextLayout = false
-    private var dependency = Dependency()
-    private var dependencyCallBack: InsetsCallback? = null
+    private var source = Source.None
     private var scrollOnEdge = false
 
     private var dstLeft = if (isRtl) dstEnd else dstStart
@@ -64,27 +68,27 @@ internal class ViewInsetsDelegateImpl(
 
     override fun onViewAttachedToWindow(view: View) {
         provider = view.findInsetsProvider()
-        logd { "$nameWithId onAttach provider? ${provider != null}, listener? ${listener != null}" }
-        provider?.addInsetsListener(listener ?: return)
+        logd { "$nameWithId onAttach provider? ${provider != null}" }
+        provider?.addInsetsListener(this)
+        view.viewTreeObserver.addOnGlobalLayoutListener(this)
     }
 
     override fun onViewDetachedFromWindow(view: View) {
-        logd { "$nameWithId onDetach provider? ${provider != null}, listener? ${listener != null}" }
-        provider?.removeInsetsListener(listener ?: return)
+        logd { "$nameWithId onDetach provider? ${provider != null}" }
+        provider?.removeInsetsListener(this)
+        view.viewTreeObserver.removeOnGlobalLayoutListener(this)
         provider = null
     }
 
-    override fun detachFromProvider() {
-        logd { "$nameWithId unsubscribe insets? ${provider != null}, listener? ${listener != null}" }
-        provider?.removeInsetsListener(listener ?: return)
-        listener = null
-    }
-
-    override fun detachFromView() {
-        logd { "$nameWithId detach? idk" }
-        detachFromProvider()
-        view.removeOnLayoutChangeListener(this)
-        view.removeOnAttachStateChangeListener(this)
+    override fun onGlobalLayout() {
+        val placed = !view.isGone
+        if (placed != viewPlaced) {
+            viewPlaced = placed
+            if (source.any) {
+                logd { "$nameWithId become placed? $placed, provider? ${provider != null}" }
+                provider?.publishInsetsFrom(this)
+            }
+        }
     }
 
     override fun resetInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate {
@@ -100,7 +104,6 @@ internal class ViewInsetsDelegateImpl(
         dstBottom = config.dstBottom
         logDestination("reset")
         updateInsets(windowInsets)
-        applyInsets(insets)
         return this
     }
 
@@ -109,13 +112,12 @@ internal class ViewInsetsDelegateImpl(
         updateInsets(windowInsets)
     }
 
-    override fun dependency(horizontal: Boolean, vertical: Boolean, callback: InsetsCallback?): ViewInsetsDelegate {
-        dependency = dependency.copy(horizontal = horizontal, vertical = vertical)
-        dependencyCallBack = callback
+    override fun source(horizontal: Boolean, vertical: Boolean, callback: InsetsViewSourceCallback?): ViewInsetsDelegate {
+        source = Source(horizontal, vertical, callback)
         return this
     }
 
-    override fun dependency(callback: InsetsCallback?) = dependency(horizontal = true, vertical = true, callback)
+    override fun source(callback: InsetsViewSourceCallback?) = source(horizontal = true, vertical = true, callback)
 
     override fun scrollOnEdge(): ViewInsetsDelegate {
         scrollOnEdge = true
@@ -129,9 +131,9 @@ internal class ViewInsetsDelegateImpl(
     override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
         val horizontally = (left != oldLeft || right != oldRight) && (dstLeft != None || dstRight != None)
         val vertically = (top != oldTop || bottom != oldBottom) && (dstTop != None || dstBottom != None)
-        if (dependency.horizontal && horizontally || dependency.vertical && vertically) {
-            logd { "$nameWithId request insets? ${provider != null}" }
-            provider?.requestInsets()
+        if (source.horizontal && horizontally || source.vertical && vertically) {
+            logd { "$nameWithId modify insets? ${provider != null}" }
+            provider?.publishInsetsFrom(this)
         }
         if (postRequestLayoutOnNextLayout) {
             postRequestLayoutOnNextLayout = false
@@ -139,8 +141,8 @@ internal class ViewInsetsDelegateImpl(
         }
     }
 
-    override fun getModifier(windowInsets: ExtendedWindowInsets): InsetsModifier? {
-        return dependencyCallBack?.getModifier(InsetsCallbackArg(view, windowInsets))
+    override fun getSource(windowInsets: ExtendedWindowInsets): InsetsSource? {
+        return source.callback?.getSource(InsetsCallbackArg(view, windowInsets))
     }
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
@@ -152,7 +154,7 @@ internal class ViewInsetsDelegateImpl(
             val delta = Insets.subtract(new, insets)
             insets = new
             applyInsets(delta)
-            if (isAnyMargin() && !view.isShown) postRequestLayoutOnNextLayout = true
+            if (isAnyMargin() && view.isGone) postRequestLayoutOnNextLayout = true
         }
     }
 
@@ -174,7 +176,7 @@ internal class ViewInsetsDelegateImpl(
                 ?.run { view.height - bottom - marginBottom }
             view is ScrollingView && bottomSpace == it
         }
-        val oldPadding = view.takeIf { dependency.any }?.run {
+        val oldPadding = view.takeIf { source.any }?.run {
             Insets.of(paddingLeft, paddingTop, paddingRight, paddingBottom)
         }
         val changed = view.updatePaddingIfChanged(
@@ -193,8 +195,8 @@ internal class ViewInsetsDelegateImpl(
         }
         oldPadding?.run {
             // trigger insets requesting
-            if (dependency.horizontal) view.right += (view.paddingLeft + view.paddingRight) - (left + right)
-            if (dependency.vertical) view.bottom += (view.paddingTop + view.paddingBottom) - (top + bottom)
+            if (source.horizontal) view.right += (view.paddingLeft + view.paddingRight) - (left + right)
+            if (source.vertical) view.bottom += (view.paddingTop + view.paddingBottom) - (top + bottom)
         }
     }
 
@@ -218,12 +220,12 @@ internal class ViewInsetsDelegateImpl(
         if (dstRight == Translation) dx -= delta.right
         if (dstTop == Translation) dy += delta.top
         if (dstBottom == Translation) dy -= delta.bottom
-        val request = dependency.horizontal && dx != 0f || dependency.vertical && dy != 0f
+        val request = source.horizontal && dx != 0f || source.vertical && dy != 0f
         view.translationX += dx
         view.translationY += dy
         if (request) {
-            logd { "$nameWithId request insets? ${provider != null}" }
-            provider?.requestInsets()
+            logd { "$nameWithId modify insets? ${provider != null}" }
+            provider?.publishInsetsFrom(this)
         }
     }
 

@@ -10,10 +10,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.WindowInsets
 import androidx.annotation.RequiresApi
-import androidx.core.view.WindowInsetsCompat
-import lib.atomofiron.insets.ExtendedWindowInsets.Companion.Builder
-import androidx.core.view.WindowInsetsCompat.Type as CompatType
-import lib.atomofiron.insets.ExtendedWindowInsets.Type
 
 
 const val INVALID_INSETS_LISTENER_KEY = 0
@@ -22,7 +18,6 @@ class InsetsProviderImpl private constructor(
     private var dropNative: Boolean,
 ) : InsetsProvider, InsetsListener, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
-    private var transformed = ExtendedWindowInsets.Empty
     private var source = ExtendedWindowInsets.Empty
         set(value) {
             logd { "$nameWithId new received? ${field != value}" }
@@ -31,8 +26,10 @@ class InsetsProviderImpl private constructor(
                 updateCurrent(value)
             }
         }
+    private var modified = ExtendedWindowInsets.Empty
     override var current = ExtendedWindowInsets.Empty
         private set(value) {
+            isActual = true
             logd { "$nameWithId new current? ${field != value}" }
             if (field != value) {
                 val prev = field
@@ -42,6 +39,7 @@ class InsetsProviderImpl private constructor(
         }
 
     private val listeners = hashMapOf<Int, InsetsListener>()
+    private val sources = hashMapOf<Int, InsetsSource>()
     private var insetsModifier: InsetsModifierCallback? = null
     private var parentProvider: InsetsProvider? = null
     private var thisView: View? = null
@@ -51,6 +49,8 @@ class InsetsProviderImpl private constructor(
     private val isInLayout get() = thisView?.isInLayout ?: false
     private var isNotifying = false
     private var isRequested = false
+    // some cached modifiers were changed, insets rebuilding required
+    private var isActual = true
 
     constructor() : this(dropNative = false)
 
@@ -79,7 +79,6 @@ class InsetsProviderImpl private constructor(
     override fun onLayoutChange(view: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
         if (isRequested) {
             logd { "$nameWithId notify listeners after layout changed" }
-            isRequested = false
             updateCurrent(source)
         }
     }
@@ -118,18 +117,18 @@ class InsetsProviderImpl private constructor(
     override fun removeInsetsListener(key: Int) {
         val removed = listeners.remove(key) != null
         logd { "$nameWithId remove listener? $removed -> ${listeners.size}" }
+        val source = sources.remove(key)
+        if (!source.isNullOrEmpty() && source.any { it.insets.isNotEmpty() }) {
+            updateWithSources()
+        }
     }
 
     // the one of the two entry points for window insets
     @RequiresApi(Build.VERSION_CODES.R)
     override fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets {
         if (parentProvider == null) {
-            logd { "$nameWithId native insets were accepted" }
-            val windowInsetsCompat = WindowInsetsCompat.toWindowInsetsCompat(windowInsets, thisView)
-            val barsWithCutout = windowInsetsCompat.getInsets(CompatType.systemBars() or CompatType.displayCutout())
-            source = Builder(windowInsetsCompat)
-                .set(Type.general, barsWithCutout)
-                .build()
+            logd { "$nameWithId native insets were received" }
+            source = ExtendedWindowInsets(windowInsets, thisView)
         }
         return if (dropNative) WindowInsets.CONSUMED else windowInsets
     }
@@ -138,6 +137,18 @@ class InsetsProviderImpl private constructor(
         isInLayout -> isRequested = true.also { logd { "$nameWithId insets were requested during the layout" } }
         isNotifying -> isRequested = true.also { logd { "$nameWithId insets were requested during the notification of listeners" } }
         else -> updateCurrent(source)
+    }
+
+    override fun publishInsetsFrom(callback: InsetsSourceCallback) {
+        val entry = listeners.entries.find { it.value === callback }
+            ?: return logd { "InsetsDependencyCallback was not found!" }
+        publishInsets(entry.key, callback)
+    }
+
+    override fun publishInsetsFrom(view: View) {
+        val entry = listeners.entries.find { it.value is InsetsSourceCallback && it.value.view() === view }
+            ?: return logd { "InsetsDependencyCallback with ${view.nameWithId()} was not found!" }
+        publishInsets(entry.key, entry.value as InsetsSourceCallback)
     }
 
     override fun dropNativeInsets(drop: Boolean) {
@@ -152,45 +163,51 @@ class InsetsProviderImpl private constructor(
 
     private fun updateCurrent(source: ExtendedWindowInsets) {
         logd { "$nameWithId update current, with modifier? ${insetsModifier != null}" }
-        isNotifying = true
-        current = insetsModifier
-            ?.transform(listeners.isNotEmpty(), source)
-            .let {
-                transformed = it ?: source
-                iterateCallbacks(transformed)
-            }
-        isNotifying = false
+        isRequested = false
+        modified = insetsModifier?.modify(listeners.isNotEmpty(), source) ?: source
+        updateWithSources()
     }
 
-    private fun iterateCallbacks(windowInsets: ExtendedWindowInsets): ExtendedWindowInsets {
-        val callbacks = listeners.values.mapNotNull { it as? InsetsDependencyCallback }
+    private fun updateWithSources() {
         var builder: ExtendedBuilder? = null
-        for (callback in callbacks) {
-            callback.getModifier(windowInsets)
-                ?.takeIf { it.isNotEmpty() }
-                ?.let { modifier ->
-                    builder = (builder ?: windowInsets.builder()).applyReversed(callback, modifier)
-                }
+        for (entry in sources) {
+            if (entry.value.isNotEmpty()) {
+                builder = (builder ?: modified.builder()).applySources(listeners[entry.key], entry.value)
+            }
         }
-        return builder?.build() ?: windowInsets
+        current = builder?.build() ?: modified
+    }
+
+    private fun publishInsets(key: Int, callback: InsetsSourceCallback) {
+        when (val new = callback.getSource(modified)) {
+            sources[key] -> return
+            null -> sources.remove(key)
+            else -> sources[key] = new
+        }
+        when {
+            isNotifying || isRequested -> isActual = false
+            else -> updateWithSources()
+        }
     }
 
     private fun notifyListeners(prev: ExtendedWindowInsets, new: ExtendedWindowInsets) {
         isNotifying = true
         val listeners = listeners.values.toTypedArray()
         val currentViewDelegateIndex = listeners.indexOfFirst { it.view() === thisView }
-        listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(transformed)
+        listeners.getOrNull(currentViewDelegateIndex)?.onApplyWindowInsets(source)
         listeners.forEachIndexed { index, it ->
             when {
                 index == currentViewDelegateIndex -> Unit
                 it.triggers.isEmpty() -> it.onApplyWindowInsets(new)
-                it.triggers.find { prev[it] != new[it] } != null -> it.onApplyWindowInsets(new)
+                it.triggers.any { prev[it] != new[it] } -> it.onApplyWindowInsets(new)
             }
         }
         if (isRequested) {
-            logd { "$nameWithId notify listeners after the notification of listeners" }
-            isRequested = false
+            logd { "$nameWithId restart full insets update" }
             updateCurrent(source)
+        } else if (isActual) {
+            logd { "$nameWithId restart insets update from cache" }
+            updateWithSources()
         }
         isNotifying = false
     }
@@ -198,15 +215,10 @@ class InsetsProviderImpl private constructor(
 
 private fun Any?.view(): View? = (this as? ViewInsetsDelegateImpl)?.view
 
-private fun ExtendedBuilder.applyReversed(callback: InsetsDependencyCallback, modifier: InsetsModifier): ExtendedBuilder {
-    modifier.next?.let { applyReversed(callback, it) }
-    logd { "${callback.view()?.nameWithId() ?: callback.simpleName} modifications: $modifier" }
-    when (modifier.action) {
-        ModifierAction.Max -> max(modifier.types, modifier.insets)
-        ModifierAction.Set -> set(modifier.types, modifier.insets)
-        ModifierAction.Add -> add(modifier.types, modifier.insets)
-        ModifierAction.Consume -> consume(modifier.types, modifier.insets)
-        ModifierAction.None -> Unit // unreachable
+private fun ExtendedBuilder.applySources(listener: InsetsListener?, sources: InsetsSource): ExtendedBuilder {
+    for (source in sources) {
+        logd { "${listener.view()?.nameWithId() ?: listener?.simpleName} source: $source" }
+        max(source.types, source.insets)
     }
     return this
 }

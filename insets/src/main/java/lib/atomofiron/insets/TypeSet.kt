@@ -45,8 +45,8 @@ data class TypeSet internal constructor(
     override fun containsAll(elements: Collection<TypeSet>): Boolean {
         when {
             elements.isEmpty() -> return true
-            isEmpty() -> return elements.find { !it.isEmpty() } == null
-            elements is TypeSet -> return elements.find { !contains(it) } == null
+            isEmpty() -> return !elements.any { !it.isEmpty() }
+            elements is TypeSet -> return !elements.any { !contains(it) }
             else -> for (element in elements) {
                 if (!containsAll(element)) return false
             }
@@ -58,7 +58,10 @@ data class TypeSet internal constructor(
         private var next: TypeSet? = this@TypeSet
             get() = field?.takeIf { it !== Empty }
         override fun hasNext(): Boolean = next != null
-        override fun next(): TypeSet = next?.also { next = it.next } ?: throw NoSuchElementException()
+        override fun next(): TypeSet = next
+            ?.also { next = it.next }
+            ?.single()
+            ?: throw NoSuchElementException()
     }
 
     // without sorting
@@ -107,6 +110,8 @@ data class TypeSet internal constructor(
         }
         return head ?: Empty
     }
+
+    private fun single(): TypeSet = if (size == 1) this else copy(next = null)
 
     override fun toString(): String = next?.takeIf { it.isNotEmpty() }?.let { ("$it,$name") } ?: name
 

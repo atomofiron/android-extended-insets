@@ -201,47 +201,6 @@ fun View.onAttachCallback(
     }.also { addOnAttachStateChangeListener(it) }
 }
 
-fun requestInsetsOnVisibilityChange(vararg views: View) {
-    val placements = views.map { !it.isGone }.toMutableList()
-    val visibilityChecker = {
-        val providers = mutableListOf<InsetsProvider>()
-        views.forEachIndexed { index, view ->
-            val placed = !view.isGone
-            if (placed != placements[index]) {
-                placements[index] = placed
-                if (placed) {
-                    view.findInsetsProvider()
-                        ?.takeIf { provider -> providers.find { it === provider } == null }
-                        ?.also { providers.add(it) }
-                        ?.requestInsets()
-                }
-            }
-        }
-    }
-    views.forEach { view ->
-        view.onAttachCallback(
-            onAttach = { view.viewTreeObserver.addOnGlobalLayoutListener(visibilityChecker) },
-            onDetach = { view.viewTreeObserver.removeOnGlobalLayoutListener(visibilityChecker) },
-        )
-    }
-}
-
-fun requestInsetsOnLayoutChange(vararg views: View)
-    = requestInsetsOnLayoutChange(*views, horizontally = true, vertically = true)
-
-fun requestInsetsOnLayoutChange(
-    vararg views: View,
-    horizontally: Boolean = false,
-    vertically: Boolean = false,
-) {
-    val listener = View.OnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-        if (horizontally && (left != oldLeft || right != oldRight) || vertically && (top != oldTop || bottom != oldBottom)) {
-            view.requestInsets()
-        }
-    }
-    for (view in views) view.addOnLayoutChangeListener(listener)
-}
-
 internal fun Int.toTypeMask(): Int = when {
     this > LEGACY_LIMIT -> throw IllegalArgumentException("Seed $this is too big to be converted to the legacy bit mask, $LEGACY_LIMIT is the limit")
     else -> 1.shl(dec())
