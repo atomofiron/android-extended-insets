@@ -130,8 +130,8 @@ internal class ViewInsetsDelegateImpl(
     // oldTop and oldBottom are sometimes wrong
     private val old = Rect()
     override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int, ol: Int, ot: Int, or: Int, ob: Int) {
-        val horizontally = (left != old.left || right != old.right) && (dstLeft != None || dstRight != None)
-        val vertically = (top != old.top || bottom != old.bottom) && (dstTop != None || dstBottom != None)
+        val horizontally = left != old.left || right != old.right
+        val vertically = top != old.top || bottom != old.bottom
         old.set(left, top, right, bottom)
         if (source.horizontal && horizontally || source.vertical && vertically) {
             logd { "$nameWithId modify insets? ${provider != null}" }
