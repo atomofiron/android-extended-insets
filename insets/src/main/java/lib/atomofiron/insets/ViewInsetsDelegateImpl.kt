@@ -35,14 +35,14 @@ data class Source(
 }
 
 internal class ViewInsetsDelegateImpl(
-    val view: View,
+    override val view: View,
     override val types: TypeSet,
     private var combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
     private var dstBottom: InsetsDestination = None,
-) : ViewInsetsDelegate, InsetsListener, InsetsSourceCallback, View.OnAttachStateChangeListener, View.OnLayoutChangeListener, ViewTreeObserver.OnGlobalLayoutListener {
+) : ViewInsetsDelegate, InsetsListener, InsetsSourceCallback, ViewDelegate, View.OnAttachStateChangeListener, View.OnLayoutChangeListener, ViewTreeObserver.OnGlobalLayoutListener {
 
     private val nameWithId: String = view.nameWithId()
 
