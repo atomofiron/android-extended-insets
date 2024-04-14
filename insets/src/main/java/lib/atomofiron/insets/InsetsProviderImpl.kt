@@ -44,6 +44,7 @@ class InsetsProviderImpl private constructor(
     private var parentProvider: InsetsProvider? = null
     private var thisView: View? = null
     private var nameWithId: String? = null
+    private val typesProvider = ::collectTypes
     private var nextKey = INVALID_INSETS_LISTENER_KEY.inc()
     // prevent extra notifications of listeners
     private val isInLayout get() = thisView?.isInLayout ?: false
@@ -156,6 +157,18 @@ class InsetsProviderImpl private constructor(
         dropNative = drop
     }
 
+    override fun collectTypes(): TypeSet {
+        var types = TypeSet.Empty
+        for (listener in listeners.values) {
+            types += when {
+                listener.types.isNotEmpty() -> listener.types
+                listener is InsetsProvider -> listener.collectTypes()
+                else -> continue
+            }
+        }
+        return types
+    }
+
     // the one of the two entry points for window insets
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
         source = windowInsets
@@ -164,7 +177,7 @@ class InsetsProviderImpl private constructor(
     private fun updateCurrent(source: ExtendedWindowInsets) {
         logd { "$nameWithId update current, with modifier? ${insetsModifier != null}" }
         isRequested = false
-        modified = insetsModifier?.modify(listeners.isNotEmpty(), source) ?: source
+        modified = insetsModifier?.modify(typesProvider, source) ?: source
         updateWithSources()
     }
 
@@ -198,8 +211,8 @@ class InsetsProviderImpl private constructor(
         listeners.forEachIndexed { index, it ->
             when {
                 index == currentViewDelegateIndex -> Unit
-                it.triggers.isEmpty() -> it.onApplyWindowInsets(new)
-                it.triggers.any { prev[it] != new[it] } -> it.onApplyWindowInsets(new)
+                it.types.isEmpty() -> it.onApplyWindowInsets(new)
+                it.types.any { prev[it] != new[it] } -> it.onApplyWindowInsets(new)
             }
         }
         if (isRequested) {
