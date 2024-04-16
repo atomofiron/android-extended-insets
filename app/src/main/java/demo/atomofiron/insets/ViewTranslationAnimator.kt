@@ -16,7 +16,6 @@ enum class Gravity {
 class ViewTranslationAnimator(
     private val view: View,
     private val gravity: Gravity,
-    private val callback: () -> Unit,
 ) : ValueAnimator.AnimatorUpdateListener {
 
     private var anim: ValueAnimator? = null
@@ -56,7 +55,6 @@ class ViewTranslationAnimator(
     override fun onAnimationUpdate(animation: ValueAnimator) {
         if (view.isInvisible) view.isVisible = true
         view.translationY = animation.animatedValue as Float
-        callback()
     }
 
     private fun reset() {

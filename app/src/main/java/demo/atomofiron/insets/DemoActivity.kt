@@ -24,6 +24,8 @@ import lib.atomofiron.insets.isEmpty
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
+import lib.atomofiron.insets.insetsSource
+import lib.atomofiron.insets.insetsTranslation
 import lib.atomofiron.insets.setContentView
 import lib.atomofiron.insets.setInsetsDebug
 import kotlin.math.max
@@ -46,8 +48,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
 
             configureInsets()
 
-            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top) { publishInsetsFrom(viewTop) }
-            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom) { publishInsetsFrom(viewBottom) }
+            val topCtrl = ViewTranslationAnimator(viewTop, Gravity.Top)
+            val bottomCtrl = ViewTranslationAnimator(viewBottom, Gravity.Bottom)
             switchConnection.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) topCtrl.show() else topCtrl.hide()
             }
@@ -110,8 +112,9 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
             cutoutDrawable.sync(windowInsets)
             val fullscreen = windowInsets.isEmpty(ExtType.systemBars)
             switchFullscreen.isChecked = fullscreen
-            val cutout = if (fullscreen) Insets.NONE else {
-                windowInsets { displayCutout }.run { Insets.of(max(left, right), top, max(left, right), bottom) }
+            val cutout = windowInsets { displayCutout }.run {
+                val horizontal = if (fullscreen) 0 else max(left, right)
+                Insets.of(horizontal, top, horizontal, bottom)
             }
             windowInsets.builder()
                 .set(ExtType.general, windowInsets { barsWithCutout })
@@ -121,49 +124,57 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         }
         root.insetsPadding(ExtType.ime, bottom = true)
         bottomPanel.insetsPadding(horizontal = true, bottom = true)
-            .source(vertical = true) {
-                val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
-                InsetsSource
-                    .publish(ExtType.general, insets)
-                    .publish(ExtType.togglePanel, insets)
-            }
-        viewTop.insetsMix { margin(horizontal).padding(top) }
-            .source(vertical = true) { (view, _) ->
-                val insets = Insets.of(0, view.visibleTopHeight, 0, 0)
-                InsetsSource
-                    .publish(ExtType.general, insets)
-                    .publish(ExtType.verticalPanels, insets)
-            }
-        viewBottom.insetsMix(ExtType { barsWithCutout + togglePanel }) { horizontal(margin).bottom(padding) }
-            .source(vertical = true) {
-                val insets = Insets.of(0, 0, 0, viewBottom.visibleBottomHeight)
-                InsetsSource
-                    .publish(ExtType.general, insets)
-                    .publish(ExtType.verticalPanels, insets)
-            }
+        bottomPanel.insetsSource(vertical = true) {
+            val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
+            InsetsSource
+                .submit(ExtType.general, insets)
+                .submit(ExtType.togglePanel, insets)
+        }
+        viewTop.insetsMix {
+            margin(horizontal).padding(top)
+        }
+        viewTop.insetsSource(vertical = true) { view ->
+            val insets = Insets.of(0, view.visibleTopHeight, 0, 0)
+            InsetsSource
+                .submit(ExtType.general, insets)
+                .submit(ExtType.verticalPanels, insets)
+        }
+        viewBottom.insetsMix(ExtType { barsWithCutout + togglePanel }) {
+            horizontal(margin).bottom(padding)
+        }
+        viewBottom.insetsSource(vertical = true) {
+            val insets = Insets.of(0, 0, 0, viewBottom.visibleBottomHeight)
+            InsetsSource
+                .submit(ExtType.general, insets)
+                .submit(ExtType.verticalPanels, insets)
+        }
         toolbar.insetsMix(ExtType { barsWithCutout + verticalPanels }) {
             top(translation).horizontal(margin)
         }
         val fabTypes = ExtType { barsWithCutout + togglePanel + verticalPanels }
         val fabCombining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
-        fab.insetsMix(fabTypes, fabCombining) {
-            translation(bottom, end)
-        }.source { (view, _) ->
+        fab.insetsTranslation(fabTypes, fabCombining, end = true, bottom = true)
+        fab.insetsSource { view ->
             InsetsSource
-                .publish(ExtType.fabTop, Insets.of(0, 0, 0, view.visibleBottomHeight))
-                .publish(ExtType.fabHorizontal, Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, 0))
+                .submit(ExtType.fabTop, Insets.of(0, 0, 0, view.visibleBottomHeight))
+                .submit(ExtType.fabHorizontal, Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, 0))
         }
         // nested container with applied insets
-        snackbarParentContainer.insetsMix(fabTypes) { padding(horizontal).translation(bottom) }
+        snackbarParentContainer.insetsMix(fabTypes) {
+            padding(horizontal).translation(bottom)
+        }
+        val snackbarTypes = ExtType { fabTop + fabHorizontal }
         snackbarParentContainer.setInsetsModifier { _, windowInsets ->
             val landscape = snackbarParentContainer.run { width > height }
             windowInsets.builder()
                 // snackbar dynamic relative position
                 .consume(if (landscape) ExtType.fabTop else ExtType.fabHorizontal)
-                .consume(ExtType { fabTop + fabHorizontal }, windowInsets[fabTypes])
+                .consume(snackbarTypes, windowInsets[fabTypes])
                 .build()
         }
-        snackbarContainer.insetsMix(ExtType { fabTop + fabHorizontal }) { translation(bottom).padding(end) }
+        snackbarContainer.insetsMix(snackbarTypes) {
+            padding(end).translation(bottom)
+        }
     }
 
     private fun CutoutDrawable.sync(windowInsets: ExtendedWindowInsets) {
