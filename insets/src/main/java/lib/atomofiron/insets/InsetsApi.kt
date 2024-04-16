@@ -72,8 +72,6 @@ data class InsetsCombining(
     val minBottom: Int = 0,
 )
 
-class ExtendedInsetsTypeMaskOverflow : Exception()
-
 class MultipleViewInsetsDelegate(message: String?) : Exception(message ?: "")
 
 class NoMarginLayoutParams(message: String?) : Exception(message ?: "")
