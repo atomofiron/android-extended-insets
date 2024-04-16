@@ -126,6 +126,10 @@ class ExtendedWindowInsets internal constructor(
         else -> getIgnoringVisibility(types - hidden)
     }
 
+    fun isEmpty(types: TypeSet): Boolean = get(types).isEmpty()
+
+    fun isNotEmpty(types: TypeSet): Boolean = !isEmpty(types)
+
     fun isVisible(type: TypeSet): Boolean = !hidden.contains(type)
 
     fun hasInsets(): Boolean = insets.count { !it.value.isEmpty } != 0
