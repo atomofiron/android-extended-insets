@@ -12,13 +12,13 @@ import androidx.annotation.LayoutRes
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isGone
 import androidx.core.view.WindowInsetsCompat.Type as CompatType
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.barsWithCutout
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
 import lib.atomofiron.insets.InsetsDestination.Margin
 import lib.atomofiron.insets.InsetsDestination.None
 import lib.atomofiron.insets.InsetsDestination.Padding
+import lib.atomofiron.insets.InsetsDestination.Translation
 
 
 val insetsCombining by lazy(LazyThreadSafetyMode.NONE) {
@@ -93,6 +93,23 @@ fun View.insetsMix(
     } ?: ViewInsetsDelegateImpl(this, typeMask)
 }
 
+fun View.insetsTranslation(
+    typeMask: TypeSet = barsWithCutout,
+    combining: InsetsCombining? = null,
+    start: Boolean = false,
+    top: Boolean = false,
+    end: Boolean = false,
+    bottom: Boolean = false,
+): ViewInsetsDelegate = ViewInsetsDelegateImpl(
+    this,
+    typeMask,
+    combining,
+    if (start) Translation else None,
+    if (top) Translation else None,
+    if (end) Translation else None,
+    if (bottom) Translation else None,
+)
+
 fun View.insetsPadding(
     typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
@@ -166,6 +183,14 @@ fun View.insetsPadding(
     typeMask: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
 ) = insetsPadding(typeMask, combining, horizontal = true, vertical = true)
+
+fun View.insetsSource(callback: ViewInsetsSourceCallback) = insetsSource(horizontal = true, vertical = true, callback)
+
+fun View.insetsSource(
+    horizontal: Boolean = false,
+    vertical: Boolean = false,
+    callback: ViewInsetsSourceCallback,
+): ViewInsetsSource = ViewInsetsSourceImpl(this, horizontal, vertical, callback)
 
 fun ExtendedWindowInsets.builder(): ExtendedBuilder = ExtendedWindowInsets.Builder(this)
 

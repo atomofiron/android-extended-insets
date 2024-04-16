@@ -26,20 +26,19 @@ interface InsetsProvider {
     // that allows not to set a insets listener that can be replaced with another one
     fun dispatchApplyWindowInsets(windowInsets: WindowInsets): WindowInsets
     fun requestInsets()
-    fun publishInsetsFrom(callback: InsetsSourceCallback)
-    fun publishInsetsFrom(view: View)
+    fun submitInsets(key: Int, source: InsetsSource)
+    fun revokeInsetsFrom(key: Int)
     fun dropNativeInsets(drop: Boolean = true)
     fun collectTypes(): TypeSet
 }
 
 interface ViewDelegate {
     val view: View?
+    val nameWithId: String
 }
 
 interface ViewInsetsDelegate {
-    fun resetInsets(block: ViewInsetsConfig.() -> Unit): ViewInsetsDelegate
-    fun source(callback: InsetsViewSourceCallback? = null): ViewInsetsDelegate
-    fun source(horizontal: Boolean = false, vertical: Boolean = false, callback: InsetsViewSourceCallback? = null): ViewInsetsDelegate
+    fun resetInsets(block: ViewInsetsConfig.() -> Unit)
     fun combining(combining: InsetsCombining?)
     fun scrollOnEdge(): ViewInsetsDelegate
 }
@@ -48,21 +47,11 @@ fun interface InsetsModifierCallback {
     fun modify(types: () -> TypeSet, windowInsets: ExtendedWindowInsets): ExtendedWindowInsets
 }
 
-fun interface InsetsSourceCallback {
-    fun getSource(windowInsets: ExtendedWindowInsets): InsetsSource?
+interface ViewInsetsSource {
+    fun invalidateInsets()
 }
 
-fun interface InsetsViewSourceCallback {
-    fun getSource(arg: InsetsCallbackArg): InsetsSource?
-}
-
-class InsetsCallbackArg(
-    val view: View,
-    val windowInsets: ExtendedWindowInsets,
-) {
-    operator fun component1() = view
-    operator fun component2() = windowInsets
-}
+typealias ViewInsetsSourceCallback = (view: View) -> InsetsSource
 
 enum class InsetsDestination(
     internal val label: String,
@@ -82,8 +71,6 @@ data class InsetsCombining(
     val minEnd: Int = 0,
     val minBottom: Int = 0,
 )
-
-class ExtendedInsetsTypeMaskOverflow : Exception()
 
 class MultipleViewInsetsDelegate(message: String?) : Exception(message ?: "")
 
