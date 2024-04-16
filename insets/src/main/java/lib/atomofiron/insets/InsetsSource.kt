@@ -7,24 +7,27 @@ package lib.atomofiron.insets
 import androidx.core.graphics.Insets
 import java.util.Objects
 
-
-open class InsetsSource private constructor(
-    internal val types: TypeSet,
-    internal val insets: Insets,
-    next: InsetsSource?,
+class InsetsSource private constructor(
+    val types: TypeSet,
+    val insets: Insets,
+    val next: InsetsSource?,
+    val debugData: String? = null,
 ) : Set<InsetsSource> {
-    companion object : InsetsSource(TypeSet.Empty, Insets.NONE, null) {
+    companion object {
+        private val Empty = InsetsSource(TypeSet.Empty, Insets.NONE, next = null)
         private val emptyIterator = object : Iterator<InsetsSource> {
             override fun hasNext(): Boolean = false
             override fun next(): InsetsSource = throw NoSuchElementException()
         }
-        override val size = 0
-        override fun iterator() = emptyIterator
+
+        fun submit(types: TypeSet, insets: Insets) = Empty.submit(types, insets)
     }
 
-    internal val next: InsetsSource? = next?.takeIf { it.isNotEmpty() }
-
-    override val size: Int = (this.next?.size ?: 0).inc()
+    override val size: Int = when {
+        this === Empty -> 0
+        next == null -> 1
+        else -> next.size.inc()
+    }
 
     override fun isEmpty(): Boolean = size == 0
 
@@ -49,15 +52,7 @@ open class InsetsSource private constructor(
         return true
     }
 
-    override fun iterator() = object : Iterator<InsetsSource> {
-        private var next: InsetsSource? = this@InsetsSource
-            get() = field?.takeIf { it.isNotEmpty() }
-        override fun hasNext(): Boolean = next != null
-        override fun next(): InsetsSource = next
-            ?.also { next = it.next }
-            ?.single()
-            ?: throw NoSuchElementException()
-    }
+    override fun iterator() = if (isEmpty()) emptyIterator else IteratorImpl(this)
 
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
@@ -74,9 +69,26 @@ open class InsetsSource private constructor(
         ?.let { if (isEmpty()) it.toString() else "$it,${string()}" }
         ?: string()
 
-    fun publish(types: TypeSet, insets: Insets) = InsetsSource(types, insets, next = takeIf { it.isNotEmpty() })
+    fun submit(types: TypeSet, insets: Insets): InsetsSource = when {
+        types.isEmpty() -> this
+        else -> InsetsSource(types, insets, next = takeIf { it.isNotEmpty() })
+    }
 
-    private fun single(): InsetsSource = if (size == 1) this else InsetsSource(types, insets, next = null)
+    internal fun copy(debugData: String) = InsetsSource(types, insets, next, debugData)
+
+    private fun single(): InsetsSource = if (next == null) this else InsetsSource(types, insets, next = null)
 
     private fun string() = "[$types][${insets.ltrb()}]"
+
+    private inner class IteratorImpl(first: InsetsSource) : Iterator<InsetsSource> {
+        private var next: InsetsSource? = first
+            get() = field?.takeIf { it.isNotEmpty() }
+
+        override fun hasNext(): Boolean = next != null
+
+        override fun next(): InsetsSource = next
+            ?.also { next = it.next }
+            ?.single()
+            ?: throw NoSuchElementException()
+    }
 }
