@@ -51,9 +51,7 @@ interface ViewInsetsSource {
     fun invalidateInsets()
 }
 
-fun interface ViewInsetsSourceCallback {
-    operator fun invoke(view: View): InsetsSource
-}
+typealias ViewInsetsSourceCallback = (view: View) -> InsetsSource
 
 enum class InsetsDestination(
     internal val label: String,
