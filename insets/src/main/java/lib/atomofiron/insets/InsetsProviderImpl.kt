@@ -39,7 +39,8 @@ class InsetsProviderImpl private constructor(
         }
     override var view: View? = null
         private set
-    override val nameWithId: String? by lazy { view?.nameWithId() }
+    override var nameWithId: String = this::class.simpleName.toString()
+        private set
 
     private val listeners = hashMapOf<Int, InsetsListener>()
     private val sources = hashMapOf<Int, InsetsSource>()
@@ -60,6 +61,7 @@ class InsetsProviderImpl private constructor(
 
     override fun View.onInit() {
         view = this
+        nameWithId = nameWithId()
         addOnAttachStateChangeListener(this@InsetsProviderImpl)
         addOnLayoutChangeListener(this@InsetsProviderImpl)
         if (isAttachedToWindow) onViewAttachedToWindow(this)

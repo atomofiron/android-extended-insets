@@ -35,6 +35,8 @@ internal class ViewInsetsDelegateImpl(
     View.OnAttachStateChangeListener,
     View.OnLayoutChangeListener {
 
+    override val nameWithId = view.nameWithId()
+
     private var insets = Insets.NONE
     private var windowInsets = ExtendedWindowInsets.Empty
     private var provider: InsetsProvider? = null

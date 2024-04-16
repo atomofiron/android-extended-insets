@@ -34,7 +34,7 @@ interface InsetsProvider {
 
 interface ViewDelegate {
     val view: View?
-    val nameWithId: String? get() = view?.nameWithId()
+    val nameWithId: String
 }
 
 interface ViewInsetsDelegate {

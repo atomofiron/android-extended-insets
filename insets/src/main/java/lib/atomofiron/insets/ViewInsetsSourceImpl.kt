@@ -19,6 +19,8 @@ internal class ViewInsetsSourceImpl(
     ViewTreeObserver.OnGlobalLayoutListener,
     ViewTreeObserver.OnPreDrawListener {
 
+    override val nameWithId = view.nameWithId()
+
     private var viewPlaced = !view.isGone
     private var tX = view.translationX
     private var tY = view.translationY
