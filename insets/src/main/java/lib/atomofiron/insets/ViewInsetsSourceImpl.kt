@@ -36,11 +36,13 @@ internal class ViewInsetsSourceImpl(
 
     override fun onViewAttachedToWindow(view: View) {
         provider = view.findInsetsProvider()
+        logd { "$nameWithId was attached, provider? ${provider != null}" }
         view.viewTreeObserver.addOnGlobalLayoutListener(this)
         view.viewTreeObserver.addOnPreDrawListener(this)
     }
 
     override fun onViewDetachedFromWindow(view: View) {
+        logd { "$nameWithId was detached, provider? ${provider != null}" }
         provider?.revokeInsetsFrom(key)
         provider = null
         view.viewTreeObserver.removeOnGlobalLayoutListener(this)
@@ -62,7 +64,7 @@ internal class ViewInsetsSourceImpl(
         val horizontal = left != oldLeft || right != oldRight
         val vertical = top != oldTop || bottom != oldBottom
         if (this.horizontal && horizontal || this.vertical && vertical) {
-            logd { "$nameWithId layout changed, invalidate insets, provider? ${provider != null}" }
+            logd { "$nameWithId layout was changed, invalidate insets, provider? ${provider != null}" }
             invalidateInsets()
         }
     }
@@ -71,6 +73,7 @@ internal class ViewInsetsSourceImpl(
         if (horizontal && tX != view.translationX || vertical && tY != view.translationY) {
             tX = view.translationX
             tY = view.translationY
+            logd { "$nameWithId translation was changed, invalidate insets, provider? ${provider != null}" }
             invalidateInsets()
         }
         return true

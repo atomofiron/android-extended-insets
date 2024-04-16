@@ -69,12 +69,12 @@ class InsetsProviderImpl private constructor(
 
     override fun onViewAttachedToWindow(view: View) {
         parentProvider = view.parent.findInsetsProvider()
-        this.logd { "$nameWithId onAttach parent provider? ${parentProvider != null}" }
+        logd { "$nameWithId was attached, parent provider? ${parentProvider != null}" }
         parentProvider?.addInsetsListener(this)
     }
 
     override fun onViewDetachedFromWindow(view: View) {
-        logd { "$nameWithId onDetach parent provider? ${parentProvider != null}" }
+        logd { "$nameWithId was detached, parent provider? ${parentProvider != null}" }
         parentProvider?.removeInsetsListener(this)
         parentProvider = null
     }

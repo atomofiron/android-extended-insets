@@ -56,12 +56,12 @@ internal class ViewInsetsDelegateImpl(
 
     override fun onViewAttachedToWindow(view: View) {
         provider = view.findInsetsProvider()
-        logd { "$nameWithId onAttach provider? ${provider != null}" }
+        logd { "$nameWithId was attached, provider? ${provider != null}" }
         provider?.addInsetsListener(this)
     }
 
     override fun onViewDetachedFromWindow(view: View) {
-        logd { "$nameWithId onDetach provider? ${provider != null}" }
+        logd { "$nameWithId was detached, provider? ${provider != null}" }
         provider?.removeInsetsListener(this)
         provider = null
     }
