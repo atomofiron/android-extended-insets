@@ -25,10 +25,6 @@ val insetsCombining by lazy(LazyThreadSafetyMode.NONE) {
     InsetsCombining(combiningTypes = Type.displayCutout)
 }
 
-fun ExtendedWindowInsets.isEmpty(types: TypeSet): Boolean = get(types).isEmpty()
-
-fun ExtendedWindowInsets.isNotEmpty(types: TypeSet): Boolean = !isEmpty(types)
-
 fun Insets.isEmpty() = this == Insets.NONE
 
 fun Insets.isNotEmpty() = !isEmpty()
