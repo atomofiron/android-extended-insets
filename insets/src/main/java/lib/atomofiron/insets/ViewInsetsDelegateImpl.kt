@@ -29,6 +29,7 @@ internal class ViewInsetsDelegateImpl(
     private var dstTop: InsetsDestination = None,
     dstEnd: InsetsDestination = None,
     private var dstBottom: InsetsDestination = None,
+    private val configProvider: (ViewInsetsConfig.() -> Unit)? = null,
 ) : ViewInsetsDelegate,
     InsetsListener,
     ViewDelegate,
@@ -66,8 +67,13 @@ internal class ViewInsetsDelegateImpl(
         provider = null
     }
 
-    override fun resetInsets(block: ViewInsetsConfig.() -> Unit) {
-        val config = ViewInsetsConfig().apply(block)
+    override fun updateInsets(): Boolean {
+        changeInsets(configProvider ?: return false)
+        return true
+    }
+
+    override fun changeInsets(block: ViewInsetsConfig.() -> Unit) {
+        val config = ViewInsetsConfig(block)
         config.logd { "$nameWithId with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
         val delta = insets.inv()
         if (insets.isNotEmpty(Padding)) applyPadding(delta)
@@ -77,7 +83,7 @@ internal class ViewInsetsDelegateImpl(
         dstTop = config.dstTop
         dstRight = if (isRtl) config.dstStart else config.dstEnd
         dstBottom = config.dstBottom
-        logDestination("reset")
+        logDestination("change")
         updateInsets(windowInsets)
     }
 
