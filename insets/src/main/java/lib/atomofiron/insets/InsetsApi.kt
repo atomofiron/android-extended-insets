@@ -38,7 +38,9 @@ interface ViewDelegate {
 }
 
 interface ViewInsetsDelegate {
-    fun resetInsets(block: ViewInsetsConfig.() -> Unit)
+    /** @return true if operation succeed */
+    fun updateInsets(): Boolean
+    fun changeInsets(block: ViewInsetsConfig.() -> Unit)
     fun combining(combining: InsetsCombining?)
     fun scrollOnEdge(): ViewInsetsDelegate
 }
@@ -51,13 +53,16 @@ interface ViewInsetsSource {
     fun invalidateInsets()
 }
 
-typealias ViewInsetsSourceCallback = (view: View) -> InsetsSource
+typealias ViewInsetsSourceCallback = InsetsSource.Companion.(view: View) -> InsetsSource
 
 enum class InsetsDestination(
     internal val label: String,
     internal val isNone: Boolean,
 ) {
-    None("none", true), Padding("padding", false), Margin("margin", false), Translation("translation", false);
+    None("none", true),
+    Padding("padding", false),
+    Margin("margin", false),
+    Translation("translation", false);
 
     internal val letter: Char = label.first()
 

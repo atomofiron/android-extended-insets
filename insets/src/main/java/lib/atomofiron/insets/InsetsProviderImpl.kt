@@ -100,8 +100,9 @@ class InsetsProviderImpl private constructor(
             if (entry.value === listener) {
                 logd { "$nameWithId listener already added" }
                 return entry.key
-            } else {
-                listener.checkTheSameView(entry.value)
+            } else if (listener.checkTheSameView(entry.value)) {
+                MultipleViewInsetsDelegate("The target view ${listener.view()?.nameWithId()}").printStackTrace()
+                return INVALID_INSETS_LISTENER_KEY
             }
         }
         logd { "$nameWithId add listener -> ${listeners.size.inc()}" }
@@ -237,10 +238,9 @@ private fun ExtendedBuilder.applySources(sources: InsetsSource): ExtendedBuilder
 }
 
 private fun InsetsListener.checkTheSameView(other: InsetsListener) = when {
-    this !is ViewInsetsDelegateImpl -> Unit
-    other !is ViewInsetsDelegateImpl -> Unit
-    other.view !== view -> Unit
-    else -> throw MultipleViewInsetsDelegate("The target view ${view.nameWithId()}")
+    this !is ViewInsetsDelegateImpl -> false
+    other !is ViewInsetsDelegateImpl -> false
+    else -> other.view === view
 }
 
 private fun Context.dropNativeInsets(attrs: AttributeSet?): Boolean {
