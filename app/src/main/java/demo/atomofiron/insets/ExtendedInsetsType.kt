@@ -7,8 +7,7 @@ import lib.atomofiron.insets.TypeSet
 object ExtType : ExtendedWindowInsets.Type() {
     val togglePanel = define("togglePanel")
     val verticalPanels = define("verticalPanels")
-    val fabTop = define("fabTop")
-    val fabHorizontal = define("fabHorizontal")
+    val fab = define("fab")
     val general = define("general")
 }
 
