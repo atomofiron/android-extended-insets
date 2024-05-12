@@ -53,7 +53,7 @@ interface ViewInsetsSource {
     fun invalidateInsets()
 }
 
-typealias ViewInsetsSourceCallback = InsetsSource.Companion.(view: View) -> InsetsSource
+typealias ViewInsetsSourceCallback = (view: View) -> InsetsSource
 
 enum class InsetsDestination(
     internal val label: String,
