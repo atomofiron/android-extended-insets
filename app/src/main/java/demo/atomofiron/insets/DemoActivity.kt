@@ -18,6 +18,7 @@ import lib.atomofiron.insets.ExtendedWindowInsets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 import lib.atomofiron.insets.InsetsProvider
 import lib.atomofiron.insets.InsetsProviderImpl
+import lib.atomofiron.insets.InsetsSource
 import lib.atomofiron.insets.builder
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
@@ -124,7 +125,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         bottomPanel.insetsPadding(horizontal = true, bottom = true)
         bottomPanel.insetsSource(vertical = true) {
             val insets = Insets.of(0, 0, 0, bottomPanel.visibleBottomHeight)
-            submit(ExtType.general, insets)
+            InsetsSource
+                .submit(ExtType.general, insets)
                 .submit(ExtType.togglePanel, insets)
         }
         viewTop.insetsMix {
@@ -132,7 +134,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         }
         viewTop.insetsSource(vertical = true) { view ->
             val insets = Insets.of(0, view.visibleTopHeight, 0, 0)
-            submit(ExtType.general, insets)
+            InsetsSource
+                .submit(ExtType.general, insets)
                 .submit(ExtType.verticalPanels, insets)
         }
         viewBottom.insetsMix(ExtType { barsWithCutout + togglePanel }) {
@@ -140,7 +143,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         }
         viewBottom.insetsSource(vertical = true) {
             val insets = Insets.of(0, 0, 0, viewBottom.visibleBottomHeight)
-            submit(ExtType.general, insets)
+            InsetsSource
+                .submit(ExtType.general, insets)
                 .submit(ExtType.verticalPanels, insets)
         }
         toolbar.insetsMix(ExtType { barsWithCutout + verticalPanels }) {
@@ -150,7 +154,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
         val fabCombining = insetsCombining.run { copy(combiningTypes + ExtType.togglePanel) }
         fab.insetsTranslation(fabTypes, fabCombining, end = true, bottom = true)
         fab.insetsSource { view ->
-            submit(ExtType.fab, Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, view.visibleBottomHeight))
+            val insets = Insets.of(view.visibleLeftWidth, 0, view.visibleRightWidth, view.visibleBottomHeight)
+            InsetsSource.submit(ExtType.fab, insets)
         }
         // nested container with applied insets
         snackbarParentContainer.insetsMix(fabTypes) {
