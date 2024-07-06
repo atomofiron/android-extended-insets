@@ -81,7 +81,7 @@ internal class ViewInsetsSourceImpl(
 
     override fun invalidateInsets() {
         if (!isAttached) return
-        var source = InsetsSource.callback(view)
+        var source = callback(view)
         debug {
             source = source.copy(debugData = view.nameWithId())
         }
