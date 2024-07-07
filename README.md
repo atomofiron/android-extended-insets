@@ -18,29 +18,24 @@ https://github.com/atomofiron/android-window-insets-compat/assets/14147217/2369d
 ```
 # Step 2
 ```kotlin
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
+class YourActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+    }
 }
 ```
 
 # How to use
 ```gradle
-repositories {
-    // ...
-    maven { url 'https://jitpack.io' }
-}
 dependencies {
-    implementation 'com.github.atomofiron:android-window-insets-compat:1.1.1'
+    implementation("io.github.atomofiron:extended-insets:2.0.0")
 }
 ```
 
 ```kotlin
 fun onViewCreated(view: View) {
-    view.insets...
+    view.insetsPadding(top = true)
 }
 ```
-
-# How and why it works
-[<img width="645" alt="Window Insets" src="https://github.com/atomofiron/android-window-insets-compat/assets/14147217/384b2c52-1145-4a53-867c-ed17baf2471e">](https://www.youtube.com/watch?v=hJveJ8MtMJ4 "Window Insets")
