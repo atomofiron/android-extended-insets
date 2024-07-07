@@ -12,6 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "AndroidWindowInsetsCompat"
-include ':app'
-include ':android-window-insets-compat'
+rootProject.name = "AndroidExtendedInsets"
+include(":app")
+include(":insets")
