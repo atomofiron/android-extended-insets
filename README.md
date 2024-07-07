@@ -1,5 +1,3 @@
-[![](https://jitpack.io/v/atomofiron/android-window-insets-compat.svg)](https://jitpack.io/#atomofiron/android-window-insets-compat)
-
 # Demo
 https://github.com/atomofiron/android-window-insets-compat/assets/14147217/2369db1d-566e-4b4d-9b90-9fae9e97c2d9
 
@@ -18,26 +16,24 @@ https://github.com/atomofiron/android-window-insets-compat/assets/14147217/2369d
 ```
 # Step 2
 ```kotlin
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
+class YourActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+    }
 }
 ```
 
 # How to use
 ```gradle
-repositories {
-    // ...
-    maven { url 'https://jitpack.io' }
-}
 dependencies {
-    implementation 'com.github.atomofiron:android-window-insets-compat:1.1.1'
+    implementation("io.github.atomofiron:extended-insets:2.0.0")
 }
 ```
 
 ```kotlin
 fun onViewCreated(view: View) {
-    view.insets...
+    view.insetsPadding(top = true)
 }
 ```
