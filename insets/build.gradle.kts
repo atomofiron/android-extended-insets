@@ -1,7 +1,11 @@
+import org.jreleaser.model.Active
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("org.jreleaser")
     id("maven-publish")
+    id("signing")
 }
 
 android {
@@ -30,6 +34,7 @@ android {
     publishing {
         singleVariant("release") {
             withSourcesJar()
+            withJavadocJar()
         }
     }
 }
@@ -41,13 +46,97 @@ dependencies {
 
 publishing {
     publications {
-        register<MavenPublication>("release") {
-            groupId = "io.github.atomofiron"
-            artifactId = "extended-insets"
-            version = "2.0.0-rc0"
+        create<MavenPublication>("release") {
+            groupId = properties["GROUP"].toString()
+            artifactId = properties["POM_ARTIFACT_ID"].toString()
+            version = properties["VERSION_NAME"].toString()
 
-            afterEvaluate {
-                from(components["release"])
+            pom {
+                name.set(project.properties["POM_NAME"].toString())
+                description.set(project.properties["POM_DESCRIPTION"].toString())
+                url.set("https://github.com/atomofiron/android-extended-insets")
+                issueManagement {
+                    url.set("https://github.com/atomofiron/android-extended-insets/issues")
+                }
+
+                scm {
+                    url.set("https://github.com/atomofiron/android-extended-insets")
+                    connection.set("scm:git://github.com/atomofiron/android-extended-insets.git")
+                    developerConnection.set("scm:git://github.com/atomofiron/android-extended-insets.git")
+                }
+
+                licenses {
+                    license {
+                        name.set("The MIT License")
+                        url.set("https://opensource.org/license/mit")
+                        distribution.set("repo")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("atomofiron")
+                        name.set("Jaroslav Nesterov")
+                        email.set("atomofiron@gmail.com")
+                        url.set("https://atomofiron.github.io")
+                    }
+                }
+
+                afterEvaluate {
+                    from(components["release"])
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            setUrl(layout.buildDirectory.dir("staging-deploy"))
+        }
+    }
+}
+
+version = properties["VERSION_NAME"].toString()
+description = properties["POM_DESCRIPTION"].toString()
+
+jreleaser {
+    project {
+        inceptionYear = "2024"
+        author("@atomofiron")
+    }
+    gitRootSearch = true
+    signing {
+        active = Active.ALWAYS
+        armored = true
+        verify = true
+    }
+    release {
+        github {
+            skipRelease = true
+            skipTag = true
+        }
+    }
+    release {
+        github {
+            skipTag = true
+            sign = true
+            branch = "develop"
+            branchPush = "develop"
+            overwrite = true
+        }
+    }
+    deploy {
+        maven {
+            mavenCentral.create("sonatype") {
+                active = Active.ALWAYS
+                url = "https://central.sonatype.com/api/v1/publisher"
+                stagingRepository(layout.buildDirectory.dir("staging-deploy").get().toString())
+                setAuthorization("Basic")
+                applyMavenCentralRules = false // Wait for fix: https://github.com/kordamp/pomchecker/issues/21
+                sign = true
+                checksums = true
+                sourceJar = true
+                javadocJar = true
+                retryDelay = 60
             }
         }
     }
