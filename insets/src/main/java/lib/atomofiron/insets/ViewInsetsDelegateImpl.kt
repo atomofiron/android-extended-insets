@@ -50,6 +50,7 @@ internal class ViewInsetsDelegateImpl(
 
     init {
         logDestination("init")
+        clipToPaddingIfNeeded()
         view.addOnAttachStateChangeListener(this)
         if (view.isAttachedToWindow) onViewAttachedToWindow(view)
         view.addOnLayoutChangeListener(this)
@@ -85,6 +86,7 @@ internal class ViewInsetsDelegateImpl(
         dstBottom = config.dstBottom
         logDestination("change")
         updateInsets(windowInsets)
+        clipToPaddingIfNeeded()
     }
 
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) {
@@ -189,8 +191,12 @@ internal class ViewInsetsDelegateImpl(
         else -> true
     }
 
-    private fun isAnyMargin(): Boolean {
-        return when (Margin) {
+    private fun isAnyPadding(): Boolean = isAny(Padding)
+
+    private fun isAnyMargin(): Boolean = isAny(Margin)
+
+    private fun isAny(destination: InsetsDestination): Boolean {
+        return when (destination) {
             dstLeft -> true
             dstTop -> true
             dstRight -> true
@@ -290,6 +296,15 @@ internal class ViewInsetsDelegateImpl(
         }
         val subtracted = Insets.subtract(space, stock)
         return Insets.max(other, subtracted)
+    }
+
+    private fun clipToPaddingIfNeeded() {
+        val view = view
+        when (false) {
+            isAnyPadding() -> Unit
+            (view is ViewGroup) -> Unit
+            else -> view.clipToPadding = false
+        }
     }
 
     private fun logDestination(action: String) {
