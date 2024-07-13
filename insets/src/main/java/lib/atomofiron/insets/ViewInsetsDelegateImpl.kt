@@ -76,10 +76,7 @@ internal class ViewInsetsDelegateImpl(
     override fun changeInsets(block: ViewInsetsConfig.() -> Unit) {
         val config = ViewInsetsConfig(block)
         config.logd { "$nameWithId with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
-        val delta = insets.inv()
-        if (insets.isNotEmpty(Padding)) applyPadding(delta)
-        if (insets.isNotEmpty(Margin)) applyMargin(delta)
-        if (insets.isNotEmpty(Translation)) applyTranslation(delta)
+        updateInsets(ExtendedWindowInsets.Empty)
         dstLeft = if (isRtl) config.dstEnd else config.dstStart
         dstTop = config.dstTop
         dstRight = if (isRtl) config.dstStart else config.dstEnd
