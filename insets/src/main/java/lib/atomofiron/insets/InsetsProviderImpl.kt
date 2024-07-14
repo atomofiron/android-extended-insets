@@ -14,7 +14,7 @@ import androidx.annotation.RequiresApi
 
 const val INVALID_INSETS_LISTENER_KEY = 0
 
-class InsetsProviderImpl private constructor(
+class InsetsProviderImpl(
     private var dropNative: Boolean,
 ) : InsetsProvider, InsetsListener, ViewDelegate, View.OnAttachStateChangeListener, View.OnLayoutChangeListener {
 
