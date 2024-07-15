@@ -76,7 +76,7 @@ internal class ViewInsetsDelegateImpl(
     override fun changeInsets(block: ViewInsetsConfig.() -> Unit) {
         val config = ViewInsetsConfig(block)
         config.logd { "$nameWithId with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
-        updateInsets(ExtendedWindowInsets.Empty)
+        resetInsets()
         dstLeft = if (isRtl) config.dstEnd else config.dstStart
         dstTop = config.dstTop
         dstRight = if (isRtl) config.dstStart else config.dstEnd
@@ -109,6 +109,7 @@ internal class ViewInsetsDelegateImpl(
 
     private fun updateInsets(windowInsets: ExtendedWindowInsets) {
         val new = combining
+            ?.takeIf { windowInsets.isNotEmpty() }
             ?.combine(windowInsets)
             .let { it ?: windowInsets[types] }
             .filterUseful()
@@ -118,6 +119,16 @@ internal class ViewInsetsDelegateImpl(
             applyInsets(delta)
             if (isAnyMargin() && view.isGone) postRequestLayoutOnNextLayout = true
         }
+    }
+
+    private fun resetInsets() {
+        if (insets.isEmpty()) {
+            return
+        }
+        val delta = insets.inv()
+        insets = Insets.NONE
+        applyInsets(delta)
+        if (isAnyMargin() && view.isGone) postRequestLayoutOnNextLayout = true
     }
 
     private fun applyInsets(delta: Insets) {
