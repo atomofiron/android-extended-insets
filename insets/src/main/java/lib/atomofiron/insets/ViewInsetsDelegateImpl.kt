@@ -23,7 +23,7 @@ private val stubMarginLayoutParams = MarginLayoutParams(0, 0)
 
 internal class ViewInsetsDelegateImpl(
     override val view: View,
-    override val types: TypeSet,
+    override var types: TypeSet,
     private var combining: InsetsCombining? = null,
     dstStart: InsetsDestination = None,
     private var dstTop: InsetsDestination = None,
@@ -69,18 +69,31 @@ internal class ViewInsetsDelegateImpl(
     }
 
     override fun updateInsets(): Boolean {
-        changeInsets(configProvider ?: return false)
+        changeInsets(config = configProvider ?: return false)
         return true
     }
 
-    override fun changeInsets(block: ViewInsetsConfig.() -> Unit) {
-        val config = ViewInsetsConfig(block)
-        config.logd { "$nameWithId with insets [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
+    override fun changeInsets(types: TypeSet) {
+        changeInsets(types, config = null)
+    }
+
+    override fun changeInsets(types: TypeSet?, config: ViewInsetsConfig.() -> Unit) {
+        changeInsets(types, ViewInsetsConfig(config))
+    }
+
+    private fun changeInsets(types: TypeSet?, config: ViewInsetsConfig?) {
         resetInsets()
-        dstLeft = if (isRtl) config.dstEnd else config.dstStart
-        dstTop = config.dstTop
-        dstRight = if (isRtl) config.dstStart else config.dstEnd
-        dstBottom = config.dstBottom
+        types?.let {
+            it.logd { "$nameWithId change types: ${this@ViewInsetsDelegateImpl.types} -> $types" }
+            this.types = it
+        }
+        config?.let {
+            it.logd { "$nameWithId change dst: [${dstStart.label},${dstTop.label},${dstEnd.label},${dstBottom.label}]" }
+            dstLeft = if (isRtl) config.dstEnd else config.dstStart
+            dstTop = config.dstTop
+            dstRight = if (isRtl) config.dstStart else config.dstEnd
+            dstBottom = config.dstBottom
+        }
         logDestination("change")
         updateInsets(windowInsets)
         clipToPaddingIfNeeded()
@@ -127,12 +140,12 @@ internal class ViewInsetsDelegateImpl(
         }
         val delta = insets.inv()
         insets = Insets.NONE
-        applyInsets(delta)
+        applyInsets(delta, quietly = true)
         if (isAnyMargin() && view.isGone) postRequestLayoutOnNextLayout = true
     }
 
-    private fun applyInsets(delta: Insets) {
-        logInsets()
+    private fun applyInsets(delta: Insets, quietly: Boolean = false) {
+        if (!quietly) logInsets()
         applyPadding(delta)
         applyMargin(delta)
         applyTranslation(delta)
@@ -323,7 +336,7 @@ internal class ViewInsetsDelegateImpl(
                 (if (isRtl) dstLeft else dstRight).takeIf { !it.isNone }?.let { "end=$it" },
                 dstBottom.takeIf { !it.isNone }?.let { "bottom=$it" },
             ).joinToString(", ")
-            "$nameWithId $action insets $types, ${list.ifEmpty { None.toString() }}"
+            "$nameWithId $action insets: $types, ${list.ifEmpty { None.toString() }}"
         }
     }
 
