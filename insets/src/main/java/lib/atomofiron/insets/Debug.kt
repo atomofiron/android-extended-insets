@@ -96,7 +96,10 @@ internal fun ExtendedBuilder.logChanges(
         }
         val changes = changesList.joinToString(separator = " ").ifEmpty { "none" }
         val values = insets.run { "[${left.orMax()},${top.orMax()},${right.orMax()},${bottom.orMax()}]" }
-        val typeNames = types?.joinToString(separator = ",") { it.name }?.let { " types: $it," } ?: ""
+        val typeNames = types?.joinToString(separator = ",") { it.name }
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { " types: $it," }
+            ?: ""
         "$operation: $values,$typeNames changes: $changes"
     }
 }

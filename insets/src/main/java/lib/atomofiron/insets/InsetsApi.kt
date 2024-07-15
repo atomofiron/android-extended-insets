@@ -40,7 +40,8 @@ interface ViewDelegate {
 interface ViewInsetsDelegate {
     /** @return true if operation succeed */
     fun updateInsets(): Boolean
-    fun changeInsets(block: ViewInsetsConfig.() -> Unit)
+    fun changeInsets(types: TypeSet)
+    fun changeInsets(types: TypeSet? = null, config: ViewInsetsConfig.() -> Unit)
     fun combining(combining: InsetsCombining?)
     fun scrollOnEdge(): ViewInsetsDelegate
 }

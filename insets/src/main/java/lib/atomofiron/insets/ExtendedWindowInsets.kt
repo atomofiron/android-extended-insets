@@ -134,7 +134,7 @@ class ExtendedWindowInsets internal constructor(
 
     fun isNotEmpty(types: TypeSet): Boolean = !isEmpty(types)
 
-    fun isVisible(type: TypeSet): Boolean = !hidden.contains(type)
+    fun isVisible(types: TypeSet): Boolean = !hidden.contains(types)
 
     @Suppress("SuspiciousEqualsCombination")
     override fun equals(other: Any?): Boolean = when {
