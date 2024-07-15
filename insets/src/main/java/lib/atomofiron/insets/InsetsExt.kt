@@ -213,7 +213,7 @@ fun View.getInsets(type: Int = CompatType.systemBars() or CompatType.displayCuto
     return getWindowInsets()[type.toTypeSet()]
 }
 
-fun View.getInsets(type: TypeSet = barsWithCutout): Insets = getWindowInsets()[type]
+fun View.getInsets(types: TypeSet = barsWithCutout): Insets = getWindowInsets()[types]
 
 operator fun WindowInsetsCompat.get(typeMask: Int): Insets = getInsets(typeMask)
 
