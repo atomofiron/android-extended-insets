@@ -37,6 +37,7 @@ class YourActivity : AppCompatActivity() {
 }
 ```
 ```xml
+<!-- activity_your.xml -->
 <lib.atomofiron.insets.InsetsProviderFrameLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -71,6 +72,10 @@ class YourActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
 ```
 # How to use
 ```kotlin
+import androidx.core.graphics.Insets
+import lib.atomofiron.insets.ExtendedWindowInsets
+import lib.atomofiron.insets.TypeSet
+
 // apply bottom ime insets as padding
 view1.insetsPadding(Type.ime, bottom = true)
 // apply insets as padding at the top and as margin horizontally 
