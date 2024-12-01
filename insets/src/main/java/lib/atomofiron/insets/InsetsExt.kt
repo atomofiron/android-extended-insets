@@ -77,6 +77,13 @@ fun View.removeInsetsListener(listener: InsetsListener) {
         ?: logd { "${nameWithId()} unable remove insets listener, provider not found" }
 }
 
+fun View.insetsDelegate(
+    types: TypeSet = barsWithCutout,
+    combining: InsetsCombining? = null,
+): ViewInsetsDelegate {
+    return ViewInsetsDelegateImpl(this, types, combining)
+}
+
 fun View.insetsMix(
     types: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
@@ -204,7 +211,7 @@ fun View.getInsets(type: Int = CompatType.systemBars() or CompatType.displayCuto
     return getWindowInsets()[type.toTypeSet()]
 }
 
-fun View.getInsets(type: TypeSet = barsWithCutout): Insets = getWindowInsets()[type]
+fun View.getInsets(types: TypeSet = barsWithCutout): Insets = getWindowInsets()[types]
 
 operator fun WindowInsetsCompat.get(typeMask: Int): Insets = getInsets(typeMask)
 
