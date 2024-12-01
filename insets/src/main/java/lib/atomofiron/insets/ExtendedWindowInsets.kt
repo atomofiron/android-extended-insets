@@ -55,8 +55,6 @@ class ExtendedWindowInsets internal constructor(
             internal val types = linkedSetOf(TypeSet.Empty, statusBars, navigationBars, captionBar, displayCutout, tappableElement, systemGestures, mandatorySystemGestures, ime)
 
             inline operator fun invoke(block: Companion.() -> TypeSet): TypeSet = this.block()
-
-            inline operator fun <T : Type> T.invoke(block: T.() -> TypeSet): TypeSet = block()
         }
 
         val statusBars = Companion.statusBars
