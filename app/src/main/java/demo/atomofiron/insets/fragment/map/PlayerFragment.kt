@@ -9,7 +9,6 @@ import demo.atomofiron.insets.databinding.FragmentPlayerBinding
 import demo.atomofiron.insets.fragment.list.ListFragment
 import lib.atomofiron.insets.insetsCombining
 import lib.atomofiron.insets.insetsMix
-import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
 
