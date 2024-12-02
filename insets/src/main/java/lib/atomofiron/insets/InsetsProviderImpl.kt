@@ -193,7 +193,7 @@ class InsetsProviderImpl(
 
     private fun updateWithSources() {
         logd { "$nameWithId update current with ${sources.size} sources" }
-        var builder: ExtendedBuilder? = modified.builder()//null
+        var builder: ExtendedBuilder? = null
         for (entry in sources) {
             if (entry.value.isNotEmpty()) {
                 builder = (builder ?: modified.builder()).applySources(entry.value)
