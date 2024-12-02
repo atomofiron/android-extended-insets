@@ -77,8 +77,6 @@ fun View.removeInsetsListener(listener: InsetsListener) {
         ?: logd { "${nameWithId()} unable remove insets listener, provider not found" }
 }
 
-// todo try find existing delegate
-
 fun View.insetsDelegate(
     types: TypeSet = barsWithCutout,
     combining: InsetsCombining? = null,
