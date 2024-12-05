@@ -93,6 +93,8 @@ object ExtType : ExtendedWindowInsets.Type() {
     val verticalPanels = define("verticalPanels")
     val fab = define("fab")
     val general = define("general")
+
+    inline operator fun invoke(block: ExtType.() -> TypeSet): TypeSet = ExtType.block()
 }
 // associate your custom type with ExtendedWindowInsets
 operator fun ExtendedWindowInsets.invoke(block: ExtType.() -> TypeSet): Insets = get(ExtType.block())
