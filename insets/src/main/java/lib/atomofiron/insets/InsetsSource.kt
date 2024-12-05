@@ -14,7 +14,7 @@ class InsetsSource private constructor(
     val debugData: String? = null,
 ) : Set<InsetsSource> {
     companion object {
-        private val Empty = InsetsSource(TypeSet.Empty, Insets.NONE, next = null)
+        val Empty = InsetsSource(TypeSet.Empty, Insets.NONE, next = null)
         private val emptyIterator = object : Iterator<InsetsSource> {
             override fun hasNext(): Boolean = false
             override fun next(): InsetsSource = throw NoSuchElementException()
