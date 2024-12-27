@@ -62,20 +62,7 @@ fun View.findInsetsProvider(): InsetsProvider? {
     return (this as? InsetsProvider) ?: parent?.findInsetsProvider()
 }
 
-fun View.requestInsets() {
-    findInsetsProvider()?.requestInsets()
-}
-
-fun View.addInsetsListener(listener: InsetsListener): Int {
-    val key = findInsetsProvider()?.addInsetsListener(listener)
-    key ?: logd { "${nameWithId()} unable add insets listener, provider not found" }
-    return key ?: INVALID_INSETS_LISTENER_KEY
-}
-
-fun View.removeInsetsListener(listener: InsetsListener) {
-    findInsetsProvider()?.removeInsetsListener(listener)
-        ?: logd { "${nameWithId()} unable remove insets listener, provider not found" }
-}
+fun View.requestInsets() = findInsetsProvider()?.requestInsets() != null
 
 fun View.insetsDelegate(
     types: TypeSet = barsWithCutout,

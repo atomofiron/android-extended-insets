@@ -40,3 +40,15 @@ fun View.attachInsetsListener(
     override val types = triggers
     override fun onApplyWindowInsets(windowInsets: ExtendedWindowInsets) = listener(windowInsets)
 }.let { attachInsetsListener(it) }
+
+private fun View.addInsetsListener(listener: InsetsListener) {
+    findInsetsProvider()
+        ?.addInsetsListener(listener)
+        ?: logd { "${nameWithId()} unable add insets listener, provider not found" }
+}
+
+private fun View.removeInsetsListener(listener: InsetsListener) {
+    findInsetsProvider()
+        ?.removeInsetsListener(listener)
+        ?: logd { "${nameWithId()} unable remove insets listener, provider not found" }
+}
