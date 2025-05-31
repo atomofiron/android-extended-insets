@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
 import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
 import androidx.core.graphics.Insets
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
@@ -15,7 +14,6 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.snackbar.Snackbar
 import demo.atomofiron.insets.fragment.map.PlayerFragment
 import lib.atomofiron.insets.ExtendedWindowInsets
-import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 import lib.atomofiron.insets.InsetsProvider
 import lib.atomofiron.insets.InsetsProviderImpl
 import lib.atomofiron.insets.InsetsSource
@@ -25,6 +23,7 @@ import lib.atomofiron.insets.insetsMix
 import lib.atomofiron.insets.insetsPadding
 import lib.atomofiron.insets.insetsSource
 import lib.atomofiron.insets.insetsTranslation
+import lib.atomofiron.insets.reallyDisableFitsSystemWindows
 import lib.atomofiron.insets.setContentView
 import lib.atomofiron.insets.setInsetsDebug
 import kotlin.math.max
@@ -37,7 +36,8 @@ class DemoActivity : AppCompatActivity(), InsetsProvider by InsetsProviderImpl()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // needed in some projects
+        window.reallyDisableFitsSystemWindows()
         setInsetsDebug(false)
 
         val root = setContentView(R.layout.activity_demo, insetsProvider = this@DemoActivity)
