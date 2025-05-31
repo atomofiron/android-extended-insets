@@ -71,13 +71,13 @@ class ViewInsetsConfig(block: ViewInsetsConfig.() -> Unit) {
         return this
     }
 
-    fun padding(vararg sides: Side) = set(Padding, *sides)
+    fun padding(vararg sides: Side?) = set(Padding, *sides)
 
-    fun margin(vararg sides: Side) = set(Margin, *sides)
+    fun margin(vararg sides: Side?) = set(Margin, *sides)
 
-    fun translation(vararg sides: Side) = set(Translation, *sides)
+    fun translation(vararg sides: Side?) = set(Translation, *sides)
 
-    private fun set(destination: InsetsDestination, vararg sides: Side): ViewInsetsConfig {
+    private fun set(destination: InsetsDestination, vararg sides: Side?): ViewInsetsConfig {
         sides.forEach {
             when (it) {
                 Side.Start -> start(destination)
@@ -86,6 +86,7 @@ class ViewInsetsConfig(block: ViewInsetsConfig.() -> Unit) {
                 Side.Bottom -> bottom(destination)
                 Side.Horizontal -> horizontal(destination)
                 Side.Vertical -> vertical(destination)
+                null -> Unit
             }
         }
         return this
