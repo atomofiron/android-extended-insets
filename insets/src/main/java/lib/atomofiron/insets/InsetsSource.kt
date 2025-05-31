@@ -6,6 +6,7 @@ package lib.atomofiron.insets
 
 import androidx.core.graphics.Insets
 import java.util.Objects
+import kotlin.collections.plus as kplus
 
 class InsetsSource private constructor(
     val types: TypeSet,
@@ -14,7 +15,7 @@ class InsetsSource private constructor(
     val debugData: String? = null,
 ) : Set<InsetsSource> {
     companion object {
-        private val Empty = InsetsSource(TypeSet.Empty, Insets.NONE, next = null)
+        val Empty = InsetsSource(TypeSet.Empty, Insets.NONE, next = null)
         private val emptyIterator = object : Iterator<InsetsSource> {
             override fun hasNext(): Boolean = false
             override fun next(): InsetsSource = throw NoSuchElementException()
@@ -30,6 +31,12 @@ class InsetsSource private constructor(
     }
 
     override fun isEmpty(): Boolean = size == 0
+
+    operator fun plus(other: InsetsSource): Set<InsetsSource> = when {
+        isEmpty() -> other
+        other.isEmpty() -> this
+        else -> kplus(other)
+    }
 
     override operator fun contains(element: InsetsSource): Boolean {
         when {
