@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "AndroidExtendedInsets"
-include(":app")
+//include(":app")
 include(":insets")
