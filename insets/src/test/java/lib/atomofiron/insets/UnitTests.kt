@@ -2,7 +2,6 @@ package lib.atomofiron.insets
 
 import androidx.core.graphics.Insets
 import lib.atomofiron.insets.ExtendedWindowInsets.Type
-import lib.atomofiron.insets.ExtendedWindowInsets.Type.Companion.invoke
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -15,6 +14,8 @@ class UnitTests {
 
         val negative = TypeSet("negative", seed = -1)
         val positive = TypeSet("positive", seed = 1)
+
+        inline operator fun invoke(block: CustomType.() -> TypeSet): TypeSet = CustomType.block()
     }
 
     // associate your custom type with ExtendedWindowInsets

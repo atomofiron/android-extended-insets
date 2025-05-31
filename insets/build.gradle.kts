@@ -119,8 +119,8 @@ jreleaser {
         github {
             skipTag = true
             sign = true
-            branch = "develop"
-            branchPush = "develop"
+            branch = "main"
+            branchPush = "main"
             overwrite = true
         }
     }
